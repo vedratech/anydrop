@@ -1,0 +1,8 @@
+packages:
+  - packages/*
+  - demo
+  - e2e
+
+# pnpm 10+ blocks dependency install scripts unless approved. esbuild needs its postinstall.
+allowBuilds:
+  esbuild: true

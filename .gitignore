@@ -1,0 +1,27 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.turbo/
+.vite/
+
+# test output
+e2e/fixtures/generated/
+e2e/.uploads/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# local / OS
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+*.tgz
+
+e2e/.out-*/
+.claude/hooks/

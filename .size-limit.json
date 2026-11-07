@@ -1,0 +1,22 @@
+[
+  {
+    "name": "@vedratech/anydrop-core (gzip, ESM, whole entry incl. resume store)",
+    "path": "packages/core/dist/index.js",
+    "limit": "19.5 kB",
+    "gzip": true
+  },
+  {
+    "name": "@vedratech/anydrop-ui (gzip, ESM, without core)",
+    "path": "packages/ui/dist/index.js",
+    "limit": "16.5 kB",
+    "gzip": true,
+    "ignore": ["@vedratech/anydrop-core"]
+  },
+  {
+    "name": "@vedratech/anydrop-ui CDN file (gzip, IIFE, core + ui as downloaded)",
+    "path": "packages/ui/dist/index.global.js",
+    "limit": "35 kB",
+    "gzip": true,
+    "rolldown": false
+  }
+]

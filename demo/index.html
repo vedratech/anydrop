@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AnyDrop demo</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        margin: 0 auto;
+        max-width: 860px;
+        padding: 16px max(16px, env(safe-area-inset-left));
+        color: #1f2937;
+        background: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #f3f4f6;
+          background: #0b1220;
+        }
+        a {
+          color: #93c5fd;
+        }
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        margin: 12px 0;
+      }
+      nav a {
+        display: inline-block;
+        min-height: 44px;
+        line-height: 44px;
+      }
+      section {
+        margin: 32px 0;
+        padding-top: 8px;
+        border-top: 1px solid #9ca3af;
+      }
+      .tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .tools button {
+        min-height: 44px;
+        padding: 0 14px;
+        font: inherit;
+      }
+      .narrow {
+        max-width: 360px;
+      }
+      pre.log {
+        max-height: 160px;
+        overflow: auto;
+        background: #f3f4f6;
+        color: #1f2937;
+        padding: 8px;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AnyDrop demo</h1>
+    <p>Version: <span id="version" data-testid="version"></span></p>
+    <p>Mock server: <code id="mock-url"></code></p>
+    <nav aria-label="Examples">
+      <a href="#ex-basic">Basic (Dropzone config)</a>
+      <a href="#ex-tree">Folder tree</a>
+      <a href="#ex-headless">Headless</a>
+      <a href="#ex-mobile">Mobile</a>
+      <a href="#ex-errors">Errors and retry</a>
+      <a href="#ex-network">Offline and network</a>
+    </nav>
+
+    <section id="ex-basic" data-testid="example-basic">
+      <h2>Basic: a Dropzone configuration, unchanged</h2>
+      <p>
+        The markup and options below are the ones from the Dropzone documentation
+        (<code>Dropzone.options.myAwesomeDropzone</code>, a <code>form</code> with an
+        <code>action</code>, a custom <code>accept</code>).
+      </p>
+      <form id="my-awesome-dropzone" class="dropzone" data-testid="basic-zone"></form>
+    </section>
+
+    <section id="ex-tree" data-testid="example-tree">
+      <h2>Folder tree</h2>
+      <p>
+        Chunked upload with a manifest, a collapsible tree, per-folder progress and controls. Drop a
+        folder, or use <em>Select folder</em>.
+      </p>
+      <div id="tree-zone" data-testid="tree-zone"></div>
+      <div class="tools">
+        <button type="button" id="tree-view-flat">Flat view</button>
+        <button type="button" id="tree-view-tree">Tree view</button>
+        <button type="button" id="tree-slow">Slow server (300 ms)</button>
+      </div>
+    </section>
+
+    <section id="ex-headless" data-testid="example-headless">
+      <h2>Headless (no UI package)</h2>
+      <p>The core engine alone, with a hand-made input and log.</p>
+      <input
+        type="file"
+        id="headless-input"
+        multiple
+        webkitdirectory
+        data-testid="headless-input"
+      />
+      <pre class="log" id="headless-log" data-testid="headless-log" aria-live="polite"></pre>
+    </section>
+
+    <section id="ex-mobile" data-testid="example-mobile">
+      <h2>Mobile layout</h2>
+      <p>
+        A 360 px wide column. On touch devices the zone becomes one full-width tap-to-upload button.
+      </p>
+      <div class="narrow">
+        <div id="mobile-zone" data-testid="mobile-zone"></div>
+      </div>
+    </section>
+
+    <section id="ex-errors" data-testid="example-errors">
+      <h2>Errors and retry</h2>
+      <p>
+        Only <code>.txt</code> and <code>.bin</code> files up to 1 MB are accepted. Use the buttons
+        to make the server fail, then press <em>Retry failed</em>.
+      </p>
+      <div class="tools">
+        <button type="button" id="errors-fail">Make the server fail</button>
+        <button type="button" id="errors-heal">Heal the server</button>
+      </div>
+      <div id="errors-zone" data-testid="errors-zone"></div>
+    </section>
+    <section id="ex-network" data-testid="example-network">
+      <h2>Offline and network</h2>
+      <p>
+        Start an upload, then press <em>Simulate outage</em>: uploads go to a dead address, so
+        requests end without any response (like a Wi-Fi without internet). The banner shows the
+        countdown and <em>Retry now</em>. <em>Restore</em> points uploads back at the mock. To test
+        the offline state, open DevTools, Network, and choose <em>Offline</em> (or use
+        <code>context.setOffline(true)</code> in Playwright). Needs core with the connection API
+        (decision 0017); until then the banner stays hidden.
+      </p>
+      <div class="tools">
+        <button type="button" id="network-outage">Simulate outage</button>
+        <button type="button" id="network-restore">Restore</button>
+      </div>
+      <div id="network-zone" data-testid="network-zone"></div>
+    </section>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

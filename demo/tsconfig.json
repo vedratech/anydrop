@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "paths": {
+      "@vedratech/anydrop-core": ["../packages/core/src/index.ts"],
+      "@vedratech/anydrop-ui": ["../packages/ui/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

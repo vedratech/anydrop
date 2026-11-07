@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      slow:
+        description: 'Also run the real-time (slow) connectivity tests'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 3 * * *' # nightly: the slow tests too
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, typecheck, build, unit tests, packaging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # the version comes from "packageManager" in package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build first: the unit tests include packages/ui/test/dist.test.ts, which checks the built
+      # files and is skipped when dist/ does not exist.
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # Budgets from .size-limit.json (decisions 0009 and 0017): core, ui without core, ui CDN file.
+      - run: pnpm size
+      # publint, are-the-types-wrong and `npm pack --dry-run` for both packages.
+      - run: pnpm check:packages
+      - name: SSR import smoke test (no window, no document), ESM and CJS, Node 22
+        run: node scripts/ssr-smoke.cjs
+      - name: The fixture generator is deterministic (same seed, same bytes)
+        run: |
+          node e2e/fixtures/generate.mjs --out "$RUNNER_TEMP/fx-a" --files 300 --depth 3 --empty 3
+          node e2e/fixtures/generate.mjs --out "$RUNNER_TEMP/fx-b" --files 300 --depth 3 --empty 3
+          diff "$RUNNER_TEMP/fx-a/tree.manifest.json" "$RUNNER_TEMP/fx-b/tree.manifest.json"
+      # Both packages declare engines.node >=18 (decision 0019): the built files must import there too.
+      # Last step of the job, because the earlier steps (pnpm 11) run on Node 22.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: SSR import smoke test, Node 18 (against the built dist)
+        run: node scripts/ssr-smoke.cjs
+
+  e2e:
+    name: E2E (${{ matrix.project }})
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit, iphone, pixel]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps ${{ matrix.project == 'iphone' && 'webkit' || matrix.project == 'pixel' && 'chromium' || matrix.project }}
+      # The demo page and the CDN/dist specs run against the built packages.
+      - run: pnpm build
+      # Every spec makes its own fixtures from the seeded generator (e2e/fixtures/generate.mjs) in a temp
+      # directory, so no generation step is needed here. Specs: demo, mock-server, core-upload, core-m3,
+      # ui, ui-scenarios (verify-upload 1 to 5), large-file (7: 1 GiB in Chromium, 256 MiB in Firefox,
+      # 64 MiB on mobile and WebKit), wrapper-ready (8), dropzone-docs (9), cdn (the IIFE on a plain
+      # page), connectivity (decision 0017).
+      - run: pnpm test:e2e --project=${{ matrix.project }}
+        env:
+          CI: 'true'
+          AD_SLOW: ${{ (github.event_name == 'schedule' || inputs.slow) && '1' || '' }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+
+  consumer:
+    name: Fresh consumer (Vite app and plain HTML page, from packed tarballs)
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm check:consumer

@@ -1,0 +1,66 @@
+{
+  "name": "@vedratech/anydrop-core",
+  "version": "0.0.0",
+  "description": "Headless engine for AnyDrop: folder-first, chunked, resumable uploads with no dependencies.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vedratech/anydrop.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/vedratech/anydrop/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/vedratech/anydrop/issues"
+  },
+  "author": "AnyDrop contributors",
+  "keywords": [
+    "upload",
+    "folder",
+    "chunked",
+    "resumable",
+    "dropzone"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.global.js",
+  "jsdelivr": "./dist/index.global.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "pnpm run clean && tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "dropzone": "6.3.5"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@vedratech/anydrop-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "End-to-end tests, test fixtures and the test-only mock upload server. Never published.",
+  "scripts": {
+    "test": "playwright test -c .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
