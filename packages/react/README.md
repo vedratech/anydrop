@@ -39,6 +39,8 @@ export function Uploader() {
 }
 ```
 
+Using TypeScript 6 in a new Vite app? Keep `/// <reference types="vite/client" />` (Vite templates have it in `src/vite-env.d.ts`) so the CSS import type-checks.
+
 ## Props
 
 | Prop | Description |

@@ -13,8 +13,8 @@ interface Transport {
 }
 ```
 
-::: warning ui 0.1.x
-In `@vedratech/anydrop-ui` 0.1.x, a plain-object `transport` passed to the constructor is copied, and its methods run with `this` bound to the copy. If the transport keeps state that you also read from outside, use a class instance, keep the state in a closure, or set it with `setOption('transport', transport)`.
+::: warning ui 0.1.0
+In `@vedratech/anydrop-ui` 0.1.0, a plain-object `transport` passed to the constructor is copied, and its methods run with `this` bound to the copy. This is fixed in 0.1.1: the transport you pass is used as is. On 0.1.0, use a class instance, keep the state in a closure, or set it with `setOption('transport', transport)`.
 :::
 
 ## A logging transport

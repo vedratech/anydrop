@@ -64,7 +64,7 @@ The instance is created once, after mount, and is never recreated because a prop
 - **A removed option goes back to its default.** If a key was in `options` and is missing (or `undefined`) on a later render, it is reset.
 - **Some options are read only when the instance is created:** `init`, `fallback` and `forceFallback`. Changing them later is ignored, and in development the console says so once: `[anydrop] option "init" is only read when the instance is created; the change was ignored. Remount the component to apply it.` To apply a change, remount the component with a new `key`. The wrapper does not recreate the instance by itself, because that would stop uploads in progress and drop the file list.
 - **Changes in the middle of an upload** behave as they do in the UI: for example a new `url` applies to the next request, and `render` or `layout` rebuild the panel (the scroll position is lost).
-- `transport` is passed by identity and never cloned by the wrapper. In ui 0.1.x, though, a plain-object `transport` passed when the instance is created is copied by the UI, and its methods run with `this` bound to the copy. For a transport with state, use a class instance, keep the state in a closure, or pass it later with `setOption`.
+- `transport` is passed by identity and never cloned. (In ui 0.1.0 only, a plain-object `transport` given at creation was copied by the UI; update to ui 0.1.1 or later.)
 
 ## Event props
 

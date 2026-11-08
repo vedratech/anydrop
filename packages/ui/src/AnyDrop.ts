@@ -94,6 +94,10 @@ function prepare(element: string | HTMLElement, config: AnyDropConfig): AnyDropC
   merge(out, uiDefaults());
   merge(out, pickLocale(own.locale, true)?.dict);
   merge(out, own);
+  // A transport keeps its identity (it may hold state), even when it is a plain object.
+  const preset = presetFor(el) || undefined;
+  const transport = config.transport !== undefined ? config.transport : preset?.transport;
+  if (transport !== undefined) out.transport = transport;
   const pc = out.previewsContainer;
   if (typeof pc === 'string' && !resolve(pc))
     throw new Error('Invalid `previewsContainer` option provided.');
