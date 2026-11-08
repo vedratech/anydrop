@@ -141,7 +141,7 @@ describe('requests and fields (protocol section 3)', () => {
     const { core, t } = mk({
       chunking: true,
       chunkSize: 4,
-      params(files, xhr, chunk) {
+      params(files, _xhr, chunk) {
         seen.push(this);
         return { dzuuid: null, uuid: files[0]!.upload.uuid, idx: chunk!.index, list: ['a', 'b'] };
       },
@@ -507,7 +507,7 @@ describe('finalize hook chunksUploaded (0011)', () => {
     const { core, t } = mk({
       chunking: true,
       chunkSize: 1,
-      chunksUploaded(file, done, instance) {
+      chunksUploaded(_file, done, instance) {
         seen.push(this);
         inst = instance;
         done({ some: 'response' });
@@ -702,7 +702,7 @@ describe('transformFile (0011)', () => {
     const { core, t } = mk({
       chunking: true,
       chunkSize: 2,
-      transformFile(file, done) {
+      transformFile(_file, done) {
         order.push('transform');
         expect(this).toBe(core);
         setTimeout(() => done(new Blob(['abcdef'])), 0);

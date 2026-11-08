@@ -2,7 +2,7 @@
 /**
  * AnyDrop mock upload server. TEST ONLY, never published.
  *
- * Implements the wire protocol in .claude/skills/upload-protocol/SKILL.md (v1):
+ * Implements the wire protocol in docs/protocol.md (v1):
  *   POST {url}            chunk / whole file upload (multipart/form-data, dz* + ad* fields)
  *   GET  {statusUrl}      chunk status for resume
  *   POST {manifestUrl}    folder manifest (creates every folder, including empty ones)

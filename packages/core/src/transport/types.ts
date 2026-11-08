@@ -1,4 +1,4 @@
-// The pluggable transport interface (IMPLEMENTATION.md, transport/): one request in, a handle out.
+// The pluggable transport interface (internal/IMPLEMENTATION.md, transport/): one request in, a handle out.
 // The built-in transport uses XMLHttpRequest because `fetch` has no upload progress. Adapters
 // (S3, tus, a fetch-based one) implement the same `send()`.
 

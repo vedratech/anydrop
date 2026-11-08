@@ -25,3 +25,8 @@ Thumbs.db
 
 e2e/.out-*/
 .claude/hooks/
+
+# internal planning and AI team setup (kept locally, not published)
+internal/
+CLAUDE.md
+.claude/

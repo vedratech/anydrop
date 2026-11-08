@@ -243,7 +243,7 @@ describe('resume records (0004)', () => {
 
   it('completed files are still skipped when transformFile is set (0011)', async () => {
     await writeRecords([record({ completed: true })]);
-    const transformFile = (file: File, done: (b: Blob) => void) => done(new Blob(['x']));
+    const transformFile = (_file: File, done: (b: Blob) => void) => done(new Blob(['x']));
     const { t, f } = await reloadAndAdd({ transformFile });
     await until(() => f.status === 'success');
     expect(f.upload.skipped).toBe(true);

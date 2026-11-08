@@ -62,7 +62,7 @@ in the page) and `large-file.spec.ts` builds its file in the page. See `docs/dev
 
 ## Mock server
 
-`e2e/mock-server/server.mjs`, Node built-ins only. Implements `.claude/skills/upload-protocol/SKILL.md` v1.
+`e2e/mock-server/server.mjs`, Node built-ins only. Implements the backend contract in `docs/protocol.md` (v1.
 
 | Method and path             | Behaviour                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------- |

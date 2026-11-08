@@ -1,4 +1,4 @@
-// M2 done-when (IMPLEMENTATION.md, decisions 0001/0010): the built core alone, in a real browser,
+// M2 done-when (internal/IMPLEMENTATION.md, decisions 0001/0010): the built core alone, in a real browser,
 // uploads a generated folder tree to an isolated mock server and the server holds the exact tree
 // (paths, sizes, SHA-256, empty folders). Concurrency limits are checked on both sides:
 // files uploading <= parallelUploads, POSTs per file <= the per-file limit, total POSTs <=

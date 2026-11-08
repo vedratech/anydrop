@@ -1,4 +1,4 @@
-// M5: the verify-upload scenarios 1 to 5 and the PLAN.md Verification bullets, driven through the
+// M5: the verify-upload scenarios 1 to 5 and the internal/PLAN.md Verification bullets, driven through the
 // demo page (the UI), never only through the headless core. An isolated mock server per test, a
 // seeded folder from fixtures/generate.mjs, and every check made against what the server holds:
 // paths, sizes, SHA-256, empty folders, and the request log.

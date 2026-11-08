@@ -1,4 +1,4 @@
-// M3 done-when (IMPLEMENTATION.md, decisions 0004, 0007, 0008): the built core IIFE in a real
+// M3 done-when (internal/IMPLEMENTATION.md, decisions 0004, 0007, 0008): the built core IIFE in a real
 // browser against an isolated mock server.
 //   (a) pause and resume at each level, in both pauseModes: no chunk is committed twice;
 //   (b) offline then online (context.setOffline): only the missing chunks are sent;

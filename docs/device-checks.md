@@ -131,4 +131,4 @@ Keep the laptop as the server. Start with the slow server (`latencyMs: 300`) and
 | Section 3: did `Blob.slice` of a picked file upload correct bytes? | | |
 | Sections 3 and 7: any `400 INVALID_CHUNK` with length 0 in `__log`? (how many, which step) | | |
 
-Put the filled table in `STATUS.md` (session log) or send it to qa-compat-tester; the M5 done-when ("real-device checks on an iPhone and an Android phone are recorded") needs it.
+Send the filled table to the maintainers; the M5 done-when ("real-device checks on an iPhone and an Android phone are recorded") needs it.
