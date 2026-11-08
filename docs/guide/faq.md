@@ -9,7 +9,7 @@ description: "Answers about AnyDrop: server needs, CORS, large files, resume aft
 
 ### Does it include a server?
 
-No. AnyDrop is frontend only. Your backend implements the [upload contract](/backend/). There are [Express](/backend/express) and [Laravel](/backend/laravel) examples.
+No. AnyDrop is frontend only. Your backend implements the [upload contract](/backend/). There are [Express](/backend/express), [Laravel](/backend/laravel), [Python (FastAPI)](/backend/python) and [Java (Spring Boot)](/backend/java) examples.
 
 ### How big is it?
 

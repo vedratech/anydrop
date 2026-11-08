@@ -33,8 +33,9 @@ const fail = (res, status, code, message) => res.status(status).json({ code, mes
 
 // Absolute path inside ROOT for a client-supplied relative path, or null.
 function target(rel) {
-  if (typeof rel !== 'string' || !rel || rel.startsWith('/') || rel.includes('\\')) return null;
-  if (rel.split('/').some((s) => s === '' || s === '..')) return null;
+  if (typeof rel !== 'string' || !rel || rel.startsWith('/') || rel.includes('\\') || rel.includes('\0')) return null;
+  if (/^[a-zA-Z]:/.test(rel)) return null; // drive letters (C:...)
+  if (rel.split('/').some((s) => s === '' || s === '.' || s === '..')) return null;
   const abs = path.resolve(ROOT, rel);
   return abs.startsWith(ROOT + path.sep) ? abs : null;
 }

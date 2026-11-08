@@ -86,7 +86,7 @@ The instance is created once, in `ngAfterViewInit`, and is never recreated becau
 - **A removed option goes back to its default.**
 - **Some options are read only when the instance is created:** `init`, `fallback` and `forceFallback`. Changing them later is ignored, and in development mode the console says so once. To apply a change, remove the component and create it again (for example with `@if`). The component does not recreate the instance by itself, because that would stop uploads in progress and drop the file list.
 - Changes in the middle of an upload behave as they do in the UI: a new `url` applies to the next request, and `render` or `layout` rebuild the panel.
-- `transport` is passed by identity and never cloned. (In ui 0.1.0 only, a plain-object `transport` given at creation was copied by the UI; update to ui 0.1.1 or later.)
+- `transport` is passed by identity and never cloned. (Before 1.0.0, a plain-object `transport` given at creation was copied by the UI.)
 
 ## Outputs
 

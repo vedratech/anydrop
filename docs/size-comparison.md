@@ -5,7 +5,7 @@ description: "Measured minified and gzipped download sizes of AnyDrop, Uppy, Fil
 
 # Size comparison: AnyDrop and the libraries people compare it with
 
-The compared libraries were measured on **2026-11-07**; AnyDrop (`0.1.0` build) was measured again on **2026-11-08** with the same script. Numbers are **minified + gzip** of what a browser downloads. Brotli is shown as a second column because most CDNs serve it.
+The compared libraries were measured on **2026-11-07**; AnyDrop (`1.0.0` build) was measured again on **2026-11-08** with the same script. Numbers are **minified + gzip** of what a browser downloads. Brotli is shown as a second column because most CDNs serve it.
 
 ## Method
 
@@ -17,7 +17,7 @@ The compared libraries were measured on **2026-11-07**; AnyDrop (`0.1.0` build) 
 6. CSS is measured separately, as shipped (the minified file when the package ships one).
 7. 1 kB = 1024 bytes in the tables. Note that `pnpm size` (size-limit) counts 1 kB = 1000 bytes, so the same CDN file reads 35.62 kB there and 34.8 kB here (35,621 bytes gzip); the `.size-limit.json` budgets are in size-limit's unit.
 
-Versions: Uppy `@uppy/core` **6.3.1**, `@uppy/dashboard` **6.0.3**, `@uppy/xhr-upload` **6.0.1**, FilePond **4.32.12** (no plugins), Resumable.js (`resumablejs`) **1.1.0**, AnyDrop `0.1.0` build of 2026-11-08 with the UI customisation features (pre-release).
+Versions: Uppy `@uppy/core` **6.3.1**, `@uppy/dashboard` **6.0.3**, `@uppy/xhr-upload` **6.0.1**, FilePond **4.32.12** (no plugins), Resumable.js (`resumablejs`) **1.1.0**, AnyDrop `1.0.0` build of 2026-11-08.
 
 ## JavaScript
 

@@ -100,4 +100,4 @@ The same as the UI package: [Mobile and iOS](https://vedratech.github.io/anydrop
 
 ## Licence
 
-MIT. Created and maintained by **Jayesh Gupta**.
+MIT. Created and maintained by **Vedra Tech**.

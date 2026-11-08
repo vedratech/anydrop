@@ -60,7 +60,7 @@ Test data: put on the phone (AirDrop, USB or cloud) a few photos including **HEI
 
 Playwright's WebKit build posts an **empty body** for `Blob.slice()` of a file chosen through `<input type=file>` (reproduced without AnyDrop, see `e2e/tests/large-file.spec.ts`). We do not know whether real iOS Safari does the same, so this check matters a lot for iPhone.
 
-**Also look at the server log in sections 3 and 7.** Open `http://localhost:3001/__log` (or watch the terminal of `pnpm dev:mock`) and search for **`400` with `INVALID_CHUNK` and "length 0"** (a chunk that arrived with an empty body; the log line carries `bytes: 0`, the error message says `length 0 do not match`). An upload that shows such an error, on a real iPhone or Mac Safari, **reproduces WEBKIT-FLAKE-1 and becomes a 0.1.0 blocker**. Write down the step, the file and how many times it happened, even if the file ended up complete after "Retry failed".
+**Also look at the server log in sections 3 and 7.** Open `http://localhost:3001/__log` (or watch the terminal of `pnpm dev:mock`) and search for **`400` with `INVALID_CHUNK` and "length 0"** (a chunk that arrived with an empty body; the log line carries `bytes: 0`, the error message says `length 0 do not match`). An upload that shows such an error, on a real iPhone or Mac Safari, **reproduces WEBKIT-FLAKE-1 and becomes a release blocker**. Write down the step, the file and how many times it happened, even if the file ended up complete after "Retry failed".
 
 | # | Step | Expected | iPhone | Android |
 |---|---|---|---|---|

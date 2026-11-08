@@ -1,6 +1,6 @@
 {
   "name": "@vedratech/anydrop-ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause/resume, progress, retry.",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/vedratech/anydrop/issues"
   },
-  "author": "Jayesh Gupta",
+  "author": "Vedra Tech",
   "keywords": [
     "upload",
     "file-upload",

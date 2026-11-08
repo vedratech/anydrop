@@ -1,6 +1,6 @@
 {
   "name": "@vedratech/anydrop-core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Headless folder upload engine for the browser: chunked and resumable uploads, pause/resume, retry, offline handling. No dependencies, TypeScript.",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/vedratech/anydrop/issues"
   },
-  "author": "Jayesh Gupta",
+  "author": "Vedra Tech",
   "keywords": [
     "upload",
     "file-upload",

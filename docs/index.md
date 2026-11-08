@@ -92,4 +92,4 @@ AnyDrop ships two packages, with wrappers for [React and Next.js](/guide/react) 
 - [Pause and resume uploads](/use-cases/pause-resume-uploads): everything, a folder or one file.
 - [File upload that survives a lost connection](/use-cases/upload-lost-connection).
 - [Folder upload with React, Angular and Vue](/use-cases/folder-upload-react-angular-vue): official React, Next.js and Angular packages, and a pattern for Vue and others.
-- [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend).
+- [Chunked upload backend (Express, Laravel, Python, Java)](/use-cases/chunked-upload-backend).

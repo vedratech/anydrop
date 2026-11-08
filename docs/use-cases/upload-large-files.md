@@ -62,4 +62,4 @@ AnyDrop does not set a maximum file size by itself beyond `maxFilesize`: the pra
 
 - [Chunked and resumable file uploads in the browser](/use-cases/chunked-resumable-uploads)
 - [Chunked uploads guide](/guide/chunked-uploads)
-- [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend)
+- [Chunked upload backend (Express, Laravel, Python, Java)](/use-cases/chunked-upload-backend)

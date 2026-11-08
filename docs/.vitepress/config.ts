@@ -35,9 +35,9 @@ const homeJsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Web browser',
   author: {
-    '@type': 'Person',
-    name: 'Jayesh Gupta',
-    url: 'https://github.com/jayeshgupta91',
+    '@type': 'Organization',
+    name: 'Vedra Tech',
+    url: 'https://github.com/vedratech',
   },
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
@@ -54,7 +54,10 @@ const useCases: DefaultTheme.SidebarItem = {
       text: 'Folder upload in React, Angular, Vue',
       link: '/use-cases/folder-upload-react-angular-vue',
     },
-    { text: 'Laravel and Express chunked backend', link: '/use-cases/chunked-upload-backend' },
+    {
+      text: 'Chunked backend (Express, Laravel, Python, Java)',
+      link: '/use-cases/chunked-upload-backend',
+    },
   ],
 };
 
@@ -147,9 +150,11 @@ const backend: DefaultTheme.SidebarItem[] = [
     text: 'Backend',
     items: [
       { text: 'Overview', link: '/backend/' },
-      { text: 'Protocol (v1.4)', link: '/protocol' },
+      { text: 'Protocol (v2.0)', link: '/protocol' },
       { text: 'Express example', link: '/backend/express' },
       { text: 'Laravel example', link: '/backend/laravel' },
+      { text: 'Python (FastAPI) example', link: '/backend/python' },
+      { text: 'Java (Spring Boot) example', link: '/backend/java' },
     ],
   },
 ];
@@ -171,10 +176,10 @@ export default defineConfig({
       {
         name: 'keywords',
         content:
-          'folder upload, file upload, drag and drop, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library, react file upload, react folder upload, angular file upload, angular folder upload, next.js upload',
+          'folder upload, file upload, drag and drop, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library, react file upload, react folder upload, angular file upload, angular folder upload, next.js upload, fastapi file upload, python chunked upload, spring boot chunked upload, spring boot file upload, express chunked upload, laravel chunked upload',
       },
     ],
-    ['meta', { name: 'author', content: 'Jayesh Gupta' }],
+    ['meta', { name: 'author', content: 'Vedra Tech' }],
     ['meta', { property: 'og:site_name', content: SITE_NAME }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:locale', content: 'en_US' }],
@@ -253,7 +258,7 @@ export default defineConfig({
     outline: { level: [2, 3] },
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026 Jayesh Gupta.',
+      copyright: 'Copyright © 2026 Vedra Tech.',
     },
   },
 });

@@ -1,6 +1,6 @@
 {
   "name": "@vedratech/anydrop-react",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "React component and hook for AnyDrop: folder upload with chunked, resumable uploads, custom row components and SSR support.",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/vedratech/anydrop/issues"
   },
-  "author": "Jayesh Gupta",
+  "author": "Vedra Tech",
   "keywords": [
     "react",
     "react file upload",
@@ -65,8 +65,8 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "peerDependencies": {
-    "@vedratech/anydrop-core": "^0.1.0",
-    "@vedratech/anydrop-ui": "^0.1.0",
+    "@vedratech/anydrop-core": "^1.0.0",
+    "@vedratech/anydrop-ui": "^1.0.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },

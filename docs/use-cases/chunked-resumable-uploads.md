@@ -44,7 +44,7 @@ Files up to `chunkSize` are sent whole unless you set `forceChunking: true`.
 
 ## What your backend must do
 
-Accept chunks in any order and more than once (writing the same chunk again is harmless), answer a status request with `{ "received": [0, 1, 4] }`, and assemble the file on finalize. The full contract is in the [protocol](/protocol), with working [Express](/backend/express) and [Laravel](/backend/laravel) examples (see also [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend)).
+Accept chunks in any order and more than once (writing the same chunk again is harmless), answer a status request with `{ "received": [0, 1, 4] }`, and assemble the file on finalize. The full contract is in the [protocol](/protocol), with working [Express](/backend/express), [Laravel](/backend/laravel), [Python](/backend/python) and [Java](/backend/java) examples (see also [Chunked upload backend (Express, Laravel, Python, Java)](/use-cases/chunked-upload-backend)).
 
 ## Not a tus or S3 client
 

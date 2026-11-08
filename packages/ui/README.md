@@ -321,4 +321,4 @@ Everything is on the website: **https://vedratech.github.io/anydrop/**
 
 ## License
 
-MIT © 2026 Jayesh Gupta.
+MIT © 2026 Vedra Tech.

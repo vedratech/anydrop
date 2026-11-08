@@ -1,6 +1,6 @@
 ---
 title: "Upload backend overview: the HTTP contract"
-description: "The four endpoints a backend implements for AnyDrop chunked and folder uploads. No server is shipped."
+description: "The four endpoints a backend implements for AnyDrop chunked and folder uploads, with Express, Laravel, Python (FastAPI) and Java (Spring Boot) examples. No server is shipped."
 ---
 
 # Backend overview
@@ -10,6 +10,8 @@ AnyDrop is a front-end library. It ships no server: your backend implements a sm
 - [Protocol (v2.0)](/protocol): the full contract, with every field, status code and edge case.
 - [Express example](/backend/express): a complete working server in about 100 lines.
 - [Laravel example](/backend/laravel): the same contract as a Laravel controller.
+- [Python (FastAPI) example](/backend/python): the same contract with FastAPI, plus notes for Flask and Django.
+- [Java (Spring Boot) example](/backend/java): the same contract as a Spring Boot 3 `@RestController`, with the multipart size limits.
 
 ## The four endpoints
 

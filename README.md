@@ -19,7 +19,7 @@ AnyDrop is a front-end upload library that treats **folders as first-class objec
 | [React and Next.js](https://vedratech.github.io/anydrop/guide/react), [Angular](https://vedratech.github.io/anydrop/guide/angular) | Frameworks: components, event props and outputs, custom rows, SSR |
 | [Live demo](https://vedratech.github.io/anydrop/demo) | The real UI, with a simulated network |
 | [API reference](https://vedratech.github.io/anydrop/api/) | Every option, method, event, error code and type |
-| [Backend](https://vedratech.github.io/anydrop/backend/) | The HTTP contract, with Express and Laravel examples |
+| [Backend](https://vedratech.github.io/anydrop/backend/) | The HTTP contract, with Express, Laravel, Python (FastAPI) and Java (Spring Boot) examples |
 
 ## Why AnyDrop
 
@@ -41,7 +41,7 @@ Guides for common tasks:
 [pause and resume uploads](https://vedratech.github.io/anydrop/use-cases/pause-resume-uploads),
 [uploads that survive a lost connection](https://vedratech.github.io/anydrop/use-cases/upload-lost-connection),
 [folder upload with React, Angular or Vue](https://vedratech.github.io/anydrop/use-cases/folder-upload-react-angular-vue),
-[Laravel and Express chunked upload backend](https://vedratech.github.io/anydrop/use-cases/chunked-upload-backend).
+[Chunked upload backend (Express, Laravel, Python, Java)](https://vedratech.github.io/anydrop/use-cases/chunked-upload-backend).
 
 ## Two packages
 
@@ -143,7 +143,7 @@ Chrome, Edge, Firefox and Safari (desktop), Safari on iOS and iPadOS, Chrome on 
 
 ## Backend
 
-Your server implements four endpoints: `POST /upload` (a chunk or a whole file), `GET /upload/status`, `POST /upload/manifest` and `POST /upload/finalize`. Full contract: [protocol](https://vedratech.github.io/anydrop/protocol). Working examples: [Express](https://vedratech.github.io/anydrop/backend/express) and [Laravel](https://vedratech.github.io/anydrop/backend/laravel).
+Your server implements four endpoints: `POST /upload` (a chunk or a whole file), `GET /upload/status`, `POST /upload/manifest` and `POST /upload/finalize`. Full contract: [protocol](https://vedratech.github.io/anydrop/protocol). Working examples: [Express](https://vedratech.github.io/anydrop/backend/express), [Laravel](https://vedratech.github.io/anydrop/backend/laravel), [Python (FastAPI)](https://vedratech.github.io/anydrop/backend/python) and [Java (Spring Boot)](https://vedratech.github.io/anydrop/backend/java).
 
 ## Contributing
 
@@ -154,10 +154,10 @@ pnpm docs:dev     # the documentation website with hot reload
 pnpm docs:build   # builds the packages, the API reference and the site
 ```
 
-## Author
+## Maintainer
 
-Created and maintained by **Jayesh Gupta** ([@jayeshgupta91](https://github.com/jayeshgupta91)).
+Created and maintained by **Vedra Tech** ([@vedratech](https://github.com/vedratech)).
 
 ## License
 
-MIT © 2026 Jayesh Gupta.
+MIT © 2026 Vedra Tech.
