@@ -1,7 +1,6 @@
 {
   "name": "@vedratech/anydrop-react",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "React component and hook for AnyDrop: folder upload with chunked, resumable uploads, custom row components and SSR support.",
   "license": "MIT",
   "repository": {

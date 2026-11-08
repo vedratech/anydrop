@@ -1,7 +1,6 @@
 {
   "name": "@vedratech/anydrop-angular",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Angular component, template slots and service for AnyDrop: folder upload with chunked, resumable uploads.",
   "license": "MIT",
   "repository": {
