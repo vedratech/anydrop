@@ -1,5 +1,0 @@
----
-'@vedratech/anydrop-ui': minor
----
-
-Customise the UI without forking it. New options: `render` hooks (`file`, `folder`, `toolbar`, `message`, `errorItem`) that decorate or replace a part and can return a view with `update` and `destroy`; `layout` (`list` or `compact`) with `rowHeight` now defaulting to `null` (the layout's height) and `errorRowHeight`; `rowActions` (choose, add and override row buttons, plus the `actionclicked` event); `icons` (a record or a function); `locale` and `dir` with nine language entry points (`@vedratech/anydrop-ui/locales/<code>`: English plus draft packs for hi, es, fr, de, pt-BR, ja, zh-CN and ar) and right-to-left support; `themePreset` with four stylesheets (`@vedratech/anydrop-ui/themes/<name>.css`: minimal, rounded, enterprise, glass); eight new `--ad-*` variables (28 in total); `getOption()` for UI options. A row has two separate buttons: `cancel` stops an active upload and `remove` clears a finished row. A theme builder on the docs site previews the result.
