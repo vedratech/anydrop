@@ -1,0 +1,10 @@
+@import '@vedratech/anydrop-ui/style.css';
+@import '@vedratech/anydrop-ui/themes/glass.css';
+@import '@vedratech/anydrop-ui/themes/rounded.css';
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #1c1c28;
+  background: #f4f5f9;
+}

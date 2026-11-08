@@ -1,0 +1,84 @@
+{
+  "name": "@vedratech/anydrop-react",
+  "version": "0.0.0",
+  "private": true,
+  "description": "React component and hook for AnyDrop: folder upload with chunked, resumable uploads, custom row components and SSR support.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vedratech/anydrop.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://vedratech.github.io/anydrop/",
+  "bugs": {
+    "url": "https://github.com/vedratech/anydrop/issues"
+  },
+  "author": "Jayesh Gupta",
+  "keywords": [
+    "react",
+    "react file upload",
+    "react folder upload",
+    "upload",
+    "folder-upload",
+    "drag-and-drop",
+    "chunked-upload",
+    "resumable-upload",
+    "nextjs",
+    "ssr"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prebuild": "node ../../scripts/sync-wrapper-shared.mjs",
+    "pretest": "node ../../scripts/sync-wrapper-shared.mjs",
+    "build": "pnpm run clean && tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:react18": "node scripts/test-react18.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "peerDependencies": {
+    "@vedratech/anydrop-core": "^0.1.0",
+    "@vedratech/anydrop-ui": "^0.1.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vedratech/anydrop-core": "workspace:*",
+    "@vedratech/anydrop-ui": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}

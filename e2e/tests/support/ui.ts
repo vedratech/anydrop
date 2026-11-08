@@ -31,6 +31,8 @@ export interface Generated {
   tree: Tree;
   /** What `<input webkitdirectory>` can report: no empty folders. */
   treeWithoutEmptyFolders: Tree;
+  /** The folder's name under `out` when it was renamed from `tree` (example-app specs, unique roots). */
+  root?: string;
   cleanup(): Promise<void>;
 }
 
@@ -145,7 +147,7 @@ export async function addFolder(
     (await input.count()) > 0 &&
     (await page.locator(`${zone} [data-ad-action=pick-folder]`).isVisible());
   if (canPick && (opts.picker ?? !webkit)) {
-    await input.setInputFiles(join(g.out, 'tree'));
+    await input.setInputFiles(join(g.out, g.root ?? 'tree'));
     return done('pick');
   }
   await dropGenerated(page, zone, g);

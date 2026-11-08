@@ -7,7 +7,7 @@ description: "Use AnyDrop in React, Next.js, Vue, Nuxt, Angular and Svelte: crea
 
 Both packages are safe to import on the server: nothing touches `window` or `document` when you import them. Create the instance only in the browser, after your component has mounted, and destroy it when the component unmounts.
 
-There are no official framework wrappers yet. The API has no framework assumptions (everything is options, methods and events), so wrapping it is a few lines, as shown below.
+React, Next.js and Angular have official packages: [React and Next.js](/guide/react) and [Angular](/guide/angular). Use them instead of the React and Angular snippets below. For other frameworks, the API has no framework assumptions (everything is options, methods and events), so wrapping it is a few lines, as shown below.
 
 ## Rules for any framework
 

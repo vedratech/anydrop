@@ -1,6 +1,11 @@
 node_modules
 dist
+.next
+next-env.d.ts
 coverage
+.angular
+out-tsc
+examples/angular/vendor
 pnpm-lock.yaml
 CHANGELOG.md
 e2e/fixtures/generated

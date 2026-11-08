@@ -32,6 +32,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The React and Angular copies of wrappers-shared/ must be in sync (decision 0022 1.3). Before the
+      # build: the wrappers' prebuild hook would silently rewrite a drifted copy.
+      - run: pnpm check:wrapper-shared
       # Build first: the unit tests include packages/ui/test/dist.test.ts, which checks the built
       # files and is skipped when dist/ does not exist.
       - run: pnpm build
@@ -42,7 +45,7 @@ jobs:
       - run: pnpm size
       # The docs site: TypeDoc reference, API coverage check, VitePress build (fails on dead links).
       - run: pnpm --filter @vedratech/anydrop-docs build
-      # publint, are-the-types-wrong and `npm pack --dry-run` for both packages.
+      # publint, are-the-types-wrong and `npm pack --dry-run` for core, ui, react and the Angular dist.
       - run: pnpm check:packages
       - name: SSR import smoke test (no window, no document), ESM and CJS, Node 22
         run: node scripts/ssr-smoke.cjs
@@ -51,6 +54,14 @@ jobs:
           node e2e/fixtures/generate.mjs --out "$RUNNER_TEMP/fx-a" --files 300 --depth 3 --empty 3
           node e2e/fixtures/generate.mjs --out "$RUNNER_TEMP/fx-b" --files 300 --depth 3 --empty 3
           diff "$RUNNER_TEMP/fx-a/tree.manifest.json" "$RUNNER_TEMP/fx-b/tree.manifest.json"
+      # One build for the whole workflow: the jobs below unpack it instead of running `pnpm build` again.
+      - name: Pack the build output (packages/*/dist)
+        run: tar czf "$RUNNER_TEMP/packages-dist.tgz" packages/*/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-dist
+          path: ${{ runner.temp }}/packages-dist.tgz
+          retention-days: 1
       # Both packages declare engines.node >=18 (decision 0019): the built files must import there too.
       # Last step of the job, because the earlier steps (pnpm 11) run on Node 22.
       - uses: actions/setup-node@v4
@@ -113,3 +124,137 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
       - run: pnpm check:consumer
+
+  # ---- M7: framework wrappers (decision 0022) -------------------------------------------------------
+
+  wrappers:
+    name: Wrapper unit tests (${{ matrix.name }})
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: React 19, filter: '@vedratech/anydrop-react', script: test }
+          # Installs React 18 next to the workspace's React 19 (packages/react/scripts/test-react18.mjs).
+          - { name: React 18, filter: '@vedratech/anydrop-react', script: 'test:react18' }
+          # Angular 18.2 (the toolchain the package is built with; TestBed in JIT, plain Vitest, zone.js).
+          - { name: Angular 18, filter: '@vedratech/anydrop-angular', script: test }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-dist
+          path: ${{ runner.temp }}
+      - run: tar xzf "$RUNNER_TEMP/packages-dist.tgz"
+      - run: pnpm --filter ${{ matrix.filter }} ${{ matrix.script }}
+
+  examples-build:
+    name: Build the example apps (React + Vite, Next, Angular SSR)
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-dist
+          path: ${{ runner.temp }}
+      - run: tar xzf "$RUNNER_TEMP/packages-dist.tgz"
+      # Production builds: vite build, next build (server + client components), ng build (SSR, hydration).
+      # The Angular example vendors packages/angular/dist (examples/angular/scripts/vendor-lib.mjs).
+      - run: pnpm examples:build
+      - name: Pack the example builds
+        run: tar czf "$RUNNER_TEMP/examples-dist.tgz" examples/react-vite/dist examples/nextjs/.next examples/angular/dist examples/angular/vendor
+      - uses: actions/upload-artifact@v4
+        with:
+          name: examples-dist
+          path: ${{ runner.temp }}/examples-dist.tgz
+          retention-days: 1
+
+  e2e-examples:
+    name: E2E examples (${{ matrix.project }})
+    needs: [check, examples-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit, iphone]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps ${{ matrix.project == 'iphone' && 'webkit' || matrix.project }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-dist
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: examples-dist
+          path: ${{ runner.temp }}
+      - run: |
+          tar xzf "$RUNNER_TEMP/packages-dist.tgz"
+          tar xzf "$RUNNER_TEMP/examples-dist.tgz"
+      # e2e/playwright.examples.config.ts starts the mock server and the three production servers
+      # (vite preview, next start, the Angular SSR server). Specs: e2e/examples/frameworks.spec.ts.
+      - run: pnpm test:e2e:examples --project=${{ matrix.project }}
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-examples-${{ matrix.project }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+
+  consumer-wrappers:
+    name: Fresh consumer (${{ matrix.name }}, from packed tarballs)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Vite + React latest, args: '--app react-vite' }
+          - { name: Next latest, args: '--app nextjs' }
+          - { name: Angular latest, args: '--app angular' }
+          # Build-only compatibility floor (decision 0022 section 6): the repo's Next example sources on
+          # Next 14 + React 18, and Angular 18 (partial declarations compiled by 18 must link on 18).
+          - { name: Next 14 + React 18, args: '--app nextjs --next 14' }
+          - { name: Angular 18, args: '--app angular --angular 18' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-dist
+          path: ${{ runner.temp }}
+      - run: tar xzf "$RUNNER_TEMP/packages-dist.tgz"
+      - run: node scripts/consumer-wrappers.mjs ${{ matrix.args }}

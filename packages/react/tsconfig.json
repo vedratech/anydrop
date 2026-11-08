@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": [],
+    "paths": {
+      "@vedratech/anydrop-core": ["../core/src/index.ts"],
+      "@vedratech/anydrop-ui": ["../ui/src/index.ts"]
+    }
+  },
+  "include": ["src", "test", "tsup.config.ts", "vitest.config.ts", "vitest.react18.config.ts"]
+}

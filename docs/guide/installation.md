@@ -48,7 +48,7 @@ The headless core alone: `https://cdn.jsdelivr.net/npm/@vedratech/anydrop-core@0
 
 ## Frameworks
 
-There are no framework wrappers yet. The API is driven only by options, methods and events, so it works in any framework: create the instance when the component mounts and call `destroy()` when it unmounts. See [SSR and frameworks](/guide/ssr-frameworks).
+There are official packages for React and Next.js (`@vedratech/anydrop-react`, see [React and Next.js](/guide/react)) and for Angular (`@vedratech/anydrop-angular`, see [Angular](/guide/angular)). They need `@vedratech/anydrop-ui` and `@vedratech/anydrop-core` installed next to them. For other frameworks, the API is driven only by options, methods and events, so it works anywhere: create the instance when the component mounts and call `destroy()` when it unmounts. See [SSR and frameworks](/guide/ssr-frameworks).
 
 ## Requirements
 

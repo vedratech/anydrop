@@ -20,7 +20,12 @@ const homeJsonLd = {
   '@context': 'https://schema.org',
   '@type': ['SoftwareApplication', 'SoftwareSourceCode'],
   name: 'AnyDrop',
-  alternateName: ['@vedratech/anydrop-ui', '@vedratech/anydrop-core'],
+  alternateName: [
+    '@vedratech/anydrop-ui',
+    '@vedratech/anydrop-core',
+    '@vedratech/anydrop-react',
+    '@vedratech/anydrop-angular',
+  ],
   description: SITE_DESCRIPTION,
   url: SITE,
   image: OG_IMAGE,
@@ -63,6 +68,14 @@ const guide: DefaultTheme.SidebarItem[] = [
       { text: 'Headless core', link: '/guide/headless-core' },
     ],
   },
+  {
+    text: 'Frameworks',
+    items: [
+      { text: 'React and Next.js', link: '/guide/react' },
+      { text: 'Angular', link: '/guide/angular' },
+      { text: 'Other frameworks and SSR', link: '/guide/ssr-frameworks' },
+    ],
+  },
   useCases,
   {
     text: 'Uploading',
@@ -95,7 +108,6 @@ const guide: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Events cookbook', link: '/guide/events-cookbook' },
       { text: 'Custom transport', link: '/guide/custom-transport' },
-      { text: 'SSR and frameworks', link: '/guide/ssr-frameworks' },
     ],
   },
   {
@@ -159,7 +171,7 @@ export default defineConfig({
       {
         name: 'keywords',
         content:
-          'folder upload, file upload, drag and drop, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library',
+          'folder upload, file upload, drag and drop, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library, react file upload, react folder upload, angular file upload, angular folder upload, next.js upload',
       },
     ],
     ['meta', { name: 'author', content: 'Jayesh Gupta' }],
@@ -208,7 +220,12 @@ export default defineConfig({
       {
         text: 'Guide',
         link: '/guide/introduction',
-        activeMatch: '^/(guide|size|device|use-cases)',
+        activeMatch: '^/(guide/(?!react|angular|ssr-frameworks)|size|device|use-cases)',
+      },
+      {
+        text: 'Frameworks',
+        link: '/guide/react',
+        activeMatch: '^/guide/(react|angular|ssr-frameworks)',
       },
       { text: 'API', link: '/api/', activeMatch: '^/api/' },
       { text: 'Backend', link: '/backend/', activeMatch: '^/(backend|protocol)' },
