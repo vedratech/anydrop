@@ -283,4 +283,4 @@ Everything is on the website: **https://vedratech.github.io/anydrop/**
 
 ## License
 
-MIT. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+MIT © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

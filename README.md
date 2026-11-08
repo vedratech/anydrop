@@ -105,6 +105,10 @@ pnpm docs:dev     # the documentation website with hot reload
 pnpm docs:build   # builds the packages, the API reference and the site
 ```
 
+## Author
+
+Created and maintained by **Jayesh Gupta** ([@jayeshgupta91](https://github.com/jayeshgupta91)).
+
 ## License
 
-MIT. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

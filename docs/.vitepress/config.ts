@@ -139,7 +139,7 @@ export default defineConfig({
     outline: { level: [2, 3] },
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'AnyDrop. Parts adapted from Dropzone (MIT).',
+      copyright: 'Copyright © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT).',
     },
   },
 });
