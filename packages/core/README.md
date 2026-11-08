@@ -254,8 +254,8 @@ Order for one uploaded file: `processing`, then per request `sending` and `uploa
 | `STALLED` | Aborted by the stall watchdog (`stallTimeout`) | yes |
 | `SERVER_ERROR` | 5xx, 408 or 429 without a code in the body | yes |
 | `HTTP_ERROR` | Other 4xx without a code in the body | no |
-| `AUTH` | 401 or 403 | no |
-| `TOO_LARGE` | 413, from the server | no |
+| `AUTH` | 401 or 403 (the server's own `code` in the body wins if it sends one) | no |
+| `TOO_LARGE` | Only when the server sends it in the response body (`code`); a 413 without a code becomes `HTTP_ERROR` | no |
 | `INVALID_PATH` | A path with a `..` segment (also sent by a server) | no |
 | `INVALID_CHUNK` | The server rejected a chunk (400) | no |
 | `CHUNK_MISMATCH` | 409; without `chunkStatusUrl` the file fails with it | no |
@@ -338,7 +338,7 @@ interface DataBlock { name: string; data: Blob; filename: string; chunkIndex?: n
 
 interface ErrorEntry {
   fileId: string | null; relativePath: string; uploadId: string | null;
-  code: string; // see Error codes
+  code: ErrorCode; // see Error codes
   message: string; httpStatus?: number;
   stage: 'validate' | 'manifest' | 'status' | 'upload' | 'finalize';
   chunkIndex?: number; attempt: number; retryable: boolean; at: number;

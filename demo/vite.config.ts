@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
@@ -6,7 +7,13 @@ const src = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // edits to package sources by other people or agents cannot reload the page in the middle of a test.
 const dist = process.env.AD_PKG === 'dist';
 
+// The demo may run against core's source, so inject the version as the core build does.
+const { version } = JSON.parse(
+  readFileSync(new URL('../packages/core/package.json', import.meta.url), 'utf8'),
+) as { version: string };
+
 export default defineConfig({
+  define: { __ANYDROP_VERSION__: JSON.stringify(version) },
   resolve: {
     // Default: run against package sources so the demo needs no prior build and hot-reloads edits.
     alias: [

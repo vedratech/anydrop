@@ -1,6 +1,6 @@
 # Size comparison: AnyDrop and the libraries people compare it with
 
-Measured on **2026-11-07** by qa-compat-tester (decision 0009 asked for measured numbers before any size claim goes into the README). Numbers are **minified + gzip** of what a browser downloads. Brotli is shown as a second column because most CDNs serve it.
+Measured on **2026-11-07** and re-measured on **2026-11-08** (pre-release check, AnyDrop `0.1.0` build) by qa-compat-tester (decision 0009 asked for measured numbers before any size claim goes into the README). The compared libraries are the same versions in both runs; only the AnyDrop rows moved, by a few bytes (see the end of this file). Numbers are **minified + gzip** of what a browser downloads. Brotli is shown as a second column because most CDNs serve it.
 
 ## Method
 
@@ -10,9 +10,9 @@ Measured on **2026-11-07** by qa-compat-tester (decision 0009 asked for measured
 4. Compress with Node's zlib: gzip **level 9** and brotli quality 11. (`pnpm size` uses size-limit's own gzip, which differs by a few hundred bytes. The budgets in `.size-limit.json` stay the source of truth for AnyDrop's own limits.)
 5. For libraries that ship a ready minified file (Dropzone `dist/dropzone-min.js`, AnyDrop `dist/index.global.js`) that file is measured too ("as downloaded").
 6. CSS is measured separately, as shipped (the minified file when the package ships one).
-7. 1 kB = 1024 bytes in the tables.
+7. 1 kB = 1024 bytes in the tables. Note that `pnpm size` (size-limit) counts 1 kB = 1000 bytes, so the same CDN file reads 33.9 kB there and 33.1 kB here (33,926 bytes gzip); the `.size-limit.json` budgets are in size-limit's unit.
 
-Versions: Dropzone **6.3.5**, Uppy `@uppy/core` **6.3.1**, `@uppy/dashboard` **6.0.3**, `@uppy/xhr-upload` **6.0.1**, FilePond **4.32.12** (no plugins), Resumable.js (`resumablejs`) **1.1.0**, AnyDrop `0.0.0` build of 2026-11-07 (pre-release, M5).
+Versions: Dropzone **6.3.5**, Uppy `@uppy/core` **6.3.1**, `@uppy/dashboard` **6.0.3**, `@uppy/xhr-upload` **6.0.1**, FilePond **4.32.12** (no plugins), Resumable.js (`resumablejs`) **1.1.0**, AnyDrop `0.1.0` build of 2026-11-08 (pre-release).
 
 ## JavaScript
 
@@ -24,7 +24,7 @@ Versions: Dropzone **6.3.5**, Uppy `@uppy/core` **6.3.1**, `@uppy/dashboard` **6
 | **Uppy** core + xhr-upload (no UI) | 54.9 kB | **18.5 kB** | 16.5 kB |
 | **AnyDrop core** (headless engine, esbuild bundle of `@vedratech/anydrop-core`) | 53.7 kB | **18.1 kB** | 16.3 kB |
 | **FilePond** 4.32.12 (core, no plugins) | 136.8 kB | **40.5 kB** | 35.5 kB |
-| **AnyDrop ui + core** (`@vedratech/anydrop-ui`, esbuild bundle) | 97.4 kB | **31.8 kB** | 28.2 kB |
+| **AnyDrop ui + core** (`@vedratech/anydrop-ui`, esbuild bundle) | 97.5 kB | **31.8 kB** | 28.2 kB |
 | AnyDrop ui + core, shipped CDN file `dist/index.global.js` | 101.7 kB | 33.1 kB | 29.3 kB |
 | **Uppy** core + dashboard + xhr-upload | 249.7 kB | **78.4 kB** | 66.8 kB |
 
@@ -55,8 +55,12 @@ npm i dropzone@6.3.5 @uppy/core @uppy/dashboard @uppy/xhr-upload filepond resuma
 npx esbuild entries/uppy.js --bundle --minify --format=iife --target=es2019 --define:process.env.NODE_ENV='"production"' | gzip -9 | wc -c
 ```
 
-The numbers in this file were produced by a script (`measure.mjs`) kept with the scratch files of the M5 run; re-run them before quoting any figure in the README if the libraries or AnyDrop's build have changed. The ui CDN file is at 33.1 kB by this method and the `.size-limit.json` budget is 34 kB (0017).
+The numbers in this file were produced by a script (`measure.mjs`) kept with the scratch files of the M5 run; re-run them before quoting any figure in the README if the libraries or AnyDrop's build have changed. The ui CDN file is at 33.1 kB (33,926 bytes) by this method, which is 33.9 kB in `pnpm size`'s unit, against a `.size-limit.json` budget of 35 kB (decision 0019).
 
 ## Release checks (M6)
 
-The `.size-limit.json` budgets are now core 19.5 kB, ui without core 16.5 kB and the ui CDN file 35 kB (decision 0019). The AnyDrop rows above were measured against the 2026-11-07 build (CDN file 33.1 kB by this method). **qa-compat-tester re-measures this file during the M6 release checks if AnyDrop's build or any compared library changed**, and the README numbers are updated from it. README size claims are limited to what this file supports (decision 0019).
+The `.size-limit.json` budgets are now core 19.5 kB, ui without core 16.5 kB and the ui CDN file 35 kB (decision 0019). The AnyDrop rows above were measured against the 2026-11-08 build (CDN file 33.1 kB by this method; 33.9 kB in `pnpm size`). **qa-compat-tester re-measures this file during the M6 release checks if AnyDrop's build or any compared library changed**, and the README numbers are updated from it. README size claims are limited to what this file supports (decision 0019).
+
+## Change since the first measurement
+
+Re-measured on 2026-11-08 with the same script and the same library versions (Dropzone, Uppy, FilePond and Resumable.js numbers are identical). AnyDrop, in bytes (gzip level 9): ui + core esbuild bundle 32,519 to 32,529; shipped CDN file 33,916 to 33,926 (+10 bytes, minified 104,107 to 104,139); `style.css` 3,181 to 3,188; headless core unchanged. No rounded figure in the tables above changed except the ui + core minified size (97.4 to 97.5 kB). The figures quoted in the README are therefore the same as on 2026-11-07.

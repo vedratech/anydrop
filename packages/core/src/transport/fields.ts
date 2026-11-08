@@ -1,4 +1,4 @@
-// Portions adapted from Dropzone (MIT, (c) Matias Meno), see THIRD_PARTY_NOTICES.md.
+// Portions adapted from Dropzone (MIT, Copyright (c) 2026 Matias Simon <m@tias.me>), see THIRD_PARTY_NOTICES.md.
 // Request building (upload-protocol sections 3, 5): Dropzone's `dz*` chunk fields, our `ad*`
 // fields, the user `params()` result merged over them, and the request headers.
 import type { AnyDropCoreOptions } from '../options';

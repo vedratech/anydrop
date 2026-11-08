@@ -25,27 +25,26 @@ The headless core alone: `https://cdn.jsdelivr.net/npm/@vedratech/anydrop-core@0
 
 ## Quick start: UI
 
-```html
-<div id="uploader"></div>
-<script type="module">
-  import { AnyDrop } from '@vedratech/anydrop-ui';
-  import '@vedratech/anydrop-ui/style.css';
+With a bundler (Vite, webpack, esbuild, ...), in a JavaScript or TypeScript file, with `<div id="uploader"></div>` in your page:
 
-  const ad = new AnyDrop('#uploader', {
-    url: '/upload',
-    chunking: true,
-    chunkSize: 5 * 1024 * 1024,
-    sendManifest: true, // send the folder structure, including empty folders
-    manifestUrl: '/upload/manifest',
-    chunkStatusUrl: '/upload/status', // resume: ask the server which chunks it has
-    finalizeUrl: '/upload/finalize', // assemble the file after the last chunk
-  });
+```js
+import { AnyDrop } from '@vedratech/anydrop-ui';
+import '@vedratech/anydrop-ui/style.css';
 
-  ad.on('queuecomplete', () => console.log('done', ad.getErrors()));
-</script>
+const ad = new AnyDrop('#uploader', {
+  url: '/upload',
+  chunking: true,
+  chunkSize: 5 * 1024 * 1024,
+  sendManifest: true, // send the folder structure, including empty folders
+  manifestUrl: '/upload/manifest',
+  chunkStatusUrl: '/upload/status', // resume: ask the server which chunks it has
+  finalizeUrl: '/upload/finalize', // assemble the file after the last chunk
+});
+
+ad.on('queuecomplete', () => console.log('done', ad.getErrors()));
 ```
 
-With a CDN script tag, `new AnyDrop('#uploader', {...})` works the same way. Elements with the class `dropzone` or `anydrop` are also attached automatically by the CDN build (see the [UI README](packages/ui/README.md)).
+Without a bundler, load the CDN build shown above; then `new AnyDrop('#uploader', {...})` works the same way (no imports needed). Elements with the class `dropzone` or `anydrop` are also attached automatically by the CDN build (see the [UI README](packages/ui/README.md)).
 
 ## Quick start: headless core
 
@@ -81,7 +80,7 @@ Everything is driven by options, methods and events, with no framework assumptio
 
 ## How it compares
 
-AnyDrop is a focused upload widget for folders and large or unreliable uploads; Dropzone, Uppy and FilePond each have their own strengths and plugin ecosystems. The one thing we publish is the download size, measured the same way for every library (minified and gzipped, esbuild, 2026-11-07):
+AnyDrop is a focused upload widget for folders and large or unreliable uploads; Dropzone, Uppy and FilePond each have their own strengths and plugin ecosystems. The one thing we publish is the download size, measured the same way for every library (minified and gzipped with esbuild, 1 kB = 1024 bytes, measured 2026-11-08):
 
 | | JavaScript (gzip) | CSS (gzip) |
 |---|---:|---:|
@@ -90,7 +89,7 @@ AnyDrop is a focused upload widget for folders and large or unreliable uploads; 
 | FilePond 4.32.12 (core, no plugins) | 40.5 kB | 5.2 kB |
 | Uppy core + dashboard + xhr-upload | 78.4 kB | 10.4 kB |
 
-AnyDrop with the UI is about 2.7 times the size of Dropzone: it adds folders and a tree view, chunking with pause and resume, an IndexedDB resume store, connectivity handling, an error registry and a mobile layout. Method, versions and the headless numbers are in [docs/size-comparison.md](docs/size-comparison.md).
+AnyDrop with the UI is about 2.7 times the size of Dropzone (the ready-made CDN file is 33.1 kB gzip): it adds folders and a tree view, chunking with pause and resume, an IndexedDB resume store, connectivity handling, an error registry and a mobile layout. Method, versions and the headless numbers are in [docs/size-comparison.md](docs/size-comparison.md).
 
 ## Browser support
 
@@ -119,7 +118,7 @@ Your server implements four endpoints (full details in [docs/protocol.md](docs/p
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/upload` | `POST` multipart | One chunk (`file`, `dzuuid`, `dzchunkindex`, `dzchunksize`, `dzchunkbyteoffset`, `dztotalfilesize`, ...). Accept chunks in any order and more than once. |
+| `/upload` | `POST` multipart | One chunk (`file`, `dzuuid`, `dzchunkindex`, `dzchunksize`, `dzchunkbyteoffset`, `dztotalfilesize`, ...), or a whole file when it is not chunked: then there are no `dz*` fields, only `file` and `adRelativePath`. Files up to `chunkSize` are sent whole even with `chunking: true`. Accept chunks in any order and more than once. |
 | `/upload/status?uploadId=` | `GET` | `{ "received": [0, 1, 4] }`, `{ "received": [], "complete": true }` once assembled, or `404` if unknown. |
 | `/upload/manifest` | `POST` JSON | The folders and files of a batch; create every folder, including empty ones. A repeated manifest replaces the earlier one. |
 | `/upload/finalize` | `POST` JSON | `{ uploadId, relativePath, totalSize, totalChunks }`: assemble the chunks into the final file. Idempotent. |
@@ -134,13 +133,15 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 const ROOT = path.resolve('uploads');
 const TMP = path.resolve('uploads-tmp');
 const UUID = /^[0-9a-f-]{36}$/i;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 64 * 1024 * 1024 } });
 const app = express();
-app.use(express.json());
+// The manifest lists every file of a batch: the 100 kB default limit rejects (413) more than about 600 files.
+app.use(express.json({ limit: '20mb' }));
 
 const fail = (res, status, code, message) => res.status(status).json({ code, message });
 
@@ -151,16 +152,33 @@ function target(rel) {
   const abs = path.resolve(ROOT, rel);
   return abs.startsWith(ROOT + path.sep) ? abs : null;
 }
+// Write to a temp name, then rename: a cut-off write never shows up as received.
+async function writeAtomic(dest, data) {
+  const part = `${dest}.${randomUUID()}.part`;
+  await fs.writeFile(part, data);
+  await fs.rename(part, dest);
+}
 const exists = (p) => fs.stat(p).then(() => true, () => false);
 
-// Chunk upload. The same chunk may arrive twice: writing it again is harmless.
+// Chunk upload, or a whole file. The same chunk may arrive twice: writing it again is harmless.
 app.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) return fail(res, 400, 'INVALID_CHUNK', 'Missing file');
   const { dzuuid } = req.body;
+
+  // Not chunked (a file of at most chunkSize, or chunking is off): no dz* fields, write the file in place.
+  if (dzuuid === undefined) {
+    const dest = target(req.body.adRelativePath);
+    if (!dest) return fail(res, 400, 'INVALID_PATH', 'Invalid path');
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await writeAtomic(dest, req.file.buffer);
+    return res.json({ ok: true });
+  }
+
   const index = Number(req.body.dzchunkindex);
   const size = Number(req.body.dzchunksize);
   const total = Number(req.body.dztotalfilesize);
   const offset = Number(req.body.dzchunkbyteoffset);
-  if (!UUID.test(dzuuid) || !req.file || !Number.isInteger(index) || index < 0) {
+  if (!UUID.test(dzuuid) || !Number.isInteger(index) || index < 0) {
     return fail(res, 400, 'INVALID_CHUNK', 'Invalid chunk request');
   }
   if (req.file.size !== Math.min(size, total - offset)) {
@@ -168,7 +186,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
   const dir = path.join(TMP, dzuuid);
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(dir, String(index)), req.file.buffer);
+  await writeAtomic(path.join(dir, String(index)), req.file.buffer);
   res.json({ ok: true });
 });
 
@@ -235,7 +253,8 @@ If the page and the API are on different origins, also answer the CORS preflight
 
 ```php
 <?php
-// routes/api.php
+// routes/api.php: Laravel serves these under /api, so the client option is url: '/api/upload'
+// (and manifestUrl: '/api/upload/manifest', and so on). On Laravel 11 and later, run `php artisan install:api` first.
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -283,15 +302,34 @@ class UploadController extends Controller
     // Chunk upload. The same chunk may arrive twice: writing it again is harmless.
     public function chunk(Request $r)
     {
+        if (!$r->hasFile('file')) {
+            return $this->fail(400, 'INVALID_CHUNK', 'Missing file');
+        }
+        $file = $r->file('file');
+
+        // Not chunked (a file of at most chunkSize, or chunking is off): no dz* fields, write the file in place.
+        if (!$r->has('dzuuid')) {
+            $dest = $this->target((string) $r->input('adRelativePath'));
+            if (!$dest) {
+                return $this->fail(400, 'INVALID_PATH', 'Invalid path');
+            }
+            if (!is_dir(dirname($dest))) {
+                mkdir(dirname($dest), 0775, true);
+            }
+            $part = basename($dest) . '.' . Str::uuid() . '.part';
+            $file->move(dirname($dest), $part);
+            rename(dirname($dest) . '/' . $part, $dest); // temp name, then rename
+            return response()->json(['ok' => true]);
+        }
+
         $id = (string) $r->input('dzuuid');
-        if (!Str::isUuid($id) || !$r->hasFile('file')) {
+        if (!Str::isUuid($id)) {
             return $this->fail(400, 'INVALID_CHUNK', 'Invalid chunk request');
         }
         $index = (int) $r->input('dzchunkindex');
         $size = (int) $r->input('dzchunksize');
         $total = (int) $r->input('dztotalfilesize');
         $offset = (int) $r->input('dzchunkbyteoffset');
-        $file = $r->file('file');
         if ($index < 0 || $file->getSize() !== min($size, $total - $offset)) {
             return $this->fail(400, 'INVALID_CHUNK', 'Chunk length does not match');
         }
@@ -299,7 +337,8 @@ class UploadController extends Controller
         if (!is_dir($dir)) {
             mkdir($dir, 0775, true);
         }
-        $file->move($dir, (string) $index);
+        $file->move($dir, "$index.part"); // temp name, then rename: a cut-off write never shows as received
+        rename("$dir/$index.part", "$dir/$index");
         return response()->json(['ok' => true]);
     }
 
@@ -317,7 +356,7 @@ class UploadController extends Controller
         if (!is_dir($dir)) {
             return $this->fail(404, 'HTTP_ERROR', 'Unknown upload');
         }
-        $received = collect(scandir($dir))->filter('ctype_digit')->map('intval')->values();
+        $received = collect(scandir($dir))->filter(fn ($n) => ctype_digit($n))->map(fn ($n) => (int) $n)->values();
         return response()->json(['received' => $received]);
     }
 

@@ -1,7 +1,12 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'tsup';
 
+// The CDN bundle compiles core's source, so core's version is injected here too (it is the
+// version of AnyDrop.VERSION; core and ui are released together).
+const { version } = JSON.parse(readFileSync('../core/package.json', 'utf8')) as { version: string };
+
 const shared = {
+  define: { __ANYDROP_VERSION__: JSON.stringify(version) },
   entry: ['src/index.ts'],
   target: 'es2019' as const,
   platform: 'browser' as const,

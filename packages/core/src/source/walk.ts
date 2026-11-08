@@ -1,4 +1,4 @@
-// Portions adapted from Dropzone (MIT, (c) Matias Meno), see THIRD_PARTY_NOTICES.md.
+// Portions adapted from Dropzone (MIT, Copyright (c) 2026 Matias Simon <m@tias.me>), see THIRD_PARTY_NOTICES.md.
 // Walks dropped or pasted entries (`webkitGetAsEntry`) and yields files in batches.
 //
 // - `readEntries()` is called on the same reader until it returns an empty batch (Chrome returns

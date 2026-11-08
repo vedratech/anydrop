@@ -65,8 +65,8 @@ Non-2xx responses carry JSON `{ "code": "STRING_CODE", "message": "human text" }
 |---|---|---|
 | 400 | `INVALID_PATH`, `INVALID_CHUNK` | do not retry; mark the file as error |
 | 409 | `CHUNK_MISMATCH` | refetch status, then resend the missing chunks (at most 3 times per file); without a `chunkStatusUrl` the client cannot refetch, so the file fails with `CHUNK_MISMATCH` and is not retried |
-| 413 | `TOO_LARGE` | do not retry |
-| 401 / 403 | `AUTH` | do not retry automatically; emit `error` (an `onAuthExpired` refresh hook is on the roadmap) |
+| 413 | `TOO_LARGE` (the client uses the `code` in the body; a 413 without one is `HTTP_ERROR`, so always send the code) | do not retry |
+| 401 / 403 | `AUTH` (also the client fallback when the body has no `code`) | do not retry automatically; emit `error` (an `onAuthExpired` refresh hook is on the roadmap) |
 | 408 / 429 | body code or `SERVER_ERROR` | retry with backoff, honouring a `Retry-After` header in seconds (capped at 60 s) |
 | 5xx / network / timeout / stall | `SERVER_ERROR` / `NETWORK` / `TIMEOUT` / `STALLED` | retry with backoff up to `retryChunksLimit`; failures with **no HTTP response** (network, timeout, stall) also feed connectivity detection: after 3 in a row across the instance the client pauses as `unreachable` and probes (section 7) instead of using up retries |
 | other 4xx | body code or `HTTP_ERROR` | do not retry |

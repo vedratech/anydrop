@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'tsup';
+
+// The library version comes from package.json (`changeset version` bumps it), never a literal.
+const { version } = JSON.parse(readFileSync('./package.json', 'utf8')) as { version: string };
 
 const shared = {
   entry: ['src/index.ts'],
@@ -6,6 +10,7 @@ const shared = {
   platform: 'neutral' as const,
   sourcemap: false,
   treeshake: true,
+  define: { __ANYDROP_VERSION__: JSON.stringify(version) },
   clean: false, // cleaned by the "build" script (the two configs run in parallel)
 };
 

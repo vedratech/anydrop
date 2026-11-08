@@ -1,4 +1,4 @@
-// Portions adapted from Dropzone (MIT, (c) Matias Meno), see THIRD_PARTY_NOTICES.md.
+// Portions adapted from Dropzone (MIT, Copyright (c) 2026 Matias Simon <m@tias.me>), see THIRD_PARTY_NOTICES.md.
 // Built-in XMLHttpRequest transport: abort, upload progress, timeout. XHR is created per request,
 // inside send(), so nothing touches browser globals at import time.
 import type { Transport, TransportHandle, TransportResponse } from './types';
