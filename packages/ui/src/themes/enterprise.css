@@ -1,0 +1,60 @@
+/* AnyDrop theme preset "enterprise": slate neutrals, strong blue accent, square corners, solid borders.
+   Use it with the option themePreset: 'enterprise'. Import it after style.css. */
+.ad-root.ad-theme-enterprise,
+.ad-panel.ad-theme-enterprise {
+  --ad-color-bg: #ffffff;
+  --ad-color-surface: #f1f5f9;
+  --ad-color-text: #0f172a;
+  --ad-color-muted: #475569;
+  --ad-color-border: #64748b;
+  --ad-color-border-soft: #cbd5e1;
+  --ad-color-accent: #1e40af;
+  --ad-color-on-accent: #ffffff;
+  --ad-color-hover: #e2e8f0;
+  --ad-color-success: #166534;
+  --ad-color-error: #b91c1c;
+  --ad-color-warning: #92400e;
+  --ad-color-track: #cbd5e1;
+  --ad-color-focus: #1e40af;
+  --ad-radius: 2px;
+  --ad-border-width: 2px;
+  --ad-border-style: solid;
+  --ad-shadow: none;
+  --ad-font-size: 0.9375rem;
+}
+@media (prefers-color-scheme: dark) {
+  .ad-root.ad-theme-enterprise:not([data-ad-theme='light']),
+  .ad-panel.ad-theme-enterprise:not([data-ad-theme='light']) {
+    --ad-color-bg: #0f172a;
+    --ad-color-surface: #1e293b;
+    --ad-color-text: #f1f5f9;
+    --ad-color-muted: #cbd5e1;
+    --ad-color-border: #94a3b8;
+    --ad-color-border-soft: #334155;
+    --ad-color-accent: #60a5fa;
+    --ad-color-on-accent: #0f172a;
+    --ad-color-hover: #1e3a8a;
+    --ad-color-success: #86efac;
+    --ad-color-error: #fca5a5;
+    --ad-color-warning: #fcd34d;
+    --ad-color-track: #334155;
+    --ad-color-focus: #93c5fd;
+  }
+}
+.ad-root.ad-theme-enterprise[data-ad-theme='dark'],
+.ad-panel.ad-theme-enterprise[data-ad-theme='dark'] {
+  --ad-color-bg: #0f172a;
+  --ad-color-surface: #1e293b;
+  --ad-color-text: #f1f5f9;
+  --ad-color-muted: #cbd5e1;
+  --ad-color-border: #94a3b8;
+  --ad-color-border-soft: #334155;
+  --ad-color-accent: #60a5fa;
+  --ad-color-on-accent: #0f172a;
+  --ad-color-hover: #1e3a8a;
+  --ad-color-success: #86efac;
+  --ad-color-error: #fca5a5;
+  --ad-color-warning: #fcd34d;
+  --ad-color-track: #334155;
+  --ad-color-focus: #93c5fd;
+}

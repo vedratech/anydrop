@@ -88,13 +88,20 @@ export interface AnyDropEvents {
   reconnecting: [attempt: number, delayMs: number];
   /** A copy of the full error list, merged to at most once per microtask. */
   errorlistchanged: [errors: ErrorEntry[]];
+  /**
+   * (ui) A row action was triggered, by button or keyboard shortcut, built-in (`pause`, `resume`,
+   * `retry`, `cancel`, `remove`) or custom. Emitted before the action runs and not cancellable.
+   * `action` is the action id; `target` is the file (also a `displayExistingFile()` mock) or the
+   * folder of the row. Core only declares it, so `on('actionclicked', ...)` is typed.
+   */
+  actionclicked: [action: string, target: AnyDropFile | FolderNode];
 }
 
 export type AnyDropEventName = keyof AnyDropEvents;
 
 /** Every event name. `events.test.ts` checks that the list matches the `AnyDropEvents` map. */
 export const EVENT_NAMES =
-  'drop dragstart dragend dragenter dragover dragleave paste emptyfolder addedfile addedfiles removedfile reset thumbnail error errormultiple maxfilesexceeded maxfilesreached processing processingmultiple uploadprogress totaluploadprogress sending sendingmultiple success successmultiple canceled canceledmultiple complete completemultiple queuecomplete addedfolder removedfolder folderprogress foldercomplete paused resumed offline online reconnecting errorlistchanged'.split(
+  'drop dragstart dragend dragenter dragover dragleave paste emptyfolder addedfile addedfiles removedfile reset thumbnail error errormultiple maxfilesexceeded maxfilesreached processing processingmultiple uploadprogress totaluploadprogress sending sendingmultiple success successmultiple canceled canceledmultiple complete completemultiple queuecomplete addedfolder removedfolder folderprogress foldercomplete paused resumed offline online reconnecting errorlistchanged actionclicked'.split(
     ' ',
   ) as AnyDropEventName[];
 

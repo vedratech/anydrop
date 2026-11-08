@@ -16,7 +16,7 @@ The generated type of every event and its arguments is [`AnyDropEvents`](/api/ge
 
 The usual order for one uploaded file is: `processing`, then for each request `sending` and `uploadprogress`, then `success`, `complete`, `foldercomplete` (innermost folder first), and `queuecomplete` after the last file.
 
-Jump to: [Input](#input-events) / [Files](#file-events) / [Upload](#upload-events) / [Folders](#folder-events) / [Pause and connection](#pause-and-connection-events) / [Errors](#error-events)
+Jump to: [Input](#input-events) / [Files](#file-events) / [Upload](#upload-events) / [Folders](#folder-events) / [UI](#ui-events) / [Pause and connection](#pause-and-connection-events) / [Errors](#error-events)
 
 ## Input events
 
@@ -238,6 +238,18 @@ ad.on('folderprogress', (folder, pct) => console.log(folder.path, Math.round(pct
 `(folder: FolderNode)`
 
 Every file in the folder is finished, or an empty folder reached `success`. Innermost folder first. It can fire again later, for example after a retry.
+
+## UI events
+
+### `actionclicked`
+
+`(action: string, target: AnyDropFile | FolderNode)`
+
+**UI.** A row action was used: a built-in or custom action, by button or by keyboard shortcut. It is emitted **before** the action runs and cannot be cancelled; to change or stop an action, override it in [`rowActions`](/guide/row-actions-icons#overriding-a-built-in-action). For a row added with `displayExistingFile()`, the target is its `MockFile`. Also dispatched as the DOM event `anydrop:actionclicked`.
+
+```ts
+ad.on('actionclicked', (action, target) => console.log(action, target));
+```
 
 ## Pause and connection events
 

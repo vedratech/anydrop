@@ -6,6 +6,7 @@ import type { AnyDropFile } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
 import { DEFAULT_TEMPLATE } from './options';
 import { h, mark } from './dom';
+import { iconEl } from './icons';
 import { decodeImage, looksLikeImage, renderScaled, thumbMime } from './image';
 
 /** A file-like object for `displayExistingFile()`: not part of the tree or the upload queue. */
@@ -76,6 +77,11 @@ export class Previews {
     );
   }
 
+  /** The thumbnail data URL, once made. */
+  thumb(f: Item): string | null {
+    return this.cache.get(f) || ((f as MockFile).dataURL as string) || null;
+  }
+
   has(f: Item): boolean {
     return this.els.has(f);
   }
@@ -85,6 +91,14 @@ export class Previews {
     if (!e) {
       e = this.template().cloneNode(true) as HTMLElement;
       this.use(f, e);
+      const o = this.ad.options;
+      // The success and error marks and the file icon come from `icons` (an old template's own marks stay).
+      e.querySelectorAll('.ad-file-success-mark,.ad-file-error-mark').forEach((m) => {
+        if (!m.firstChild)
+          m.appendChild(iconEl(o, /success/.test(m.className) ? 'success' : 'error'));
+      });
+      const box = e.querySelector('.ad-file-thumb');
+      if (box) box.appendChild(iconEl(o, 'file', 'ad-file-icon'));
       const r = this.refs.get(e) as Refs;
       if (this.ad.options.addRemoveLinks && !r.remove.length) {
         r.auto = h('button', 'ad-file-remove ad-link-btn', {

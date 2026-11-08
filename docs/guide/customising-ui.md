@@ -1,11 +1,20 @@
 ---
 title: "Customising the upload UI: themes, texts and templates"
-description: "Change the AnyDrop interface: CSS variables, dark mode, translated texts, the preview template, toolbar and error panel options, and rendering it yourself."
+description: "Change the AnyDrop interface: layouts, render hooks, row actions, icons, languages, themes, texts, the preview template, and the toolbar and error panel options."
 ---
 
 # Customising the UI
 
-You can change the texts, the markup of a file row, and the colours.
+You can change how files are laid out, the content of every part, the buttons, the icons, the language and the colours. Start with the option that fits your goal.
+
+| I want to... | Read |
+|---|---|
+| show files as a list or a compact row | [Layouts](/guide/layouts) |
+| add a badge to a row, build my own row, or mount a React or Vue component | [Render hooks](/guide/render-hooks) |
+| choose the buttons on a row, add my own, or swap the icons | [Row actions and icons](/guide/row-actions-icons) |
+| translate the interface, or use right-to-left | [Languages and RTL](/guide/languages) |
+| change colours, radius and fonts, use a preset, or support dark mode | [Themes](/guide/themes) and the [theme builder](/theme-builder) |
+| change a text, or the markup of a file preview | the sections below |
 
 ## Texts (`dict*`)
 
@@ -42,7 +51,8 @@ new AnyDrop('#uploader', {
   errorPanel: true,
   pickerButtons: true, // the "Select files" and "Select folder" buttons
   previewsContainer: '#my-list', // put the list somewhere else
-  rowHeight: 56, // px; use a larger value for a taller previewTemplate
+  layout: 'list', // 'list' (default) or 'compact', see Layouts
+  rowHeight: null, // px; null = the height of the layout. Use a larger number for a taller previewTemplate
   theme: 'auto', // 'light', 'dark' or 'auto' (follows prefers-color-scheme)
 });
 ```
@@ -77,9 +87,9 @@ new AnyDrop('#uploader', {
 
 The default template uses the classes `ad-file-preview`, `ad-file-thumb`, `ad-file-details`, `ad-file-size`, `ad-file-name`, `ad-file-progress`, `ad-file-bar`, `ad-file-error-message`, `ad-file-success-mark`, `ad-file-error-mark` and `ad-file-remove`. Reuse them in your own template to keep the built-in styling, or use your own classes.
 
-## CSS variables
+## CSS variables and dark mode
 
-Set them on the element, or any ancestor:
+Set the `--ad-*` variables on the element, or any ancestor:
 
 ```css
 #uploader {
@@ -88,34 +98,17 @@ Set them on the element, or any ancestor:
 }
 ```
 
-| Variable | Meaning |
-|---|---|
-| `--ad-color-bg`, `--ad-color-surface`, `--ad-color-text`, `--ad-color-muted` | Backgrounds and text |
-| `--ad-color-border`, `--ad-color-border-soft` | Strong and soft borders |
-| `--ad-color-accent`, `--ad-color-on-accent`, `--ad-color-hover` | Primary colour, text on it, hover background |
-| `--ad-color-success`, `--ad-color-error`, `--ad-color-warning` | Status colours |
-| `--ad-color-track`, `--ad-color-focus` | Progress track, focus ring |
-| `--ad-radius`, `--ad-gap`, `--ad-target` | Corner radius, spacing, minimum tap target (44px) |
-| `--ad-font`, `--ad-list-max-height`, `--ad-indent` | Font, list height (420px), tree indent per level (20px) |
-
-## Dark mode
-
-Dark mode follows `prefers-color-scheme`. Force it with the `theme` option, or with `data-ad-theme="light"` or `"dark"` on the element. To follow your own site's switch:
-
-```js
-const isDark = document.documentElement.classList.contains('dark'); // however your site marks dark mode
-ad.setOption('theme', isDark ? 'dark' : 'light');
-```
+The full table, the four ready presets, dark mode and how to make your own preset are in [Themes](/guide/themes). The [theme builder](/theme-builder) writes the CSS for you.
 
 ## CSS classes
 
 State classes on the element: `ad-clickable`, `ad-started`, `ad-drag-hover`, `ad-max-files-reached`, `ad-disabled`, `ad-browser-not-supported`. State classes on a preview: `ad-processing`, `ad-success`, `ad-error`, `ad-complete`, `ad-canceled`, `ad-paused`, `ad-image-preview`, `ad-thumb-error`. An element with the class `ad-message` inside your element replaces the default drop message, and an element with the class `ad-fallback` is removed while the UI runs (use it for a plain `<form>` that only users without JavaScript see). Other hooks include `ad-root`, `ad-touch`, `ad-toolbar`, `ad-list`, `ad-row` (with `ad-folder-row` and `ad-file-row`), `ad-badge`, `ad-errors`, `ad-banner` and `ad-live`.
 
-Buttons carry `data-ad-action` (`pick-files`, `pick-folder`, `pause-all`, `resume-all`, `retry-failed`, `clear`, `pause`, `resume`, `retry`, `cancel`, `toggle`, `export-json`, `export-csv`, `copy-errors`, `dismiss-errors`), which is handy for tests.
+Buttons carry `data-ad-action` (`pick-files`, `pick-folder`, `pause-all`, `resume-all`, `retry-failed`, `clear`, `pause`, `resume`, `retry`, `cancel`, `remove`, `toggle`, `export-json`, `export-csv`, `copy-errors`, `dismiss-errors`), which is handy for tests.
 
 ## Render everything yourself
 
-Event handlers passed as options **add** to the built-in rendering; they do not replace it. To take over completely, set `disablePreviews: true` and use the [events](/api/events) and the [tree](/guide/folders).
+Event handlers passed as options **add** to the built-in rendering; they do not replace it. To change the content of a row, the toolbar, the drop message or the error panel while keeping the list, keyboard use and virtualisation, use [render hooks](/guide/render-hooks). To take over completely, set `disablePreviews: true` and use the [events](/api/events) and the [tree](/guide/folders).
 
 ## Accessibility
 

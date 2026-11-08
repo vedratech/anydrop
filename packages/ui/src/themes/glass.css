@@ -1,0 +1,92 @@
+/* AnyDrop theme preset "glass": translucent surfaces and a blurred backdrop behind the drop zone.
+   The blur is on the zone only, never on the scrolling rows. Without backdrop-filter support the
+   surfaces are solid. Use it with the option themePreset: 'glass'. Import it after style.css. */
+.ad-root.ad-theme-glass,
+.ad-panel.ad-theme-glass {
+  --ad-color-bg: rgb(255 255 255 / 0.82);
+  --ad-color-surface: rgb(241 245 249 / 0.82);
+  --ad-color-text: #0f172a;
+  --ad-color-muted: #334155;
+  --ad-color-border: #475569;
+  --ad-color-border-soft: rgb(100 116 139 / 0.35);
+  --ad-color-accent: #1d4ed8;
+  --ad-color-on-accent: #ffffff;
+  --ad-color-hover: rgb(219 234 254 / 0.9);
+  --ad-color-success: #166534;
+  --ad-color-error: #991b1b;
+  --ad-color-warning: #92400e;
+  --ad-color-track: rgb(148 163 184 / 0.55);
+  --ad-color-focus: #1d4ed8;
+  --ad-radius: 14px;
+  --ad-border-width: 1px;
+  --ad-border-style: solid;
+  --ad-shadow: 0 8px 32px rgb(15 23 42 / 0.18);
+  --ad-backdrop: blur(14px) saturate(140%);
+}
+@media (prefers-color-scheme: dark) {
+  .ad-root.ad-theme-glass:not([data-ad-theme='light']),
+  .ad-panel.ad-theme-glass:not([data-ad-theme='light']) {
+    --ad-color-bg: rgb(15 23 42 / 0.84);
+    --ad-color-surface: rgb(30 41 59 / 0.84);
+    --ad-color-text: #f8fafc;
+    --ad-color-muted: #e2e8f0;
+    --ad-color-border: #94a3b8;
+    --ad-color-border-soft: rgb(148 163 184 / 0.3);
+    --ad-color-accent: #93c5fd;
+    --ad-color-on-accent: #0f172a;
+    --ad-color-hover: rgb(30 58 138 / 0.7);
+    --ad-color-success: #86efac;
+    --ad-color-error: #fca5a5;
+    --ad-color-warning: #fcd34d;
+    --ad-color-track: rgb(100 116 139 / 0.6);
+    --ad-color-focus: #bfdbfe;
+    --ad-shadow: 0 8px 32px rgb(0 0 0 / 0.45);
+  }
+}
+.ad-root.ad-theme-glass[data-ad-theme='dark'],
+.ad-panel.ad-theme-glass[data-ad-theme='dark'] {
+  --ad-color-bg: rgb(15 23 42 / 0.84);
+  --ad-color-surface: rgb(30 41 59 / 0.84);
+  --ad-color-text: #f8fafc;
+  --ad-color-muted: #e2e8f0;
+  --ad-color-border: #94a3b8;
+  --ad-color-border-soft: rgb(148 163 184 / 0.3);
+  --ad-color-accent: #93c5fd;
+  --ad-color-on-accent: #0f172a;
+  --ad-color-hover: rgb(30 58 138 / 0.7);
+  --ad-color-success: #86efac;
+  --ad-color-error: #fca5a5;
+  --ad-color-warning: #fcd34d;
+  --ad-color-track: rgb(100 116 139 / 0.6);
+  --ad-color-focus: #bfdbfe;
+  --ad-shadow: 0 8px 32px rgb(0 0 0 / 0.45);
+}
+/* No backdrop-filter: solid surfaces keep the text readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ad-root.ad-theme-glass,
+  .ad-panel.ad-theme-glass {
+    --ad-color-bg: #ffffff;
+    --ad-color-surface: #f1f5f9;
+    --ad-color-hover: #dbeafe;
+    --ad-color-border-soft: #cbd5e1;
+    --ad-color-track: #cbd5e1;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ad-root.ad-theme-glass:not([data-ad-theme='light']),
+    .ad-panel.ad-theme-glass:not([data-ad-theme='light']) {
+      --ad-color-bg: #0f172a;
+      --ad-color-surface: #1e293b;
+      --ad-color-hover: #1e3a8a;
+      --ad-color-border-soft: #334155;
+      --ad-color-track: #475569;
+    }
+  }
+  .ad-root.ad-theme-glass[data-ad-theme='dark'],
+  .ad-panel.ad-theme-glass[data-ad-theme='dark'] {
+    --ad-color-bg: #0f172a;
+    --ad-color-surface: #1e293b;
+    --ad-color-hover: #1e3a8a;
+    --ad-color-border-soft: #334155;
+    --ad-color-track: #475569;
+  }
+}

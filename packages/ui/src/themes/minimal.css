@@ -1,0 +1,59 @@
+/* AnyDrop theme preset "minimal": thin solid border, flat surfaces, small radius, neutral accent.
+   Use it with the option themePreset: 'minimal'. Import it after style.css. */
+.ad-root.ad-theme-minimal,
+.ad-panel.ad-theme-minimal {
+  --ad-color-bg: #ffffff;
+  --ad-color-surface: #fafafa;
+  --ad-color-text: #171717;
+  --ad-color-muted: #525252;
+  --ad-color-border: #737373;
+  --ad-color-border-soft: #e5e5e5;
+  --ad-color-accent: #262626;
+  --ad-color-on-accent: #ffffff;
+  --ad-color-hover: #f0f0f0;
+  --ad-color-success: #166534;
+  --ad-color-error: #b91c1c;
+  --ad-color-warning: #92400e;
+  --ad-color-track: #e5e5e5;
+  --ad-color-focus: #262626;
+  --ad-radius: 4px;
+  --ad-border-width: 1px;
+  --ad-border-style: solid;
+  --ad-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  .ad-root.ad-theme-minimal:not([data-ad-theme='light']),
+  .ad-panel.ad-theme-minimal:not([data-ad-theme='light']) {
+    --ad-color-bg: #0a0a0a;
+    --ad-color-surface: #171717;
+    --ad-color-text: #fafafa;
+    --ad-color-muted: #d4d4d4;
+    --ad-color-border: #a3a3a3;
+    --ad-color-border-soft: #404040;
+    --ad-color-accent: #e5e5e5;
+    --ad-color-on-accent: #0a0a0a;
+    --ad-color-hover: #262626;
+    --ad-color-success: #86efac;
+    --ad-color-error: #fca5a5;
+    --ad-color-warning: #fcd34d;
+    --ad-color-track: #525252;
+    --ad-color-focus: #e5e5e5;
+  }
+}
+.ad-root.ad-theme-minimal[data-ad-theme='dark'],
+.ad-panel.ad-theme-minimal[data-ad-theme='dark'] {
+  --ad-color-bg: #0a0a0a;
+  --ad-color-surface: #171717;
+  --ad-color-text: #fafafa;
+  --ad-color-muted: #d4d4d4;
+  --ad-color-border: #a3a3a3;
+  --ad-color-border-soft: #404040;
+  --ad-color-accent: #e5e5e5;
+  --ad-color-on-accent: #0a0a0a;
+  --ad-color-hover: #262626;
+  --ad-color-success: #86efac;
+  --ad-color-error: #fca5a5;
+  --ad-color-warning: #fcd34d;
+  --ad-color-track: #525252;
+  --ad-color-focus: #e5e5e5;
+}

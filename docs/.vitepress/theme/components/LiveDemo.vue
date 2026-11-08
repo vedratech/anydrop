@@ -3,7 +3,8 @@
 // Nothing here talks to a server: the transport simulates latency, progress, random failures and
 // an offline network, which is also what the "Custom transport" guide describes.
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { useData, withBase } from 'vitepress';
+import { useData } from 'vitepress';
+import { addSampleFolderTo, createFakeTransport, loadAnyDrop } from './fakeTransport';
 
 const { isDark } = useData();
 
@@ -35,89 +36,14 @@ function say(text: string) {
   if (log.value.length > 150) log.value.length = 150;
 }
 
-/** The fake transport: the public `Transport` interface, with no network at all. */
-const transport = {
-  send(request: any) {
-    counts.requests++;
-    let finish!: (r: any) => void;
-    const promise = new Promise<any>((resolve) => (finish = resolve));
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let done = false;
-    const end = (r: any) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      finish(r);
-    };
-    const res = (status: number, body: unknown) => ({ status, body, header: () => null });
-    const noReply = (error: string) => ({ status: 0, body: null, header: () => null, error });
-
-    const handle: any = { promise, abort: () => end(noReply('abort')) };
-
-    const isUpload = request.body instanceof FormData || request.body instanceof Blob;
-    const latency = 120 + Math.random() * 220;
-
-    if (!isUpload) {
-      // manifest, finalize, probe
-      timer = setTimeout(() => {
-        if (sim.offline) return end(noReply('network'));
-        if (request.method === 'HEAD') return end(res(204, null));
-        let body: any = { ok: true };
-        try {
-          const sent = JSON.parse(String(request.body));
-          if (sent.relativePath) body = { ok: true, path: sent.relativePath };
-        } catch {
-          /* no JSON body */
-        }
-        end(res(200, body));
-      }, latency);
-      return handle;
-    }
-
-    // An upload: report progress while the body "goes out", and maybe fail on the way.
-    request.beforeSend?.(undefined);
-    const blob: Blob | null =
-      request.body instanceof FormData ? (request.body.get('file') as Blob | null) : request.body;
-    const total = Math.max(1, blob ? blob.size : 1);
-    const duration = latency + (total / (sim.speed * 1024 * 1024)) * 1000;
-    const failAt = Math.random() < sim.failRate ? 0.2 + Math.random() * 0.7 : -1;
-    const start = Date.now();
-    const tick = () => {
-      if (sim.offline) return end(noReply('network'));
-      const t = Math.min(1, (Date.now() - start) / duration);
-      handle.onProgress?.(Math.round(total * t), total);
-      if (failAt >= 0 && t >= failAt) {
-        counts.failures++;
-        return end(res(503, { code: 'SERVER_ERROR', message: 'Simulated server error' }));
-      }
-      if (t >= 1) return end(res(200, { ok: true }));
-      timer = setTimeout(tick, 60);
-    };
-    timer = setTimeout(tick, 60);
-    return handle;
-  },
-};
-
-function makeFile(name: string, kb: number, type: string): File {
-  return new File([new Uint8Array(kb * 1024)], name, { type });
-}
+const transport = createFakeTransport(sim, {
+  onRequest: () => counts.requests++,
+  onFailure: () => counts.failures++,
+});
 
 function addSampleFolder() {
   if (!ad) return;
-  const n = ++ui.folders;
-  const rand = (min: number, max: number) => Math.round(min + Math.random() * (max - min));
-  const root = `Trip ${n}`;
-  const plan: [string, string, number, string][] = [
-    [`${root}/Day 1`, 'IMG_0001.jpg', rand(900, 2400), 'image/jpeg'],
-    [`${root}/Day 1`, 'IMG_0002.jpg', rand(900, 2400), 'image/jpeg'],
-    [`${root}/Day 1`, 'IMG_0003.jpg', rand(900, 2400), 'image/jpeg'],
-    [`${root}/Day 2`, 'IMG_0101.jpg', rand(900, 2400), 'image/jpeg'],
-    [`${root}/Day 2`, 'IMG_0102.jpg', rand(900, 2400), 'image/jpeg'],
-    [`${root}/Documents`, 'tickets.pdf', rand(200, 800), 'application/pdf'],
-    [`${root}/Documents`, 'notes.txt', rand(2, 20), 'text/plain'],
-  ];
-  for (const [folder, name, kb, type] of plan) ad.addFile(makeFile(name, kb, type), folder);
-  ad.addFile(makeFile(`summary-${n}.txt`, 4, 'text/plain')); // a loose file
+  addSampleFolderTo(ad, ++ui.folders);
 }
 
 const pause = () => ad?.pause();
@@ -126,25 +52,9 @@ const retry = () => say('Retry failed: ' + (ad?.retryFailedOnly() ?? 0) + ' file
 const clearAll = () => ad?.removeAllFiles(true);
 const clearLog = () => (log.value = []);
 
-function load(): Promise<void> {
-  const w = window as any;
-  if (w.AnyDrop) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = withBase('/demo/anydrop-ui.css');
-    document.head.appendChild(css);
-    const js = document.createElement('script');
-    js.src = withBase('/demo/anydrop-ui.js');
-    js.onload = () => resolve();
-    js.onerror = () => reject(new Error('Could not load the AnyDrop build'));
-    document.head.appendChild(js);
-  });
-}
-
 onMounted(async () => {
   try {
-    await load();
+    await loadAnyDrop();
   } catch (e) {
     failed.value = (e as Error).message;
     return;

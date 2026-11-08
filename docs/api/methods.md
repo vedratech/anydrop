@@ -346,7 +346,7 @@ ad.setOption('folderView', 'flat'); // UI
 
 `(name) => value`
 
-Reads an option.
+Reads an option, core or UI.
 
 ### `resolveOption(option, ...args)`
 
@@ -474,6 +474,10 @@ Attaches an instance to every `.anydrop` element under `root` that has none. Ret
 `(element: string | HTMLElement) => AnyDrop`
 
 The instance attached to an element.
+
+### `AnyDrop.locales`
+
+`Record<string, AnyDropLocale>`, starts empty. The registry that `locale: 'hi'` looks in. The CDN locale files fill it; with npm, register a pack yourself: `AnyDrop.locales.hi = hi`. See [Languages and RTL](/guide/languages).
 
 ### `AnyDrop.isBrowserSupported()`
 

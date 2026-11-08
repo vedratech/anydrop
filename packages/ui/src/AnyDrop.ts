@@ -3,6 +3,7 @@
 // can collide with core members.
 import {
   AnyDropCore,
+  defaultOptions,
   type AnyDropEventName,
   type AnyDropEvents,
   type AnyDropFile,
@@ -22,7 +23,9 @@ import {
   uiDefaults,
 } from './options';
 import { Banner, type Conn, ErrorPanel, Toolbar } from './panels';
+import type { AnyDropLocale, AnyDropMessageContext } from './types';
 import { type Item, type MockFile, Previews } from './preview';
+import { baseContext, destroyView, type Mounted, runHook, updateView } from './render';
 
 /** Methods that arrive with core M3. Called only when present. */
 interface Later {
@@ -39,6 +42,8 @@ interface Later {
 }
 
 type Target = FolderNode | Item;
+const msgKey = (c: AnyDropMessageContext) =>
+  JSON.stringify([c.text, c.touch, c.dragging, c.disabled, c.maxFilesReached, c.hasFiles]);
 const ACTIVE = /^(added|queued|uploading|paused)$/;
 
 const camelize = (str: string) => str.replace(/[-_](\w)/g, (m) => m.charAt(1).toUpperCase());
@@ -60,6 +65,17 @@ function merge(into: Record<string, unknown>, from: unknown): void {
   }
 }
 
+/** The language pack an option value stands for: an object, or a registered code (`null` and `en` = English). */
+function pickLocale(v: unknown, warn = false): AnyDropLocale | null {
+  if (!v || v === 'en') return null;
+  if (typeof v !== 'string') return v as AnyDropLocale;
+  const l = AnyDrop.locales[v];
+  if (!l && warn && typeof console !== 'undefined') {
+    console.warn(`[anydrop] Unknown locale "${v}": using English. Load or register it first.`);
+  }
+  return l || null;
+}
+
 /** Options registered for an element id with `AnyDrop.options`; `false` disables auto-discovery. */
 function presetFor(el: HTMLElement): AnyDropConfig | false | undefined {
   return el.id ? AnyDrop.options[camelize(el.id)] : undefined;
@@ -71,9 +87,13 @@ function prepare(element: string | HTMLElement, config: AnyDropConfig): AnyDropC
   if ((el as { anydrop?: unknown }).anydrop)
     throw new Error('AnyDrop is already attached to this element.');
   const out: Record<string, unknown> = {};
+  const own: Record<string, unknown> = {};
+  merge(own, presetFor(el) || undefined);
+  merge(own, config);
+  // English, then the language pack, then the texts the developer set.
   merge(out, uiDefaults());
-  merge(out, presetFor(el) || undefined);
-  merge(out, config);
+  merge(out, pickLocale(own.locale, true)?.dict);
+  merge(out, own);
   const pc = out.previewsContainer;
   if (typeof pc === 'string' && !resolve(pc))
     throw new Error('Invalid `previewsContainer` option provided.');
@@ -120,6 +140,8 @@ export class AnyDrop extends AnyDropCore {
   static options: Record<string, AnyDropConfig | false> = {};
   /** Every live instance (removed again by `destroy()`). */
   static instances: AnyDrop[] = [];
+  /** Language packs by code. The CDN files `dist/locales/<code>.global.js` fill it; you can register your own. */
+  static locales: Record<string, AnyDropLocale> = {};
   /** Read by the CDN build only: set it to `false` right after the script tag to stop auto-discovery. */
   static autoDiscover = true;
 
@@ -192,6 +214,9 @@ export class AnyDrop extends AnyDropCore {
   private _uiPanel: HTMLElement | null = null;
   private _uiLive: HTMLElement | null = null;
   private _uiMsg: HTMLElement | null = null;
+  private _uiMsgText: HTMLElement | null = null;
+  private _uiMsgView: Mounted | null = null;
+  private _uiMsgKey = '';
   private _uiOwn: HTMLElement[] = [];
   /** Nodes taken out of the page while the UI runs (a `.fallback`), put back by `destroy()`. */
   private _uiRemoved: [Node, Node | null, Node][] = [];
@@ -214,6 +239,12 @@ export class AnyDrop extends AnyDropCore {
   private _uiSteps = -1;
   private _uiErrCount = 0;
   private _uiFlip = false;
+  private _uiLoc: AnyDropLocale | null = null;
+  private _uiPreset: string | null = null;
+  /** `dict*` options the developer set: a language switch never overwrites them. */
+  private _uiExplicit = new Set<string>();
+  /** `lang` and `dir` of the element before they were set (put back by `destroy()`). */
+  private _uiSaved: Record<string, string | null> = {};
 
   /** Attaches to an element (or a selector). Throws when there is no URL or the selector matches nothing. */
   constructor(element: string | HTMLElement, config: AnyDropConfig = {}) {
@@ -222,6 +253,10 @@ export class AnyDrop extends AnyDropCore {
     this.element = el;
     this._uiPreviews = new Previews(this);
     const o = this.options;
+    for (const k of Object.keys(Object.assign({}, presetFor(el) || {}, config))) {
+      if (/^dict/.test(k)) this._uiExplicit.add(k);
+    }
+    this._uiLoc = pickLocale(o.locale);
     if (o.forceFallback || !AnyDrop.isBrowserSupported()) {
       this._uiAttach2(el);
       (o.fallback || this._uiFallback).call(this);
@@ -289,11 +324,19 @@ export class AnyDrop extends AnyDropCore {
     return this;
   }
 
+  override getOption<K extends keyof AnyDropOptions>(name: K): AnyDropOptions[K];
+  override getOption<K extends keyof AnyDropUIOptions>(name: K): AnyDropUIOptions[K];
+  override getOption(name: string): unknown {
+    return super.getOption(name as never);
+  }
+
   override setOption<K extends keyof AnyDropCoreConfig>(name: K, value: AnyDropCoreConfig[K]): void;
   override setOption<K extends keyof AnyDropUIOptions>(name: K, value: AnyDropUIOptions[K]): void;
   override setOption(name: string, value: unknown): void {
     super.setOption(name as never, value as never);
-    if (!this.isDestroyed) this._uiApply(name);
+    if (this.isDestroyed) return;
+    if (/^dict/.test(name)) this._uiExplicit.add(name);
+    this._uiApply(name);
   }
 
   /**
@@ -377,6 +420,7 @@ export class AnyDrop extends AnyDropCore {
   override destroy(): void {
     if (this.isDestroyed) return;
     super.destroy();
+    destroyView(this._uiMsgView);
     this._uiCancel?.();
     this._uiTimers.forEach((t) => clearTimeout(t));
     this._uiTimers.clear();
@@ -398,13 +442,13 @@ export class AnyDrop extends AnyDropCore {
       parent.insertBefore(node, next && next.parentNode === parent ? next : null);
     }
     this._uiRemoved = [];
+    this._uiLang(true);
     const el = this.element;
-    el.classList.forEach((c) => {
+    Array.from(el.classList).forEach((c) => {
       if (/^ad-/.test(c)) el.classList.remove(c);
     });
-    el.classList.remove('ad-root');
-    if (!el.getAttribute('class')) el.removeAttribute('class');
     for (const c of this._uiClicked) c.classList.remove('ad-clickable');
+    if (!el.getAttribute('class')) el.removeAttribute('class');
     for (const k of this._uiAttrs) el.removeAttribute(k);
     delete (el as { anydrop?: AnyDrop }).anydrop;
     const i = AnyDrop.instances.indexOf(this);
@@ -433,7 +477,6 @@ export class AnyDrop extends AnyDropCore {
     // Our default message and buttons only go into an element that is itself the zone.
     if (!msg && !body && o.clickable === true) {
       msg = h('div', 'ad-message');
-      msg.appendChild(h('span', 'ad-message-text', undefined, o.dictDefaultMessage));
       el.appendChild(msg);
       this._uiOwn.push(msg);
     }
@@ -441,7 +484,9 @@ export class AnyDrop extends AnyDropCore {
     this._uiLive = h('div', 'ad-live ad-sr-only', { role: 'status', 'aria-live': 'polite' });
     el.appendChild(this._uiLive);
     this._uiPickers();
+    this._uiMessage();
     if (!this._uiNoPreviews()) this._uiBuildPanel();
+    this._uiLang();
     const mq = typeof matchMedia === 'function' ? matchMedia('(pointer: coarse)') : null;
     const touch = () => {
       const d = h('div');
@@ -470,7 +515,8 @@ export class AnyDrop extends AnyDropCore {
         tabindex: -1,
         'aria-hidden': 'true',
         'data-ad-input': folder ? 'folder' : 'files',
-        style: 'visibility:hidden;position:absolute;top:0;left:0;height:0;width:0',
+        style:
+          'visibility:hidden;position:absolute;top:0;left:0;height:0;width:0;overflow:hidden;max-width:0',
       });
       i.multiple = true;
       if (folder) {
@@ -512,21 +558,69 @@ export class AnyDrop extends AnyDropCore {
     });
   }
 
+  /** (Re)builds the drop message that the library owns: the default text, or what `render.message` returns. */
+  private _uiMessage(): void {
+    const msg = this._uiMsg;
+    destroyView(this._uiMsgView);
+    this._uiMsgView = null;
+    if (!msg || this._uiOwn.indexOf(msg) < 0) return;
+    msg.textContent = '';
+    this._uiMsgText = h('span', 'ad-message-text', undefined, this.options.dictDefaultMessage);
+    msg.appendChild(this._uiMsgText);
+    const c = this._uiMsgCtx();
+    this._uiMsgKey = msgKey(c);
+    const v = (this._uiMsgView = runHook(this, 'message', c));
+    if (v && v.el) {
+      msg.textContent = '';
+      msg.appendChild(v.el);
+    }
+  }
+
+  private _uiMsgCtx(): AnyDropMessageContext {
+    const el = this.element;
+    const max = this.options.maxFiles;
+    return Object.assign(this._uiBase(), {
+      kind: 'message' as const,
+      el: this._uiMsg as HTMLElement,
+      parts: { text: this._uiMsgText as HTMLElement },
+      text: this.options.dictDefaultMessage,
+      touch: this._uiTouch,
+      dragging: el.classList.contains('ad-drag-hover'),
+      disabled: this.disabled,
+      maxFilesReached: max != null && this.getAcceptedFiles().length >= max,
+      hasFiles: !!(this.files.length || this._uiExtras.length),
+      canPickFolder: !!this._uiFolderInput,
+      pickFiles: () => this._uiPick(false),
+      pickFolder: () => this._uiPick(true),
+    });
+  }
+
   private _uiBuildPanel(): void {
     const o = this.options;
     const box = resolve(o.previewsContainer) || this.element;
-    const panel = h('div', 'ad-panel ad-root', { hidden: true });
+    const panel = h('div', 'ad-panel ad-root ad-layout-' + o.layout, { hidden: true });
     if (o.theme !== 'auto') panel.setAttribute('data-ad-theme', o.theme);
     this._uiList = new RowList(this);
     panel.appendChild((this._uiBanner = new Banner(this)).el);
     if (o.toolbar) panel.appendChild((this._uiToolbar = new Toolbar(this)).el);
     panel.appendChild(this._uiList.v.el);
-    if (o.errorPanel) panel.appendChild((this._uiErrorPanel = new ErrorPanel(this)).el);
+    if (o.errorPanel) {
+      panel.appendChild((this._uiErrorPanel = new ErrorPanel(this)).el);
+      this._uiErrorPanel.set(this.getErrors());
+    }
     box.appendChild(panel);
     this._uiPanel = panel;
+    this._uiLang();
     for (const f of this.files) this._uiDefine(f);
     this._uiList.invalidate();
+    this._uiConnect(true);
     this._uiSchedule();
+  }
+
+  /** Panel rebuilt: every view gets `destroy()`, then the rows mount again. */
+  private _uiRebuild(): void {
+    this._uiDropPanel();
+    if (!this._uiNoPreviews()) this._uiBuildPanel();
   }
 
   private _uiDropPanel(): void {
@@ -611,7 +705,10 @@ export class AnyDrop extends AnyDropCore {
       const t = e.dataTransfer && e.dataTransfer.types;
       return !t || Array.prototype.indexOf.call(t, 'Files') >= 0;
     };
-    const hover = (on: boolean) => mark(el, 'drag-hover', on);
+    const hover = (on: boolean) => {
+      mark(el, 'drag-hover', on);
+      this._uiSchedule();
+    };
     L.on(el, 'dragenter', (e: DragEvent) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
@@ -663,6 +760,15 @@ export class AnyDrop extends AnyDropCore {
       L.on(c, 'click', (e: MouseEvent) => {
         const t = e.target as Node;
         if (this._uiInputs.indexOf(t as HTMLInputElement) >= 0) return;
+        // Controls inside the message (a custom one) do their own job.
+        if (
+          this._uiMsg &&
+          this._uiMsg.contains(t) &&
+          (t as Element).closest &&
+          (t as Element).closest('button,a,input,select,textarea,[data-ad-action]')
+        ) {
+          return;
+        }
         if (c !== el || t === el || (this._uiMsg && this._uiMsg.contains(t))) this._uiPick(false);
       });
     }
@@ -679,6 +785,7 @@ export class AnyDrop extends AnyDropCore {
 
   private _uiState(disabled: boolean): void {
     mark(this.element, 'disabled', disabled);
+    this._uiSchedule();
     this.element.querySelectorAll<HTMLButtonElement>('.ad-actions .ad-btn').forEach((b) => {
       b.disabled = disabled;
     });
@@ -838,10 +945,19 @@ export class AnyDrop extends AnyDropCore {
   /** @internal */
   _uiFlush(): void {
     if (this.isDestroyed) return;
-    this._uiList?.flush();
-    this._uiToolbar?.update();
+    // Shown first, so the list is laid out (and measurable) when it flushes.
     if (this._uiPanel) {
       this._uiPanel.hidden = !(this.files.length || this._uiExtras.length);
+    }
+    this._uiList?.flush();
+    this._uiToolbar?.update();
+    if (this._uiMsgView) {
+      const c = this._uiMsgCtx();
+      const k = msgKey(c);
+      if (k !== this._uiMsgKey) {
+        this._uiMsgKey = k;
+        updateView(this._uiMsgView, c);
+      }
     }
     const max = this.options.maxFiles;
     mark(this.element, 'max-files-reached', max != null && this.getAcceptedFiles().length >= max);
@@ -849,7 +965,7 @@ export class AnyDrop extends AnyDropCore {
 
   private _uiRelabel(): void {
     const o = this.options;
-    const t = this._uiMsg && this._uiMsg.querySelector('.ad-message-text');
+    const t = this._uiMsgText;
     if (t) t.textContent = o.dictDefaultMessage;
     if (this._uiFileBtn) {
       this._uiFileBtn.textContent = this._uiTouch ? o.dictTapToUpload : o.dictSelectFiles;
@@ -864,6 +980,56 @@ export class AnyDrop extends AnyDropCore {
     this._uiConnect(true);
     this._uiList?.invalidate(true);
     this._uiSchedule();
+  }
+
+  /** Rewrites every text from the language pack (or English); the texts the developer set stay. */
+  private _uiTexts(): void {
+    const en = Object.assign(defaultOptions(), uiDefaults()) as unknown as Record<string, unknown>;
+    const loc = (this._uiLoc ? this._uiLoc.dict : {}) as Record<string, unknown>;
+    const opts = this.options as unknown as Record<string, unknown>;
+    for (const k in en) {
+      if (!/^dict/.test(k) || k === 'dictRemoveFileConfirmation' || this._uiExplicit.has(k))
+        continue;
+      opts[k] =
+        k === 'dictFileSizeUnits' ? Object.assign({}, en[k], loc[k]) : k in loc ? loc[k] : en[k];
+    }
+    this._uiRelabel();
+  }
+
+  /** `lang`, `dir` and the `ad-theme-<name>` class on the element and the panel (`off`: put everything back). */
+  private _uiLang(off = false): void {
+    const loc = off ? null : this._uiLoc;
+    const o = this.options;
+    const preset = off ? null : o.themePreset;
+    for (const n of [this.element, this._uiPanel]) {
+      if (!n || n === document.body) continue;
+      if (this._uiPreset) n.classList.remove('ad-theme-' + this._uiPreset);
+      if (preset) n.classList.add('ad-theme-' + preset);
+    }
+    this._uiPreset = preset;
+    const dir = off ? null : o.dir !== 'auto' ? o.dir : loc ? loc.dir : null;
+    const vals: [string, string | null][] = [
+      ['lang', loc ? loc.code : null],
+      ['dir', dir],
+    ];
+    const saved = this._uiSaved;
+    for (const [k, v] of vals) {
+      if (this._uiPanel) {
+        if (v == null) this._uiPanel.removeAttribute(k);
+        else this._uiPanel.setAttribute(k, v);
+      }
+      const el = this.element;
+      if (el === document.body) continue;
+      if (v != null) {
+        if (!(k in saved)) saved[k] = el.getAttribute(k);
+        el.setAttribute(k, v);
+      } else if (k in saved) {
+        const was = saved[k];
+        if (was == null) el.removeAttribute(k);
+        else el.setAttribute(k, was);
+        delete saved[k];
+      }
+    }
   }
 
   private _uiApply(name: string): void {
@@ -884,12 +1050,23 @@ export class AnyDrop extends AnyDropCore {
       case 'rowHeight':
         this._uiList?.invalidate(true);
         break;
+      case 'icons':
+        this._uiPreviews.reset();
+        this._uiMessage();
+        this._uiRebuild();
+        break;
+      case 'render':
+        this._uiMessage();
+        this._uiRebuild();
+        break;
+      case 'rowActions':
+      case 'errorRowHeight':
+      case 'layout':
       case 'disablePreviews':
       case 'toolbar':
       case 'errorPanel':
       case 'previewsContainer':
-        this._uiDropPanel();
-        if (!this._uiNoPreviews()) this._uiBuildPanel();
+        this._uiRebuild();
         break;
       case 'folders':
       case 'pickerButtons':
@@ -904,6 +1081,15 @@ export class AnyDrop extends AnyDropCore {
       case 'enablePaste':
         this._uiDetach();
         if (!this.disabled) this._uiAttach();
+        break;
+      case 'locale':
+        this._uiLoc = pickLocale(o.locale, true);
+        this._uiTexts();
+        this._uiLang();
+        break;
+      case 'dir':
+      case 'themePreset':
+        this._uiLang();
         break;
       case 'theme':
         for (const n of [this.element, this._uiPanel]) {
@@ -987,19 +1173,13 @@ export class AnyDrop extends AnyDropCore {
         else if (entry) m.retryFailedOnly?.();
         break;
       }
-      case 'cancel-key':
-        if (folder && typeof window !== 'undefined') {
-          return AnyDrop.confirm(this.options.dictCancelUploadConfirmation, () =>
-            this._uiRun('cancel', item),
-          );
-        }
-        return this._uiRun('cancel', item);
       case 'cancel':
         if (folder) m.cancelFolder?.(folder.path);
-        else if (file) {
-          if (ACTIVE.test(file.status || '') && this.getFile(file.id)) this.cancelUpload(file);
-          else this.removeFile(file);
-        }
+        else if (file && ACTIVE.test(file.status || '') && this.getFile(file.id))
+          this.cancelUpload(file);
+        break;
+      case 'remove':
+        if (file) this.removeFile(file);
         break;
       case 'export-json':
         return this.downloadErrors('json');
@@ -1030,6 +1210,11 @@ export class AnyDrop extends AnyDropCore {
     if (item.status === 'uploading') AnyDrop.confirm(o.dictCancelUploadConfirmation, remove);
     else if (o.dictRemoveFileConfirmation) AnyDrop.confirm(o.dictRemoveFileConfirmation, remove);
     else remove();
+  }
+
+  /** @internal The members every render context has. */
+  _uiBase() {
+    return baseContext(this);
   }
 
   private _uiSay(text: string): void {

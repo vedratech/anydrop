@@ -1,6 +1,13 @@
 // UI options and their defaults.
 import type { AnyDropCoreOptions, AnyDropEventHandlers } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
+import type {
+  AnyDropIcons,
+  AnyDropLayout,
+  AnyDropLocale,
+  AnyDropRenderHooks,
+  AnyDropRowActions,
+} from './types';
 
 export type ElementRef = string | HTMLElement;
 
@@ -156,8 +163,24 @@ export interface AnyDropUIOptions extends AnyDropDict {
   // New in AnyDrop
   /** `'tree'` (collapsible folders) or `'flat'` (files with their full path). Default `'tree'`. */
   folderView: 'tree' | 'flat';
-  /** Row height in px of the virtualized list. */
-  rowHeight: number;
+  /** Row height in px of the virtualized list. `null` = the layout's default (`list` 56, `compact` 48). */
+  rowHeight: number | null;
+  /** Custom content for file rows, folder rows, the toolbar, the drop message and error rows. Default `{}`. */
+  render: AnyDropRenderHooks;
+  /** `'list'` or `'compact'` (48px rows, no thumbnail). Default `'list'`. */
+  layout: AnyDropLayout;
+  /** The buttons of file and folder rows: built-in ids or your own `{ id, label, icon, when, onClick }`. */
+  rowActions: AnyDropRowActions;
+  /** Replacement icons: a record of SVG strings by name, or a function. Trusted developer input. Default `null`. */
+  icons: AnyDropIcons;
+  /** A language pack (object or the code of a registered one). `null` = built-in English. */
+  locale: AnyDropLocale | string | null;
+  /** Text direction. `'auto'` follows the locale, or the page when there is none. */
+  dir: 'auto' | 'ltr' | 'rtl';
+  /** Adds the class `ad-theme-<name>` to the element and the panel. Default `null`. */
+  themePreset: string | null;
+  /** Height in px of a row of the error panel. Default `64`. */
+  errorRowHeight: number;
   /** Show the toolbar. Default `true`. */
   toolbar: boolean;
   /** Show the error panel when files failed. Default `true`. */
@@ -175,14 +198,12 @@ export type AnyDropFullOptions = AnyDropCoreOptions<AnyDrop> &
   AnyDropEventHandlers<AnyDrop>;
 
 /** What the constructor and `setOption` accept. */
-export type AnyDropConfig = Partial<AnyDropCoreOptions<AnyDrop> & AnyDropUIOptions> &
-  AnyDropEventHandlers<AnyDrop>;
-
-const MARK =
-  '<svg width="54" height="54" viewBox="0 0 54 54" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M10 30l4-4a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 0 1.4 0L38.3 15.7a1 1 0 0 1 1.4 0l4 4a1 1 0 0 1 0 1.4L22.7 42.3a1 1 0 0 1-1.4 0L10.2 31.2a1 1 0 0 1-.2-1.2z"/></svg>';
-
-const XMARK =
-  '<svg width="54" height="54" viewBox="0 0 54 54" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M19 17l-2 2 8 8-8 8 2 2 8-8 8 8 2-2-8-8 8-8-2-2-8 8z"/></svg>';
+export type AnyDropConfig = Partial<
+  Omit<AnyDropCoreOptions<AnyDrop> & AnyDropUIOptions, 'dictFileSizeUnits'>
+> & {
+  /** Units of file sizes. You may give only some of them. */
+  dictFileSizeUnits?: Partial<AnyDropCoreOptions<AnyDrop>['dictFileSizeUnits']>;
+} & AnyDropEventHandlers<AnyDrop>;
 
 /** The default preview template. `data-ad-*` attributes mark the parts that get filled in. */
 export const DEFAULT_TEMPLATE =
@@ -194,12 +215,8 @@ export const DEFAULT_TEMPLATE =
   '</div>' +
   '<div class="ad-file-progress"><span class="ad-file-bar" data-ad-uploadprogress></span></div>' +
   '<div class="ad-file-error-message"><span data-ad-errormessage></span></div>' +
-  '<div class="ad-file-success-mark">' +
-  MARK +
-  '</div>' +
-  '<div class="ad-file-error-mark">' +
-  XMARK +
-  '</div>' +
+  '<div class="ad-file-success-mark"></div>' +
+  '<div class="ad-file-error-mark"></div>' +
   '</div>';
 
 /** The default UI options (a fresh object each call). */
@@ -227,7 +244,18 @@ export function uiDefaults(): AnyDropUIOptions {
     fallback: null,
     init: null,
     folderView: 'tree',
-    rowHeight: 56,
+    rowHeight: null,
+    render: {},
+    layout: 'list',
+    rowActions: {
+      file: ['pause', 'resume', 'retry', 'cancel', 'remove'],
+      folder: ['pause', 'resume', 'retry', 'cancel'],
+    },
+    icons: null,
+    locale: null,
+    dir: 'auto',
+    themePreset: null,
+    errorRowHeight: 64,
     toolbar: true,
     errorPanel: true,
     pickerButtons: true,

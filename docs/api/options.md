@@ -124,12 +124,20 @@ These options exist in `@vedratech/anydrop-ui` only.
 | `fallback` | `(() => void) \| null` | `null` | Runs when the browser lacks the needed APIs, or with `forceFallback`. `null` means the default form. |
 | `init` | `(() => void) \| null` | `null` | Called at the end of the constructor. |
 | `folderView` | `'tree' \| 'flat'` | `'tree'` | A collapsible tree, or a flat list of files with their full path. Can be changed with `setOption`. |
-| `rowHeight` | `number` | `56` | Row height in px of the virtualised list. Use a larger value for a taller `previewTemplate`. |
+| `rowHeight` | `number \| null` | `null` | Row height in px of the virtualised list. `null` uses the height of the layout: 56 for `list`, 48 for `compact`. A number overrides it in every layout. Use a larger value for a taller `previewTemplate`. See [Layouts](/guide/layouts). |
 | `toolbar` | `boolean` | `true` | Show the toolbar. |
 | `errorPanel` | `boolean` | `true` | Show the error panel when files failed. |
 | `pickerButtons` | `boolean` | `true` | The "Select files" and "Select folder" buttons. They appear only when the element itself is clickable. |
 | `enablePaste` | `boolean` | `false` | Add files pasted into the element. Off by default. |
-| `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | `'auto'` follows `prefers-color-scheme`. |
+| `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | `'auto'` follows `prefers-color-scheme`. Combines with any `themePreset`. |
+| `layout` | `'list' \| 'compact'` | `'list'` | How files are laid out. `compact` is a denser row without a thumbnail. Can be changed with `setOption`. See [Layouts](/guide/layouts). |
+| `errorRowHeight` | `number` | `64` | Height in px of a row of the error panel. Raise it when `render.errorItem` returns taller content. |
+| `render` | `AnyDropRenderHooks` | `{}` | Hooks `file`, `folder`, `toolbar`, `message` and `errorItem` that decorate or replace the default content. See [Render hooks](/guide/render-hooks). |
+| `rowActions` | `{ file?, folder? }` | `{ file: ['pause', 'resume', 'retry', 'cancel', 'remove'], folder: ['pause', 'resume', 'retry', 'cancel'] }` | The buttons of a row: built-in ids, overrides and custom actions. Merged per key. See [Row actions and icons](/guide/row-actions-icons). |
+| `icons` | `AnyDropIcons \| null` | `null` | A record of SVG strings, or a function that returns one, to replace the built-in icons. See [Row actions and icons](/guide/row-actions-icons). |
+| `locale` | `AnyDropLocale \| string \| null` | `null` | A language pack, or the code of one registered in `AnyDrop.locales`. `null` and `'en'` mean the built-in English. Explicit `dict*` options win over it. See [Languages and RTL](/guide/languages). |
+| `dir` | `'auto' \| 'ltr' \| 'rtl'` | `'auto'` | Text direction. `'auto'` uses the direction of the locale, or inherits from the page when there is no locale. |
+| `themePreset` | `string \| null` | `null` | Adds the class `ad-theme-<name>` to the element and the panel, so a preset stylesheet applies. See [Themes](/guide/themes). |
 
 ## Texts
 

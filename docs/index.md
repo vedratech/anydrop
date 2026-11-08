@@ -80,7 +80,7 @@ features:
 
 AnyDrop is a **JavaScript folder upload** library: users can **drag and drop** whole folders or pick them, and your page uploads them with **chunked, resumable uploads**, **pause and resume**, retry and a persistent error list. It is configured with plain options and events. There is no server to install: your backend implements a [small HTTP contract](/backend/).
 
-AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 31.7 kB gzip, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
+AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 34.7 kB gzip, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
 
 </div>
 

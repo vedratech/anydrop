@@ -1,0 +1,60 @@
+/* AnyDrop theme preset "rounded": large radius, pill buttons, soft shadow, violet accent.
+   Use it with the option themePreset: 'rounded'. Import it after style.css. */
+.ad-root.ad-theme-rounded,
+.ad-panel.ad-theme-rounded {
+  --ad-color-bg: #ffffff;
+  --ad-color-surface: #f5f3ff;
+  --ad-color-text: #1f2937;
+  --ad-color-muted: #4b5563;
+  --ad-color-border: #6b7280;
+  --ad-color-border-soft: #ddd6fe;
+  --ad-color-accent: #6d28d9;
+  --ad-color-on-accent: #ffffff;
+  --ad-color-hover: #ede9fe;
+  --ad-color-success: #166534;
+  --ad-color-error: #b91c1c;
+  --ad-color-warning: #92400e;
+  --ad-color-track: #ddd6fe;
+  --ad-color-focus: #6d28d9;
+  --ad-radius: 16px;
+  --ad-btn-radius: 999px;
+  --ad-shadow: 0 4px 16px rgb(76 29 149 / 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  .ad-root.ad-theme-rounded:not([data-ad-theme='light']),
+  .ad-panel.ad-theme-rounded:not([data-ad-theme='light']) {
+    --ad-color-bg: #14111f;
+    --ad-color-surface: #1f1a33;
+    --ad-color-text: #f5f3ff;
+    --ad-color-muted: #d4d0e6;
+    --ad-color-border: #a79fc4;
+    --ad-color-border-soft: #3b3358;
+    --ad-color-accent: #a78bfa;
+    --ad-color-on-accent: #1a1033;
+    --ad-color-hover: #2d2550;
+    --ad-color-success: #86efac;
+    --ad-color-error: #fca5a5;
+    --ad-color-warning: #fcd34d;
+    --ad-color-track: #4c4470;
+    --ad-color-focus: #c4b5fd;
+    --ad-shadow: 0 4px 16px rgb(0 0 0 / 0.4);
+  }
+}
+.ad-root.ad-theme-rounded[data-ad-theme='dark'],
+.ad-panel.ad-theme-rounded[data-ad-theme='dark'] {
+  --ad-color-bg: #14111f;
+  --ad-color-surface: #1f1a33;
+  --ad-color-text: #f5f3ff;
+  --ad-color-muted: #d4d0e6;
+  --ad-color-border: #a79fc4;
+  --ad-color-border-soft: #3b3358;
+  --ad-color-accent: #a78bfa;
+  --ad-color-on-accent: #1a1033;
+  --ad-color-hover: #2d2550;
+  --ad-color-success: #86efac;
+  --ad-color-error: #fca5a5;
+  --ad-color-warning: #fcd34d;
+  --ad-color-track: #4c4470;
+  --ad-color-focus: #c4b5fd;
+  --ad-shadow: 0 4px 16px rgb(0 0 0 / 0.4);
+}

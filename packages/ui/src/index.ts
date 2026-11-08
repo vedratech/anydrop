@@ -15,3 +15,24 @@ export type {
   ElementRef,
 } from './options';
 export type { MockFile } from './preview';
+export type {
+  AnyDropErrorItemContext,
+  AnyDropFileAction,
+  AnyDropFileContext,
+  AnyDropFolderAction,
+  AnyDropFolderContext,
+  AnyDropIconName,
+  AnyDropIcons,
+  AnyDropLayout,
+  AnyDropLocale,
+  AnyDropMessageContext,
+  AnyDropRenderContext,
+  AnyDropRenderHook,
+  AnyDropRenderHooks,
+  AnyDropRenderResult,
+  AnyDropRenderView,
+  AnyDropRowAction,
+  AnyDropRowActions,
+  AnyDropTexts,
+  AnyDropToolbarContext,
+} from './types';

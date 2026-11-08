@@ -6,6 +6,7 @@ const src = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // AD_PKG=dist runs the demo against the built packages (what ships). The e2e suite sets it, so
 // edits to package sources by other people or agents cannot reload the page in the middle of a test.
 const dist = process.env.AD_PKG === 'dist';
+const ui = src('../packages/ui/').replace(/\\/g, '/');
 
 // The demo may run against core's source, so inject the version as the core build does.
 const { version } = JSON.parse(
@@ -17,6 +18,15 @@ export default defineConfig({
   resolve: {
     // Default: run against package sources so the demo needs no prior build and hot-reloads edits.
     alias: [
+      {
+        // Language packs and theme presets: src/ in dev, dist/ (what ships) under e2e.
+        find: /^@vedratech\/anydrop-ui\/locales\/(.*)$/,
+        replacement: ui + (dist ? 'dist/locales/$1.js' : 'src/locales/$1.ts'),
+      },
+      {
+        find: /^@vedratech\/anydrop-ui\/themes\/(.*)$/,
+        replacement: ui + (dist ? 'dist/themes/$1' : 'src/themes/$1'),
+      },
       {
         find: '@vedratech/anydrop-ui/style.css',
         replacement: src(dist ? '../packages/ui/dist/style.css' : '../packages/ui/src/style.css'),

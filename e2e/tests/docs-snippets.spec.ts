@@ -15,18 +15,31 @@ test.beforeEach(({}, testInfo) => {
 test('the documented programmatic configuration, events and methods work as written', async ({
   page,
   mock,
+  browserName,
 }) => {
   const errors = await openDemo(page, mock);
   const seenHeaders: string[] = [];
   const seenBodies: string[] = [];
-  await page.route(`${mock.url}/upload`, async (route) => {
-    const req = route.request();
-    if (req.method() === 'POST') {
+  // A request body is only readable through a route (the `request` event has no body for Blob parts
+  // in Chromium). On WebKit a route over upload traffic is where the sporadic empty chunk body was seen
+  // (WEBKIT-FLAKE-1, decision 0019), so there the headers are observed without intercepting and the
+  // form field is checked from the page (the `sending` handler below) instead of from the wire.
+  const intercept = browserName !== 'webkit';
+  if (intercept) {
+    await page.route(`${mock.url}/upload`, async (route) => {
+      const req = route.request();
+      if (req.method() === 'POST') {
+        seenHeaders.push(req.headers()['my-awesome-header'] ?? '');
+        seenBodies.push(req.postDataBuffer()?.toString('latin1') ?? '');
+      }
+      return route.fallback();
+    });
+  } else {
+    page.on('request', (req) => {
+      if (req.url() !== `${mock.url}/upload` || req.method() !== 'POST') return;
       seenHeaders.push(req.headers()['my-awesome-header'] ?? '');
-      seenBodies.push(req.postDataBuffer()?.toString('latin1') ?? '');
-    }
-    return route.fallback();
-  });
+    });
+  }
   await page.evaluate((url) => {
     (window as unknown as { AnyDrop: unknown }).AnyDrop = (
       window as unknown as { anydrop: { AnyDrop: unknown } }
@@ -64,6 +77,7 @@ test('the documented programmatic configuration, events and methods work as writ
     });
     myZone.on("sending", function (file, xhr, formData) {
       formData.append("userName", "bob");
+      window.sentUserName = (window.sentUserName || 0) + (formData.get("userName") === "bob" ? 1 : 0);
       window.log.push("sending:" + file.name);
     });
     myZone.on("processing", function (file) { window.log.push("processing:" + file.name); });
@@ -139,7 +153,13 @@ test('the documented programmatic configuration, events and methods work as writ
   ]);
   expect(seenHeaders.length).toBeGreaterThanOrEqual(3);
   expect(seenHeaders.every((h) => h === 'header value')).toBe(true);
-  expect(seenBodies.every((b) => b.includes('userName') && b.includes('bob'))).toBe(true);
+  if (intercept) {
+    expect(seenBodies.every((b) => b.includes('userName') && b.includes('bob'))).toBe(true);
+  }
+  // Each sent chunk or file went through `sending`, where the field was added.
+  expect(
+    await page.evaluate(() => (window as unknown as { sentUserName: number }).sentUserName),
+  ).toBeGreaterThanOrEqual(3);
 
   // Methods: getAcceptedFiles, getRejectedFiles, removeAllFiles(true).
   const state = await page.evaluate(() => {

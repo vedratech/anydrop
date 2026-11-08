@@ -2,22 +2,44 @@
 // rows near the viewport exist in the DOM, and changes are painted in batches.
 import type { AnyDropFile, FolderNode } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
-import { fmt, h, icon, iconBtn, Listeners } from './dom';
+import { fmt, h, iconBtn, Listeners, report, textBtn } from './dom';
+import { iconEl } from './icons';
+import { destroyView, type Mounted, runHook, updateView } from './render';
 import type { Item, MockFile } from './preview';
+import type { AnyDropFileContext, AnyDropFolderContext, AnyDropRowAction } from './types';
 import { VirtualList } from './virtual';
 
 const KEEP = 400; // above this many rows, preview elements of rows that left the window are dropped
 const ACTIVE = /^(added|queued|uploading|paused)$/;
 
+const BUILTIN = {
+  file: ['pause', 'resume', 'retry', 'cancel', 'remove'],
+  folder: ['pause', 'resume', 'retry', 'cancel'],
+};
+const LABEL: Record<string, string> = {
+  pause: 'dictPause',
+  resume: 'dictResume',
+  retry: 'dictRetry',
+  cancel: 'dictCancelUpload',
+  remove: 'dictRemoveFile',
+};
+
+type Ctx = AnyDropFileContext | AnyDropFolderContext;
+type Act = Partial<AnyDropRowAction<Ctx>> & { id: string; builtin: boolean };
+
 export const isFolder = (x: unknown): x is FolderNode => Array.isArray((x as FolderNode).children);
 
 interface RowRefs {
+  acts: Act[];
+  actions: HTMLElement;
   badge: HTMLElement;
   name?: HTMLElement;
   count?: HTMLElement;
   bar?: HTMLElement;
   caret?: HTMLElement;
+  main?: HTMLElement;
   b: Record<string, HTMLButtonElement>;
+  view?: Mounted | null;
 }
 
 let seq = 0;
@@ -44,6 +66,8 @@ export class RowList {
       itemAt: (i) => this.rows[i],
       updated: () => this.describe(),
       release: (_i, row) => {
+        // The view goes first, while its element is still in the document.
+        destroyView((this.refs.get(row) as RowRefs).view);
         const it = this.items.get(row);
         if (it && !isFolder(it) && this.rows.length > KEEP) ad._uiPreviews.release(it);
       },
@@ -145,7 +169,10 @@ export class RowList {
     this.index.clear();
     rows.forEach((r, i) => this.index.set(r, i));
     const had = this.v.el.contains(document.activeElement) && document.activeElement !== this.v.el;
-    this.v.setCount(rows.length, ad.options.rowHeight);
+    this.v.setCount(
+      rows.length,
+      ad.options.rowHeight ?? (ad.options.layout === 'compact' ? 48 : 56),
+    );
     this.v.mounted.forEach((row, i) => {
       const it = this.rows[i];
       if (it) this.paint(row, it);
@@ -192,9 +219,15 @@ export class RowList {
     row.setAttribute('aria-setsize', String(size));
     row.style.setProperty('--ad-depth', String(this.depths[i] || 0));
     this.items.set(row, item);
-    const r: RowRefs = { badge: h('span', 'ad-badge'), b: {} };
+    const acts = h('div', 'ad-row-actions');
+    const r: RowRefs = {
+      badge: h('span', 'ad-badge'),
+      b: {},
+      actions: acts,
+      acts: this.acts(folder),
+    };
     if (folder) {
-      const caret = iconBtn('toggle', 'caret', o.dictCollapse);
+      const caret = iconBtn('toggle', iconEl(o, 'toggle'), o.dictCollapse);
       caret.classList.add('ad-caret');
       r.caret = caret;
       const main = h('div', 'ad-folder-main');
@@ -204,111 +237,198 @@ export class RowList {
       const prog = h('div', 'ad-progress ad-folder-progress', { role: 'progressbar' });
       prog.appendChild(r.bar);
       const top = h('div', 'ad-folder-top');
-      top.append(icon('folder', 'ad-folder-icon'), r.name, r.count);
+      top.append(iconEl(o, 'folder', 'ad-folder-icon'), r.name, r.count);
       main.append(top, prog);
+      r.main = main;
       row.append(caret, main);
     } else {
       row.appendChild(ad._uiPreviews.get(item as Item));
     }
     row.appendChild(r.badge);
-    const acts = h('div', 'ad-row-actions');
-    for (const [a, ic, label] of [
-      ['pause', 'pause', o.dictPause],
-      ['resume', 'play', o.dictResume],
-      ['retry', 'retry', o.dictRetry],
-      ['cancel', 'close', o.dictCancelUpload],
-    ] as const) {
-      acts.appendChild((r.b[a] = iconBtn(a, ic, label)));
+    for (const a of r.acts) {
+      acts.appendChild(
+        (r.b[a.id] =
+          a.icon || a.builtin ? iconBtn(a.id, iconEl(o, a.icon || a.id), '') : textBtn(a.id, '')),
+      );
     }
     row.appendChild(acts);
     this.refs.set(row, r);
     this.paint(row, item);
+    // The hook sees the default parts, already painted; the row is not in the document yet.
+    const m = (r.view = runHook(ad, folder ? 'folder' : 'file', this.context(row, item, r)));
+    if (m && m.el) {
+      row.textContent = '';
+      row.appendChild(m.el);
+      row.classList.add('ad-row-custom');
+    }
     return row;
+  }
+
+  /** The configured actions of a row kind: built-in ids and custom objects, as one list. */
+  private acts(folder: boolean): Act[] {
+    const kind = folder ? 'folder' : 'file';
+    const list = (this.ad.options.rowActions || {})[kind] || BUILTIN[kind];
+    return (list as (string | (Partial<AnyDropRowAction<Ctx>> & { id: string }))[]).map((a) => {
+      const x = typeof a === 'string' ? { id: a } : a;
+      return { ...x, builtin: BUILTIN[kind].indexOf(x.id) >= 0 };
+    });
+  }
+
+  /** The render context of a row: its state, the default parts and the built-in actions. */
+  private context(row: HTMLElement, item: FolderNode | Item, r: RowRefs): Ctx {
+    const { ad } = this;
+    const o = ad.options;
+    const at = this.index.get(item);
+    const depth = at == null ? 0 : this.depths[at] || 0;
+    const folder = isFolder(item);
+    const f = item as AnyDropFile;
+    const st = (folder ? item.status : f.status) || 'success';
+    let can: Record<string, boolean>;
+    let waiting: boolean;
+    if (folder) {
+      const c = item.counts;
+      const live = c.queued + c.uploading + c.added;
+      can = {
+        pause: !item.userPaused && (live > 0 || (ad._uiConn !== 'online' && c.paused > 0)),
+        resume: !!item.userPaused,
+        retry: c.error > 0,
+        cancel: live + c.paused > 0,
+      };
+      waiting = !item.userPaused;
+    } else {
+      const own = ad._uiUserFiles.has(f);
+      const held = ad._uiUserAll || this.ancestorPaused(f);
+      can = {
+        pause:
+          !own &&
+          (st === 'queued' ||
+            st === 'uploading' ||
+            st === 'added' ||
+            (st === 'paused' && ad._uiConn !== 'online' && !held)),
+        resume: st === 'paused' && own && !held,
+        retry: st === 'error' && !!ad._uiErrors.get(f.id)?.retryable,
+        cancel: ACTIVE.test(st),
+        remove: !ACTIVE.test(st),
+      };
+      waiting = !own && !this.ancestorPaused(f);
+    }
+    // Paused only by the system (offline, unreachable): "Waiting for connection", not "Paused".
+    waiting = st === 'paused' && ad._uiConn !== 'online' && !ad._uiUserAll && waiting;
+    const run = (id: string) => () => {
+      if (can[id]) ad._uiRun(id, item);
+    };
+    const c = Object.assign(ad._uiBase(), {
+      kind: folder ? 'folder' : 'file',
+      status: st,
+      statusText: waiting
+        ? o.dictWaitingForConnection
+        : (o as unknown as Record<string, string>)[
+            'dictStatus' + st.charAt(0).toUpperCase() + st.slice(1)
+          ] || st,
+      waiting,
+      depth,
+      active: item === this.active,
+      row,
+      can,
+      pause: run('pause'),
+      resume: run('resume'),
+      retry: run('retry'),
+      cancel: run('cancel'),
+      remove: run('remove'),
+    }) as unknown as Ctx;
+    if (isFolder(item)) {
+      const k = c as AnyDropFolderContext;
+      k.folder = item;
+      k.label = item.name;
+      k.progress = item.progress;
+      k.counts = item.counts;
+      k.expanded = !this.collapsed.has(item.path);
+      k.toggle = () => this.toggle(item);
+      k.parts = {
+        toggle: r.caret as HTMLButtonElement,
+        main: r.main as HTMLElement,
+        badge: r.badge,
+        actions: r.actions,
+      };
+    } else {
+      const k = c as AnyDropFileContext;
+      const pv = ad._uiPreviews;
+      k.file = f;
+      k.label = o.folderView === 'flat' && f.relativePath ? f.relativePath : f.name;
+      k.sizeText = ad.filesize(f.size).replace(/<[^>]*>/g, '');
+      k.progress = st === 'success' ? 100 : f.upload?.progress || 0;
+      k.error = ad._uiErrors.get(f.id) || null;
+      k.errorMessage = st === 'error' || st === 'canceled' ? pv.msgs.get(f) || '' : '';
+      k.thumbnail = pv.thumb(f);
+      k.parts = { preview: pv.get(f), badge: r.badge, actions: r.actions };
+    }
+    return c;
   }
 
   private paint(row: HTMLElement, item: FolderNode | Item): void {
     const { ad } = this;
     const o = ad.options;
     const r = this.refs.get(row) as RowRefs;
-    const at = this.index.get(item);
-    if (at != null) {
-      const d = this.depths[at] || 0;
-      row.style.setProperty('--ad-depth', String(d));
-      row.setAttribute('aria-level', String(d + 1));
-    }
-    row.classList.toggle('ad-row-active', item === this.active);
-    row.setAttribute('aria-selected', String(item === this.active));
-    let st: string;
-    let canPause: boolean;
-    let canResume: boolean;
-    let canRetry: boolean;
-    let canCancel: boolean;
-    if (isFolder(item)) {
-      const c = item.counts;
-      st = item.status;
-      const open = !this.collapsed.has(item.path);
-      (r.name as HTMLElement).textContent = item.name;
+    const c = this.context(row, item, r);
+    row.style.setProperty('--ad-depth', String(c.depth));
+    row.setAttribute('aria-level', String(c.depth + 1));
+    row.classList.toggle('ad-row-active', c.active);
+    row.setAttribute('aria-selected', String(c.active));
+    if (c.kind === 'folder') {
+      const n = c.counts;
+      (r.name as HTMLElement).textContent = c.label;
       (r.count as HTMLElement).textContent = fmt(o.dictFolderCount, {
-        done: c.success,
-        total: c.total,
+        done: n.success,
+        total: n.total,
       });
-      (r.bar as HTMLElement).style.width = item.progress + '%';
+      (r.bar as HTMLElement).style.width = c.progress + '%';
       const p = (r.bar as HTMLElement).parentElement as HTMLElement;
-      p.setAttribute('aria-valuenow', String(Math.round(item.progress)));
-      p.setAttribute('aria-label', item.name);
-      row.setAttribute('aria-expanded', String(open));
-      (r.caret as HTMLElement).classList.toggle('ad-open', open);
-      (r.caret as HTMLElement).setAttribute('aria-expanded', String(open));
-      const cap = open ? o.dictCollapse : o.dictExpand;
-      (r.caret as HTMLElement).title = cap;
-      (r.caret as HTMLElement).setAttribute('aria-label', cap);
-      const live = c.queued + c.uploading + c.added;
-      canPause = !item.userPaused && (live > 0 || (ad._uiConn !== 'online' && c.paused > 0));
-      canResume = !!item.userPaused;
-      canRetry = c.error > 0;
-      canCancel = live + c.paused > 0;
+      p.setAttribute('aria-valuenow', String(Math.round(c.progress)));
+      p.setAttribute('aria-label', c.label);
+      row.setAttribute('aria-expanded', String(c.expanded));
+      const caret = r.caret as HTMLElement;
+      caret.classList.toggle('ad-open', c.expanded);
+      caret.setAttribute('aria-expanded', String(c.expanded));
+      const cap = c.expanded ? o.dictCollapse : o.dictExpand;
+      caret.title = cap;
+      caret.setAttribute('aria-label', cap);
     } else {
-      const f = item as AnyDropFile;
-      st = f.status || 'success';
-      const label = o.folderView === 'flat' && f.relativePath ? f.relativePath : f.name;
-      ad._uiPreviews.sync(f, label);
-      const e = ad._uiPreviews.has(f) ? ad._uiPreviews.get(f) : null;
-      if (e && e.parentElement !== row) row.insertBefore(e, r.badge);
-      const own = ad._uiUserFiles.has(f);
-      const held = ad._uiUserAll || this.ancestorPaused(f);
-      canPause =
-        !own &&
-        (st === 'queued' ||
-          st === 'uploading' ||
-          st === 'added' ||
-          (st === 'paused' && ad._uiConn !== 'online' && !held));
-      canResume = st === 'paused' && own && !held;
-      canRetry = st === 'error' && !!ad._uiErrors.get(f.id)?.retryable;
-      canCancel = true;
-      const cancel = r.b.cancel as HTMLButtonElement;
-      const text = ACTIVE.test(st) ? o.dictCancelUpload : o.dictRemoveFile;
-      cancel.title = text;
-      cancel.setAttribute('aria-label', text);
+      ad._uiPreviews.sync(c.file as AnyDropFile, c.label);
+      const e = c.parts.preview;
+      if (!(r.view && r.view.el) && e.parentElement !== row) row.insertBefore(e, r.badge);
     }
-    // Paused only by the system (offline, unreachable): "Waiting for connection", not "Paused".
-    const waiting =
-      st === 'paused' &&
-      ad._uiConn !== 'online' &&
-      !ad._uiUserAll &&
-      (isFolder(item)
-        ? !item.userPaused
-        : !ad._uiUserFiles.has(item) && !this.ancestorPaused(item as AnyDropFile));
-    r.badge.textContent = waiting
-      ? o.dictWaitingForConnection
-      : (o as unknown as Record<string, string>)[
-          'dictStatus' + st.charAt(0).toUpperCase() + st.slice(1)
-        ] || st;
-    row.setAttribute('data-status', st);
-    row.className = row.className.replace(/ ad-s-\w+/, '') + ' ad-s-' + st;
-    (r.b.pause as HTMLElement).hidden = !canPause;
-    (r.b.resume as HTMLElement).hidden = !canResume;
-    (r.b.retry as HTMLElement).hidden = !canRetry;
-    (r.b.cancel as HTMLElement).hidden = !canCancel;
+    r.badge.textContent = c.statusText;
+    row.setAttribute('data-status', c.status);
+    row.className = row.className.replace(/ ad-s-\w+/, '') + ' ad-s-' + c.status;
+    const fa = document.activeElement as HTMLElement | null; // read before a button is hidden
+    for (const a of r.acts) {
+      const b = r.b[a.id] as HTMLButtonElement;
+      let show = !a.builtin || (c.can as Record<string, boolean>)[a.id];
+      try {
+        if (show && a.when) show = !!a.when(c);
+      } catch (e) {
+        report(e);
+        show = false;
+      }
+      b.hidden = !show;
+      let text = a.label;
+      try {
+        if (typeof text === 'function') text = text(c);
+      } catch (e) {
+        report(e);
+        text = '';
+      }
+      text = text || (a.builtin ? (o[LABEL[a.id] as 'dictPause'] as string) : a.id);
+      if (b.classList.contains('ad-icon-btn')) {
+        b.title = text;
+        b.setAttribute('aria-label', text);
+      } else b.textContent = text;
+    }
+    // The focused button may have just been hidden (cancel gives way to remove): keep the focus in the row.
+    if (fa && fa.hidden && row.contains(fa)) {
+      (r.actions.querySelector<HTMLElement>('[data-ad-action]:not([hidden])') || this.v.el).focus();
+    }
+    updateView(r.view, c);
   }
 
   private ancestorPaused(f: AnyDropFile): boolean {
@@ -334,7 +454,7 @@ export class RowList {
     const btn = t.closest<HTMLElement>('[data-ad-action]');
     const action = btn?.getAttribute('data-ad-action');
     if (action === 'toggle' && isFolder(item)) return this.toggle(item);
-    if (action) return this.ad._uiRun(action, item);
+    if (action) return this.fire(action, row, item, e);
     if (t.closest('[data-ad-remove]')) {
       e.preventDefault();
       e.stopPropagation();
@@ -365,7 +485,15 @@ export class RowList {
     const cur = this.active == null ? -1 : (this.index.get(this.active) ?? -1);
     const item = this.rows[cur];
     let to = -2;
-    switch (e.key) {
+    let k = e.key;
+    // Left and Right swap in right-to-left text.
+    if (
+      (k === 'ArrowLeft' || k === 'ArrowRight') &&
+      getComputedStyle(this.v.el).direction === 'rtl'
+    ) {
+      k = k === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft';
+    }
+    switch (k) {
       case 'ArrowDown':
         to = Math.min(n - 1, cur + 1);
         break;
@@ -407,26 +535,56 @@ export class RowList {
         return this.stop(e, () => {});
       case 'Delete':
       case 'Backspace':
-        if (item) return this.stop(e, () => this.ad._uiRun('cancel-key', item));
-        return;
+        return this.shortcut(e, cur, ['cancel', 'remove']);
       case 'p':
       case 'P':
-        if (item) {
-          const r = this.refs.get(this.v.mounted.get(cur) as HTMLElement);
-          const a = r && !r.b.resume?.hidden ? 'resume' : 'pause';
-          return this.stop(e, () => this.ad._uiRun(a, item));
-        }
-        return;
+        return this.shortcut(e, cur, ['resume', 'pause']);
       case 'r':
       case 'R':
-        if (item) return this.stop(e, () => this.ad._uiRun('retry', item));
-        return;
+        return this.shortcut(e, cur, ['retry']);
       default:
         return;
     }
     if (to === -2) return;
     e.preventDefault();
     this.setActive(Math.max(0, to));
+  }
+
+  /** Runs the first of `ids` that is configured for the row and applies now (its button is shown). */
+  private shortcut(e: KeyboardEvent, at: number, ids: string[]): void {
+    const row = this.v.mounted.get(at);
+    const item = this.rows[at];
+    const r = row && this.refs.get(row);
+    if (!row || !item || !r) return;
+    for (const id of ids) {
+      const b = r.b[id];
+      if (!b || b.hidden) continue;
+      e.preventDefault();
+      // A folder cancel is asked about first.
+      if (id === 'cancel' && isFolder(item) && typeof window !== 'undefined') {
+        return (this.ad.constructor as typeof AnyDrop).confirm(
+          this.ad.options.dictCancelUploadConfirmation,
+          () => this.fire(id, row, item, e),
+        );
+      }
+      return this.fire(id, row, item, e);
+    }
+  }
+
+  /** A row action (button or shortcut): announced with `actionclicked`, then run (an override or the built-in). */
+  private fire(id: string, row: HTMLElement, item: FolderNode | Item, ev: Event): void {
+    const r = this.refs.get(row);
+    const a = r && r.acts.filter((x) => x.id === id)[0];
+    if (!r || !a) return;
+    this.ad.emit('actionclicked', id, item as AnyDropFile | FolderNode);
+    const c = this.context(row, item, r);
+    try {
+      if (a.onClick) a.onClick(c, ev as Event);
+      else if (a.builtin) (c as unknown as Record<string, () => void>)[id]?.();
+    } catch (err) {
+      report(err);
+    }
+    this.ad._uiSchedule();
   }
 
   private stop(e: Event, fn: () => void): void {

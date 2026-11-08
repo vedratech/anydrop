@@ -56,7 +56,19 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./locales/*.global": null,
+    "./locales/*": {
+      "import": {
+        "types": "./dist/locales/*.d.ts",
+        "default": "./dist/locales/*.js"
+      },
+      "require": {
+        "types": "./dist/locales/*.d.cts",
+        "default": "./dist/locales/*.cjs"
+      }
+    },
     "./style.css": "./dist/style.css",
+    "./themes/*.css": "./dist/themes/*.css",
     "./package.json": "./package.json"
   },
   "files": [
@@ -83,5 +95,12 @@
   },
   "dependencies": {
     "@vedratech/anydrop-core": "workspace:^"
+  },
+  "typesVersions": {
+    "*": {
+      "locales/*": [
+        "./dist/locales/*.d.ts"
+      ]
+    }
   }
 }

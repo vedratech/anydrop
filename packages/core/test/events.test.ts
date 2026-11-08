@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { Emitter } from '../src/events/emitter';
+import { AnyDropCore, type AnyDropEvents, type AnyDropFile, type FolderNode } from '../src/index';
 import { EVENT_NAMES, isEventName } from '../src/events/events';
 import { KeyedThrottle, microtaskMerge } from '../src/events/throttle';
 
@@ -107,11 +108,57 @@ describe('event names', () => {
       'online',
       'reconnecting',
       'errorlistchanged',
+      'actionclicked',
     ];
     expect([...EVENT_NAMES].sort()).toEqual([...base, ...added].sort());
     expect(isEventName('addedfile')).toBe(true);
     expect(isEventName('toString')).toBe(false);
     expect(isEventName('url')).toBe(false);
+  });
+});
+
+describe('actionclicked (declared in core, emitted by the ui)', () => {
+  it('is typed as (action, file | folder) in the event map and in option handlers', () => {
+    expectTypeOf<AnyDropEvents['actionclicked']>().toEqualTypeOf<
+      [action: string, target: AnyDropFile | FolderNode]
+    >();
+    const handler = vi.fn();
+    const core = new AnyDropCore({ url: '/upload', actionclicked: handler });
+    core.on('actionclicked', (action, target) => {
+      expectTypeOf(action).toEqualTypeOf<string>();
+      expectTypeOf(target).toEqualTypeOf<AnyDropFile | FolderNode>();
+    });
+    core.destroy();
+  });
+
+  it('reaches listeners and option handlers with this = the instance, and off() removes it', () => {
+    const seen: unknown[][] = [];
+    const core = new AnyDropCore({ url: '/upload' });
+    const off = core.on('actionclicked', function (this: unknown, action, target) {
+      seen.push([this, action, target]);
+    });
+    const file = { name: 'a.txt' } as unknown as AnyDropFile;
+    const folder = { path: 'a' } as unknown as FolderNode;
+    core.emit('actionclicked', 'remove', file);
+    core.emit('actionclicked', 'open', folder);
+    expect(seen).toEqual([
+      [core, 'remove', file],
+      [core, 'open', folder],
+    ]);
+    off();
+    core.emit('actionclicked', 'pause', file);
+    expect(seen).toHaveLength(2);
+    core.destroy();
+  });
+
+  it('is accepted as an option handler', () => {
+    const handler = vi.fn();
+    const core = new AnyDropCore({ url: '/upload', actionclicked: handler });
+    const file = { name: 'a.txt' } as unknown as AnyDropFile;
+    core.emit('actionclicked', 'retry', file);
+    expect(handler).toHaveBeenCalledWith('retry', file);
+    expect(handler.mock.contexts[0]).toBe(core);
+    core.destroy();
   });
 });
 

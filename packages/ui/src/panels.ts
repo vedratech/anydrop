@@ -2,32 +2,49 @@
 import type { ErrorEntry } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
 import { fmt, h, Listeners, textBtn } from './dom';
+import { destroyView, type Mounted, runHook, updateView } from './render';
+import type { AnyDropErrorItemContext, AnyDropToolbarContext } from './types';
 import { VirtualList } from './virtual';
 
-const ERROR_ROW = 64;
+/** What decides whether a view needs an update call: the values a context shows. */
+export const key = (c: {
+  counts?: unknown;
+  progress?: unknown;
+  summaryText?: unknown;
+  can?: unknown;
+}) => JSON.stringify([c.counts, c.progress, c.summaryText, c.can]);
 
 export class Toolbar {
   readonly el = h('div', 'ad-toolbar', { role: 'toolbar' });
   private summary = h('div', 'ad-summary');
   private bar = h('span', 'ad-bar');
+  private info = h('div', 'ad-toolbar-info');
+  private acts = h('div', 'ad-toolbar-actions');
   private b: Record<string, HTMLButtonElement> = {};
   private dom = new Listeners();
+  private view: Mounted | null;
+  private last = '';
 
   constructor(private ad: AnyDrop) {
     const prog = h('div', 'ad-progress ad-total-progress', { role: 'progressbar' });
     prog.appendChild(this.bar);
-    const info = h('div', 'ad-toolbar-info');
-    info.append(this.summary, prog);
-    const acts = h('div', 'ad-toolbar-actions');
+    this.info.append(this.summary, prog);
     for (const a of ['pause-all', 'resume-all', 'retry-failed', 'clear']) {
-      acts.appendChild((this.b[a] = textBtn(a, '')));
+      this.acts.appendChild((this.b[a] = textBtn(a, '')));
     }
-    this.el.append(info, acts);
+    this.el.append(this.info, this.acts);
     this.dom.on(this.el, 'click', (e: MouseEvent) => {
       const a = (e.target as HTMLElement).closest('[data-ad-action]');
       if (a) ad._uiRun(a.getAttribute('data-ad-action') as string);
     });
     this.labels();
+    const c = this.ctx();
+    this.last = key(c);
+    this.view = runHook(ad, 'toolbar', c);
+    if (this.view && this.view.el) {
+      this.el.textContent = '';
+      this.el.appendChild(this.view.el);
+    }
   }
 
   labels(): void {
@@ -42,27 +59,58 @@ export class Toolbar {
     this.el.setAttribute('aria-label', o.dictToolbarLabel);
   }
 
-  update(): void {
+  private ctx(): AnyDropToolbarContext {
     const ad = this.ad;
-    const c = ad.getTree().counts;
-    const live = c.queued + c.uploading + c.added;
-    this.summary.textContent = fmt(ad.options.dictSummary, {
-      done: c.success,
-      total: c.total,
-      failed: c.error,
+    const n = ad.getTree().counts;
+    const live = n.queued + n.uploading + n.added;
+    const can = {
+      pauseAll: !(ad._uiUserAll || live + n.paused === 0),
+      resumeAll: ad._uiPausedAll || n.paused > 0,
+      retryFailed: n.error > 0,
+      clear: n.total > 0 || !!ad._uiExtras.length,
+    };
+    const run = (id: string, ok: boolean) => () => {
+      if (ok) ad._uiRun(id);
+    };
+    return Object.assign(ad._uiBase(), {
+      kind: 'toolbar' as const,
+      el: this.el,
+      parts: { info: this.info, actions: this.acts },
+      counts: { ...n },
+      progress: Math.round(n.total && ad._uiTotal >= 0 ? ad._uiTotal : 0),
+      summaryText: fmt(ad.options.dictSummary, {
+        done: n.success,
+        total: n.total,
+        failed: n.error,
+      }),
+      can,
+      pauseAll: run('pause-all', can.pauseAll),
+      resumeAll: run('resume-all', can.resumeAll),
+      retryFailed: run('retry-failed', can.retryFailed),
+      clear: run('clear', can.clear),
     });
-    const pct = Math.round(c.total && ad._uiTotal >= 0 ? ad._uiTotal : 0);
-    this.bar.style.width = pct + '%';
+  }
+
+  update(): void {
+    const c = this.ctx();
+    this.summary.textContent = c.summaryText;
+    this.bar.style.width = c.progress + '%';
     const p = this.bar.parentElement as HTMLElement;
-    p.setAttribute('aria-valuenow', String(pct));
-    p.setAttribute('aria-label', this.summary.textContent);
-    (this.b['pause-all'] as HTMLButtonElement).disabled = ad._uiUserAll || live + c.paused === 0;
-    (this.b['resume-all'] as HTMLButtonElement).disabled = !ad._uiPausedAll && c.paused === 0;
-    (this.b['retry-failed'] as HTMLButtonElement).disabled = c.error === 0;
-    (this.b.clear as HTMLButtonElement).disabled = c.total === 0 && !ad._uiExtras.length;
+    p.setAttribute('aria-valuenow', String(c.progress));
+    p.setAttribute('aria-label', c.summaryText);
+    (this.b['pause-all'] as HTMLButtonElement).disabled = !c.can.pauseAll;
+    (this.b['resume-all'] as HTMLButtonElement).disabled = !c.can.resumeAll;
+    (this.b['retry-failed'] as HTMLButtonElement).disabled = !c.can.retryFailed;
+    (this.b.clear as HTMLButtonElement).disabled = !c.can.clear;
+    const k = key(c);
+    if (k !== this.last) {
+      this.last = k;
+      updateView(this.view, c);
+    }
   }
 
   destroy(): void {
+    destroyView(this.view);
     this.dom.clear();
     this.el.remove();
   }
@@ -75,6 +123,7 @@ export class ErrorPanel {
   private entries: ErrorEntry[] = [];
   private b: Record<string, HTMLButtonElement> = {};
   private dom = new Listeners();
+  private views = new WeakMap<HTMLElement, Mounted>();
 
   constructor(private ad: AnyDrop) {
     const head = h('div', 'ad-errors-head');
@@ -89,7 +138,10 @@ export class ErrorPanel {
       acts.appendChild((this.b[a] = textBtn(a, '')));
     }
     head.append(this.title, acts);
-    this.list = new VirtualList('ad-error-list', { render: (i) => this.row(i) });
+    this.list = new VirtualList('ad-error-list', {
+      render: (i) => this.row(i),
+      release: (_i, el) => destroyView(this.views.get(el)),
+    });
     this.list.el.setAttribute('role', 'list');
     this.list.el.setAttribute('tabindex', '0');
     this.el.append(head, this.list.el);
@@ -122,10 +174,11 @@ export class ErrorPanel {
     this.entries = entries;
     this.el.hidden = !entries.length;
     this.labels();
-    this.list.setCount(entries.length, ERROR_ROW);
+    this.list.setCount(entries.length, this.ad.options.errorRowHeight);
   }
 
   private row(i: number): HTMLElement {
+    const ad = this.ad;
     const e = this.entries[i] as ErrorEntry;
     const r = h('div', 'ad-error-row', { role: 'listitem', 'data-index': i });
     const text = h('div', 'ad-error-text');
@@ -134,7 +187,28 @@ export class ErrorPanel {
       h('div', 'ad-error-reason', { title: e.message }, `${e.code}: ${e.message}`),
     );
     r.appendChild(text);
-    if (e.retryable) r.appendChild(textBtn('retry-entry', this.ad.options.dictRetry));
+    const retry = e.retryable ? textBtn('retry-entry', ad.options.dictRetry) : null;
+    if (retry) r.appendChild(retry);
+    const c: AnyDropErrorItemContext = Object.assign(ad._uiBase(), {
+      kind: 'errorItem' as const,
+      entry: e,
+      index: i,
+      file: (e.fileId && ad.getFile(e.fileId)) || null,
+      row: r,
+      parts: { text, retry },
+      retry: () => {
+        if (e.retryable) ad._uiRun('retry-entry', undefined, e);
+      },
+    });
+    const v = runHook(ad, 'errorItem', c);
+    if (v) {
+      this.views.set(r, v);
+      if (v.el) {
+        r.textContent = '';
+        r.appendChild(v.el);
+        r.classList.add('ad-row-custom');
+      }
+    }
     return r;
   }
 

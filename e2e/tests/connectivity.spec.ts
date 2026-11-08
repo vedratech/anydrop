@@ -17,6 +17,7 @@ import {
   expectedTree,
   onlyProjects,
   connectivityBuilt,
+  describeFailure,
   expectAllUploaded,
   generateTree,
   heldChunks,
@@ -46,6 +47,8 @@ type Tree = {
   getConnectionState?: () => { state: string; attempt: number; retryAt: number | null };
   reconnect?: () => void;
   getErrors(): unknown[];
+  files: Array<{ relativePath: string; status: string }>;
+  retryFile(f: unknown): boolean;
   on(e: string, fn: (...a: unknown[]) => void): unknown;
   options: Record<string, unknown>;
 };
@@ -76,8 +79,81 @@ async function requireFeatures(page: Page): Promise<void> {
 
 const state = (page: Page) =>
   page.evaluate(() => (window as unknown as W).anydrop.tree.getConnectionState!());
-const errorCount = (page: Page) =>
-  page.evaluate(() => (window as unknown as W).anydrop.tree.getErrors().length);
+type RegistryEntry = {
+  code?: string;
+  httpStatus?: number;
+  message?: string;
+  relativePath?: string;
+};
+/** WEBKIT-FLAKE-1 (decision 0019): a chunk the test browser sent with an empty body. */
+const isFlake1 = (e: RegistryEntry) =>
+  e.code === 'INVALID_CHUNK' &&
+  e.httpStatus === 400 &&
+  /length 0 do not match/.test(e.message ?? '');
+/** Playwright's WebKit build (also the iPhone profile) is the only engine that shows WEBKIT-FLAKE-1. */
+const onWebkit = () => /webkit|iphone/.test(test.info().project.name);
+const registry = (page: Page) =>
+  page.evaluate(() => (window as unknown as W).anydrop.tree.getErrors()) as Promise<
+    RegistryEntry[]
+  >;
+
+/**
+ * Narrow WEBKIT-FLAKE-1 fallback, WebKit and iPhone projects only: files that failed with exactly
+ * "400 INVALID_CHUNK, length 0" are re-queued with `retryFile()`, as a user would press Retry. Any other
+ * error is left alone, so it still fails the test. Returns how many files were re-queued (also
+ * recorded as a test annotation, so a CI run says when the fallback was needed).
+ */
+async function retryWebkitFlake(page: Page): Promise<number> {
+  if (!onWebkit()) return 0;
+  const flaky = (await registry(page)).filter(isFlake1);
+  if (!flaky.length) return 0;
+  const n = await page.evaluate(
+    (paths) => {
+      const t = (window as unknown as W).anydrop.tree;
+      let k = 0;
+      for (const f of t.files) {
+        if (f.status === 'error' && paths.includes(f.relativePath) && t.retryFile(f)) k++;
+      }
+      return k;
+    },
+    flaky.map((e) => e.relativePath ?? ''),
+  );
+  test.info().annotations.push({
+    type: 'WEBKIT-FLAKE-1',
+    description: `retried ${n} file(s) after 400 INVALID_CHUNK with an empty chunk body: ${flaky
+      .map((e) => e.relativePath)
+      .join(', ')}`,
+  });
+  return n;
+}
+
+/**
+ * Asserts the number of entries in the error registry. On WebKit, WEBKIT-FLAKE-1 entries are not
+ * counted (see `retryWebkitFlake`); every other entry is. On a mismatch the failure text carries
+ * `describeFailure()` (error codes, connection state, mock log), so a CI annotation says whether it is
+ * the known artefact or something else.
+ */
+async function expectErrorCount(page: Page, mock: IsolatedMock, n: number): Promise<void> {
+  const all = await registry(page);
+  const got = onWebkit() ? all.filter((e) => !isFlake1(e)).length : all.length;
+  if (got !== n) {
+    throw new Error(
+      `error count: expected ${n}, received ${got}
+${await describeFailure(page, ZONE, mock)}`,
+    );
+  }
+}
+
+/** Waits for the toolbar summary text; on a timeout the message carries `describeFailure()`. */
+async function expectSummary(page: Page, mock: IsolatedMock, text: string, timeout: number) {
+  try {
+    await expect(page.locator(`${ZONE} .ad-summary`)).toContainText(text, { timeout });
+  } catch (e) {
+    (e as Error).message += '\n' + (await describeFailure(page, ZONE, mock));
+    throw e;
+  }
+}
+
 const lifecycle = (page: Page) => page.evaluate(() => (window as unknown as W).__lifecycle);
 const reconnecting = (page: Page) => page.evaluate(() => (window as unknown as W).__rc);
 
@@ -155,6 +231,27 @@ async function lieFi(page: Page, mock: IsolatedMock) {
   return flags;
 }
 
+/**
+ * `expectAllUploaded`, with the WebKit-only WEBKIT-FLAKE-1 fallback: while waiting, files that failed
+ * with that one error are re-queued. Elsewhere it is plain `expectAllUploaded`.
+ */
+async function expectAllUploadedHealing(
+  page: Page,
+  total: number,
+  mock: IsolatedMock,
+): Promise<void> {
+  if (onWebkit()) {
+    const until = Date.now() + 110_000;
+    while (Date.now() < until) {
+      const text = (await page.locator(`${ZONE} .ad-summary`).textContent()) ?? '';
+      if (text.includes(`${total} of ${total} uploaded, 0 failed`)) break;
+      await retryWebkitFlake(page);
+      await page.waitForTimeout(250);
+    }
+  }
+  await expectAllUploaded(page, ZONE, total, 10_000, mock);
+}
+
 /** The common ending of every scenario. */
 async function finish(
   page: Page,
@@ -162,10 +259,10 @@ async function finish(
   g: Generated,
   opts: { allowDuplicates?: number; browserName?: string; expectTree?: Generated['tree'] } = {},
 ): Promise<void> {
-  await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
+  await expectAllUploadedHealing(page, g.tree.files.length, mock);
   const report = await mock.report();
   expect(diffTrees(opts.expectTree ?? expectedTree(page, g), report.merged)).toEqual([]);
-  expect(await errorCount(page)).toBe(0);
+  await expectErrorCount(page, mock, 0);
   expect(await state(page)).toMatchObject({ state: 'online' });
   await expect(page.locator(`${ZONE} .ad-errors`)).toBeHidden();
   const allow =
@@ -235,7 +332,7 @@ test.describe('connectivity (decision 0017)', () => {
       const logAt = (await mock.log()).length;
       await page.waitForTimeout(900);
       expect((await mock.log()).length).toBe(logAt); // nothing is sent while offline
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await setOffline(context, false);
       await expect(offlineText(page)).toBeHidden({ timeout: 20_000 });
       await finish(page, mock, g, { allowDuplicates: 2, browserName });
@@ -275,7 +372,7 @@ test.describe('connectivity (decision 0017)', () => {
           .toBeGreaterThanOrEqual(2);
         const rc = await reconnecting(page);
         expect(rc[1]![0]).toBeGreaterThan(rc[0]![0]);
-        expect(await errorCount(page)).toBe(0);
+        await expectErrorCount(page, mock, 0);
         await expect(page.locator(`${ZONE} .ad-errors`)).toBeHidden();
         // The probe: HEAD ping when configured, otherwise the chunk status of the failed file.
         if (withProbe) expect(net.pings).toBeGreaterThan(0);
@@ -330,7 +427,7 @@ test.describe('connectivity (decision 0017)', () => {
       await expect.poll(() => failed.length, { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
       expect(held.length).toBeGreaterThanOrEqual(1);
       await expect.poll(() => held.length, { timeout: 30_000 }).toBeGreaterThanOrEqual(2); // the retry
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await page.unroute(re, holder);
       for (const r of held.splice(0)) await r.abort('failed').catch(() => undefined);
       await finish(page, mock, g);
@@ -348,7 +445,7 @@ test.describe('connectivity (decision 0017)', () => {
       await begin(page, mock, g, { chunks: 6 });
       await mock.stop(); // connection refused
       await expect(unreachableText(page)).toBeVisible({ timeout: 40_000 });
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       const snapshot = await mock.report().catch(() => null);
       await page.waitForTimeout(2500);
       await mock.restart();
@@ -373,7 +470,7 @@ test.describe('connectivity (decision 0017)', () => {
       await expect(waitingRows(page).first()).toBeVisible();
       await page.waitForTimeout(1500);
       expect((await mock.log()).length).toBe(0);
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await setOffline(context, false);
       await finish(page, mock, g);
     });
@@ -409,7 +506,7 @@ test.describe('connectivity (decision 0017)', () => {
         await addFolder(page, ZONE, g);
         await expect.poll(() => attempts, { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
         await expect(offlineText(page)).toBeVisible({ timeout: 20_000 });
-        expect(await errorCount(page)).toBe(0);
+        await expectErrorCount(page, mock, 0);
         await page.waitForTimeout(800);
         await setOffline(context, false);
         await finish(page, mock, g, { allowDuplicates: 2, browserName });
@@ -447,7 +544,7 @@ test.describe('connectivity (decision 0017)', () => {
       const logAt = (await mock.log()).length;
       await addFolder(page, ZONE, g); // still down: the files wait
       await expect(waitingRows(page).first()).toBeVisible({ timeout: 40_000 });
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await net.set(false);
       await finish(page, mock, g);
       const done = completedPaths(snapshot);
@@ -481,7 +578,7 @@ test.describe('connectivity (decision 0017)', () => {
       expect((await reconnecting(page)).length).toBeGreaterThanOrEqual(6);
       const delays = (await reconnecting(page)).map((r) => r[1]);
       expect(Math.max(...delays)).toBeLessThanOrEqual(60_000); // the probe delay is capped
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       expect((await state(page)).state).toBe('unreachable');
       await net.set(false);
       for (let i = 0; i < 20 && (await state(page)).state !== 'online'; i++) {
@@ -501,7 +598,7 @@ test.describe('connectivity (decision 0017)', () => {
       await net.set(true);
       await expect(unreachableText(page)).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(130_000);
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await net.set(false);
       await expect(unreachableText(page)).toBeHidden({ timeout: 90_000 });
       await finish(page, mock, g);
@@ -528,7 +625,7 @@ test.describe('connectivity (decision 0017)', () => {
         await expect.poll(() => net.pings, { timeout: 10_000 }).toBeGreaterThan(before);
         await expect(retryNow(page)).toBeVisible(); // still unreachable
       }
-      expect(await errorCount(page)).toBe(0);
+      await expectErrorCount(page, mock, 0);
       await expect(page.locator(`${ZONE} .ad-file-row[data-status=error]`)).toHaveCount(0);
       await net.set(false);
       await retryNow(page).click();
@@ -590,11 +687,22 @@ test.describe('connectivity (decision 0017)', () => {
       await addFolder(page, ZONE, g);
       await expect(page.locator(`${ZONE} .ad-errors`)).toBeVisible({ timeout: 180_000 });
       const everyoneElse = g.treeWithoutEmptyFolders.files.filter((f) => f.path !== bad.path);
-      await expect(page.locator(`${ZONE} .ad-summary`)).toContainText(
-        `${g.tree.files.length - 1} of ${g.tree.files.length} uploaded, 1 failed`,
-        { timeout: 120_000 },
-      );
-      expect(await errorCount(page)).toBe(1);
+      const want = `${g.tree.files.length - 1} of ${g.tree.files.length} uploaded, 1 failed`;
+      if (onWebkit()) {
+        // WEBKIT-FLAKE-1 fallback: re-queue a file that failed with the empty chunk body; the file
+        // that can never succeed is left alone, so it must still be the one error in the end.
+        const until = Date.now() + 110_000;
+        while (Date.now() < until) {
+          const text = (await page.locator(`${ZONE} .ad-summary`).textContent()) ?? '';
+          if (text.includes(want)) break;
+          await retryWebkitFlake(page);
+          await page.waitForTimeout(250);
+        }
+      }
+      await expectSummary(page, mock, want, 10_000);
+      await expectErrorCount(page, mock, 1);
+      const rest = await registry(page);
+      expect(rest.filter((e) => !isFlake1(e)).map((e) => e.relativePath)).toEqual([bad.path]);
       const report = await mock.report();
       expect(
         diffTrees(
@@ -647,7 +755,12 @@ test.describe('connectivity (decision 0017)', () => {
           await expect(found!.locator('.ad-badge')).toHaveText('Paused'); // not "Waiting for connection"
         }
         await net.set(false);
-        await retryNow(page).click();
+        // The scheduled probe can bring the connection back, and the banner away, before the click
+        // lands (a race seen about once in a dozen runs: "element is not visible" for 4 minutes).
+        // "Retry now" itself is the subject of test 9; here the click is best effort.
+        await retryNow(page)
+          .click({ timeout: 3_000 })
+          .catch(() => undefined);
         await expect(unreachableText(page)).toBeHidden({ timeout: 30_000 });
         await expect(
           rows.filter({ has: page.locator('.ad-badge', { hasText: /^Paused$/ }) }).first(),

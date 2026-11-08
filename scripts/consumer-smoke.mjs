@@ -10,6 +10,13 @@
 //   4. Both pages run in Chromium (Playwright from this repo) against the test mock server: a file is
 //      picked, uploaded, and the mock server must hold it with the right SHA-256.
 //
+//   5. Decision 0021 (customisation): the Vite app also imports a locale (`locales/hi`) and a theme file
+//      (`themes/glass.css`) from the tarball and uses them; Node imports and requires a locale; the
+//      theme CSS path resolves; and TypeScript (5.x from npm, and the repo's) resolves the types of
+//      `@vedratech/anydrop-ui/locales/hi` with moduleResolution bundler, node16 (ESM and CJS) and node10.
+//      node10 ignores `exports`; if it fails, the smoke test tries the `typesVersions` snippet in the temp
+//      copy and prints it (package.json itself is never changed by this script).
+//
 // Usage (after `pnpm build`): node scripts/consumer-smoke.mjs [--keep]
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -40,6 +47,17 @@ function run(cmd, args, cwd, extra = {}) {
     console.error(r.stdout);
     console.error(r.stderr);
     throw new Error(`${cmd} ${args.join(' ')} failed with status ${r.status}`);
+  }
+  return r.stdout;
+}
+
+// Runs node itself without a shell (a path with spaces, and quotes inside -e code, survive on Windows).
+function runNode(args, cwd) {
+  const r = spawnSync(process.execPath, args, { cwd, encoding: 'utf8' });
+  if (r.status !== 0) {
+    throw new Error(
+      `node ${args.slice(0, 2).join(' ')} ... failed: ${(r.stdout + r.stderr).trim()}`,
+    );
   }
   return r.stdout;
 }
@@ -90,17 +108,31 @@ try {
   await writeFile(
     join(app, 'src', 'main.js'),
     `import { AnyDrop, VERSION } from '@vedratech/anydrop-ui';
+import { hi } from '@vedratech/anydrop-ui/locales/hi';
 import '@vedratech/anydrop-ui/style.css';
+import '@vedratech/anydrop-ui/themes/glass.css';
 const mock = new URLSearchParams(location.search).get('mock');
 window.__version = VERSION;
-const zone = new AnyDrop('#zone', { url: mock + '/upload', chunking: true, chunkSize: 4096, forceChunking: true, hiddenInputContainer: '#zone' });
+const zone = new AnyDrop('#zone', { url: mock + '/upload', chunking: true, chunkSize: 4096, forceChunking: true, hiddenInputContainer: '#zone', locale: hi, themePreset: 'glass' });
+window.__custom = () => {
+  const z = document.querySelector('#zone');
+  return { lang: z.getAttribute('lang'), glass: z.classList.contains('ad-theme-glass'), backdrop: getComputedStyle(z).getPropertyValue('--ad-backdrop').trim(), message: z.querySelector('.ad-message')?.textContent, hi: hi.dict.dictDefaultMessage };
+};
 window.__uploaded = [];
 zone.on('success', (f) => window.__uploaded.push(f.name));
 `,
   );
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', '--silent', ...tarballs.map((t) => t), 'vite'],
+    [
+      'install',
+      '--no-audit',
+      '--no-fund',
+      '--silent',
+      ...tarballs.map((t) => t),
+      'vite',
+      'typescript@5',
+    ],
     app,
   );
   run('npx', ['vite', 'build'], app);
@@ -206,6 +238,13 @@ zone.on('success', (f) => window.__uploaded.push(f.name));
         if (!f || f.sha256 !== sha || f.size !== payload.length)
           throw new Error(`server copy of ${fileName} differs: ${JSON.stringify(f)}`);
         if (errors.length) throw new Error(`page errors: ${errors.join(' | ')}`);
+        if (name.startsWith('vite')) {
+          // Decision 0021: a locale module and a theme file from the tarball, bundled by Vite.
+          const c = await page.evaluate(() => window.__custom());
+          if (c.lang !== 'hi' || !c.glass || !c.backdrop.includes('blur') || c.message !== c.hi) {
+            throw new Error(`locale/theme from the tarball not applied: ${JSON.stringify(c)}`);
+          }
+        }
         const extra = name.startsWith('vite')
           ? ` (VERSION ${await page.evaluate(() => window.__version)})`
           : '';
@@ -220,6 +259,120 @@ zone.on('success', (f) => window.__uploaded.push(f.name));
   } finally {
     await browser.close();
     await rm(uploadDir, { recursive: true, force: true });
+  }
+
+  // 5. Locale and theme entry points, from Node and from TypeScript (decision 0021).
+  const step = async (name, fn) => {
+    try {
+      const extra = await fn();
+      results.push(`PASS ${name}${extra ? ` (${extra})` : ''}`);
+    } catch (e) {
+      failed = true;
+      results.push(`FAIL ${name}: ${e.message}`);
+    }
+  };
+  const nodeIn = (args) => runNode(args, app).trim().split(/\r?\n/).pop();
+  await step('node: ESM import of @vedratech/anydrop-ui/locales/ar and pt-BR', () =>
+    nodeIn([
+      '--input-type=module',
+      '-e',
+      "const m = await import('@vedratech/anydrop-ui/locales/ar'); const d = (await import('@vedratech/anydrop-ui/locales/pt-BR')).default; if (m.ar.code !== 'ar' || m.ar.dir !== 'rtl' || m.default !== m.ar || d.code !== 'pt-BR') throw new Error('bad locale'); console.log(m.ar.code + '/' + m.ar.dir)",
+    ]),
+  );
+  await step('node: CJS require of @vedratech/anydrop-ui/locales/ar', () =>
+    nodeIn([
+      '-e',
+      "const m = require('@vedratech/anydrop-ui/locales/ar'); if (m.ar.code !== 'ar' || m.ar.dir !== 'rtl') throw new Error('bad locale'); console.log(m.ar.code + '/' + m.ar.dir)",
+    ]),
+  );
+  await step('node: themes/*.css and style.css resolve through exports', () =>
+    nodeIn([
+      '-e',
+      "const fs = require('fs'); const q = require.resolve('@vedratech/anydrop-ui/style.css'); if (!q.endsWith('style.css')) throw new Error(q); for (const n of ['minimal','rounded','enterprise','glass']) { const p = require.resolve('@vedratech/anydrop-ui/themes/' + n + '.css'); if (!fs.readFileSync(p, 'utf8').includes('ad-theme-' + n)) throw new Error('not the ' + n + ' file'); } console.log('4 presets')",
+    ]),
+  );
+
+  // TypeScript: resolve the locale types with each moduleResolution mode.
+  const tsDir = join(app, 'types-check');
+  await mkdir(tsDir, { recursive: true });
+  const checkTs = `import { AnyDrop, type AnyDropLocale } from '@vedratech/anydrop-ui';
+import { hi } from '@vedratech/anydrop-ui/locales/hi';
+import ptBR, { ptBR as named } from '@vedratech/anydrop-ui/locales/pt-BR';
+const code: string = hi.code;
+const dir: 'ltr' | 'rtl' = ptBR.dir;
+const same: AnyDropLocale = named;
+const pause: string | undefined = hi.dict.dictPause;
+const ui = new AnyDrop('#x', { url: '/u', locale: hi, themePreset: 'glass', layout: 'compact' });
+void [ui, code, dir, same, pause];
+`;
+  await writeFile(join(tsDir, 'check.ts'), checkTs);
+  await writeFile(join(tsDir, 'check.cts'), checkTs);
+  const tscJs = join(app, 'node_modules', 'typescript', 'bin', 'tsc');
+  const tsVersion = runNode([tscJs, '--version'], app).trim();
+  const tscRepo = join(ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
+  const tsc = async (label, compilerOptions, files, tscPath = tscJs) => {
+    const cfg = join(tsDir, `tsconfig.${label.replace(/\W+/g, '-')}.json`);
+    await writeFile(
+      cfg,
+      JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          skipLibCheck: true,
+          target: 'es2022',
+          lib: ['es2022', 'dom'],
+          types: [],
+          ...compilerOptions,
+        },
+        files,
+      }),
+    );
+    const r = spawnSync(process.execPath, [tscPath, '-p', cfg], { cwd: tsDir, encoding: 'utf8' });
+    return { ok: r.status === 0, out: (r.stdout + r.stderr).trim() };
+  };
+  const modes = [
+    ['bundler', { module: 'esnext', moduleResolution: 'bundler' }, ['check.ts']],
+    ['node16 (ESM file)', { module: 'node16', moduleResolution: 'node16' }, ['check.ts']],
+    [
+      'node16 (CJS file, require condition)',
+      { module: 'node16', moduleResolution: 'node16' },
+      ['check.cts'],
+    ],
+  ];
+  for (const [label, opts, files] of modes) {
+    await step(`typescript ${tsVersion}: locales/hi types, moduleResolution ${label}`, async () => {
+      const r = await tsc(label, opts, files);
+      if (!r.ok) throw new Error(r.out);
+    });
+  }
+  // node10 ignores `exports`: it looks for locales/hi.d.ts at the package root unless typesVersions maps it.
+  const pkgJsonPath = join(app, 'node_modules', '@vedratech', 'anydrop-ui', 'package.json');
+  const SNIPPET = { '*': { 'locales/*': ['./dist/locales/*.d.ts'] } };
+  const node10 = { module: 'commonjs', moduleResolution: 'node10' };
+  const before = await tsc('node10', node10, ['check.ts']);
+  if (before.ok) {
+    results.push(
+      `PASS typescript ${tsVersion}: locales/hi types, moduleResolution node10 (no typesVersions needed)`,
+    );
+  } else {
+    // Prove the fix in the temp copy only: the repo's package.json is not touched.
+    const { readFile } = await import('node:fs/promises');
+    const pkg = JSON.parse(await readFile(pkgJsonPath, 'utf8'));
+    pkg.typesVersions = SNIPPET;
+    await writeFile(pkgJsonPath, JSON.stringify(pkg, null, 2));
+    const after = await tsc('node10-typesVersions', node10, ['check.ts']);
+    failed = true;
+    results.push(
+      `FAIL typescript ${tsVersion}: locales/hi types, moduleResolution node10 (ignores "exports"):\n      ${before.out.split('\n').slice(0, 3).join('\n      ')}\n    With this snippet in the temp copy of the package.json it ${after.ok ? 'PASSES' : 'STILL FAILS: ' + after.out}. Add to packages/ui/package.json:\n      "typesVersions": ${JSON.stringify(SNIPPET)}`,
+    );
+  }
+  if (existsSync(tscRepo)) {
+    const r = await tsc('repo-ts-bundler', modes[0][1], ['check.ts'], tscRepo);
+    const v = runNode([tscRepo, '--version'], app).trim();
+    results.push(
+      `${r.ok ? 'PASS' : 'FAIL'} typescript (repo, ${v}): locales/hi types, moduleResolution bundler${r.ok ? '' : ': ' + r.out}`,
+    );
+    if (!r.ok) failed = true;
   }
 } catch (e) {
   failed = true;

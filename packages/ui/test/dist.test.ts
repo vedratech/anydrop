@@ -29,4 +29,30 @@ describe.skipIf(!built)('built files', () => {
     expect(typeof A.discover).toBe('function');
     expect(A.options).toEqual({});
   });
+
+  it('a locale ESM and CJS file has no runtime imports and fits the file size', () => {
+    for (const f of ['locales/ar.js', 'locales/pt-BR.js', 'locales/ar.cjs']) {
+      const src = readFileSync(dist(f), 'utf8');
+      expect(src, f).not.toMatch(/^\s*import\s/m);
+      expect(src, f).not.toContain('require(');
+    }
+  });
+
+  it('a locale CDN file registers itself after the main script and refuses to load before it', () => {
+    const ctx: Record<string, unknown> = { setTimeout, console };
+    ctx.window = ctx;
+    runInNewContext(readFileSync(dist('index.global.js'), 'utf8'), ctx);
+    runInNewContext(readFileSync(dist('locales/ar.global.js'), 'utf8'), ctx);
+    runInNewContext(readFileSync(dist('locales/pt-BR.global.js'), 'utf8'), ctx);
+    const A = ctx.AnyDrop as { locales: Record<string, { dir: string; code: string }> };
+    expect(A.locales.ar?.dir).toBe('rtl');
+    expect(A.locales['pt-BR']?.code).toBe('pt-BR');
+    expect(() =>
+      runInNewContext(readFileSync(dist('locales/hi.global.js'), 'utf8'), { window: {} }),
+    ).toThrow('Load AnyDrop before its locale files.');
+  });
+
+  it('every theme preset file is copied', () => {
+    expect(existsSync(dist('themes/minimal.css'))).toBe(true);
+  });
 });

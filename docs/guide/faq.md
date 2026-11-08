@@ -13,7 +13,7 @@ No. AnyDrop is frontend only. Your backend implements the [upload contract](/bac
 
 ### How big is it?
 
-The ready-made CDN file with the UI is 32.1 kB gzip (31.7 kB for the ui and core bundle plus 3.2 kB of CSS), and the headless core is 18.0 kB. Compared with Uppy and FilePond, measured the same way, see [Size comparison](/size-comparison).
+The ready-made CDN file with the UI is 34.8 kB gzip (34.7 kB for the ui and core bundle plus 3.6 kB of CSS), and the headless core is 18.4 kB. Compared with Uppy and FilePond, measured the same way, see [Size comparison](/size-comparison).
 
 ### Which browsers are supported?
 

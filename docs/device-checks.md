@@ -105,6 +105,17 @@ In Playwright's WebKit, aborting an XHR whose body was already sent does not sto
 | 6.6 | Dark mode on, then off. | The UI follows the system theme and stays readable. | | |
 | 6.7 | Android mid-range phone: drop or pick a folder with about **5,000 small files** if you have one (or run `anydrop.tree.addFiles` with 5,000 generated files from the console). | The tree scrolls smoothly (about 60 fps), no jank or crash. | N/A | |
 
+### 6b. Customisation (decision 0021)
+
+In the demo's **Customisation** section (`#ex-custom`), after "Add sample files":
+
+| # | Step | Expected | iPhone | Android |
+|---|---|---|---|---|
+| 6b.1 | **Glass preset:** choose Theme preset "glass", add the sample files, then add 200 files from the console (`anydrop.custom.addFiles`) and scroll the list with a finger. The blur is on the drop zone only. | Scrolling stays smooth (about 60 fps), no flicker, no white flash while scrolling. If it janks on a mid-range Android or an older iPhone, write the model: the preset then has to drop `backdrop-filter` on touch devices (0021, uncertainty). | | |
+| 6b.2 | **Arabic (right to left):** choose Language "Arabic", add the sample files. | The list, buttons and caret are mirrored; the folder indent grows from the right; no horizontal scroll; on a hardware keyboard (iPad) Left and Right swap. The texts are drafts: note anything that reads wrong. | | |
+| 6b.3 | **Compact layout** at 320 px width (iPhone SE or a narrow window): tap every button in a row and in the toolbar. | Every button is easy to hit (44 px), rows are 48 px, nothing overflows. | | |
+| 6b.4 | Pick **Dark** colours with each preset. | Text stays readable against every background (the e2e contrast check measures it; judge the look on the real screen). | | |
+
 ## 7. Network loss
 
 **Search `__log` for `400` `INVALID_CHUNK` with "length 0" after every step of this section** (see section 3: an empty chunk body is a blocker).

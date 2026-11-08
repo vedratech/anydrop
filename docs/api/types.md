@@ -194,6 +194,82 @@ import type { AnyDropConfig } from '@vedratech/anydrop-ui';
 const config: AnyDropConfig = { url: '/upload', chunking: true, folderView: 'tree' };
 ```
 
+### `AnyDropLayout`
+
+`'list' | 'compact'`. The type of the `layout` option. In a context, `layout` is typed `AnyDropLayout | (string & {})`, so layouts added later do not break your types.
+
+### `AnyDropRenderHooks`
+
+The `render` option: `{ file?, folder?, toolbar?, message?, errorItem? }`, each an `AnyDropRenderHook`.
+
+### `AnyDropRenderHook`
+
+`(this: AnyDrop, ctx: C) => AnyDropRenderResult<C>`. One hook, for one part of the interface. See [Render hooks](/guide/render-hooks).
+
+### `AnyDropRenderResult`
+
+What a hook may return: an `HTMLElement`, an `AnyDropRenderView`, a `string` (plain text), or nothing.
+
+### `AnyDropRenderView`
+
+`{ el?, update?(ctx), destroy?() }`. The object that gives a hook an update and a cleanup call.
+
+### `AnyDropRenderContext`
+
+The members every hook context has: `instance`, `layout`, `t()`, `html` and `icon()`. The other contexts extend it, and each has a `kind` (`'file'`, `'folder'`, `'toolbar'`, `'message'` or `'errorItem'`).
+
+### `AnyDropFileContext`
+
+The context of `render.file` and of file row actions.
+
+### `AnyDropFolderContext`
+
+The context of `render.folder` and of folder row actions.
+
+### `AnyDropToolbarContext`
+
+The context of `render.toolbar`.
+
+### `AnyDropMessageContext`
+
+The context of `render.message`.
+
+### `AnyDropErrorItemContext`
+
+The context of `render.errorItem`.
+
+### `AnyDropRowActions`
+
+The `rowActions` option: `{ file?, folder? }`, each a list of built-in ids and `AnyDropRowAction` objects.
+
+### `AnyDropRowAction`
+
+`{ id, label?, icon?, when?, onClick? }`. A custom row action, or an override of a built-in one.
+
+### `AnyDropFileAction`
+
+`'pause' | 'resume' | 'retry' | 'cancel' | 'remove'`. The built-in file actions.
+
+### `AnyDropFolderAction`
+
+`'pause' | 'resume' | 'retry' | 'cancel'`. The built-in folder actions.
+
+### `AnyDropIconName`
+
+`'folder' | 'file' | 'toggle' | 'pause' | 'resume' | 'retry' | 'cancel' | 'remove' | 'success' | 'error'`. The icon names the UI uses.
+
+### `AnyDropIcons`
+
+A record of SVG strings by icon name, or a function `(name) => string | HTMLElement | null | undefined`.
+
+### `AnyDropLocale`
+
+`{ code, dir, dict }`. A language pack. See [Languages and RTL](/guide/languages).
+
+### `AnyDropTexts`
+
+Every UI and core text (`AnyDropDict` plus the core `dict*` options). The type of `locale.dict` and of the keys of `ctx.t()`.
+
 ### `AcceptDone`
 
 `(error?: unknown) => void`. The callback passed to `accept()`: call it with no argument to accept, or with a message to reject.

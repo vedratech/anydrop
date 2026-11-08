@@ -13,7 +13,7 @@ Test-only. Nothing in this folder is published.
 | `pnpm compare <expectedDir> <actualDir>`              | Exit 1 when paths, sizes, SHA-256 or empty folders differ                 |
 | `pnpm test:e2e [--project=chromium] [file]`           | Playwright. Starts the mock server and the demo itself (`webServer`).     |
 | `pnpm e2e:clean`                                      | Removes `e2e/test-results` and `e2e/playwright-report`                    |
-| `pnpm check:consumer`                                 | Fresh-consumer smoke test (packed tarballs, Vite app, plain HTML page)    |
+| `pnpm check:consumer`                                 | Fresh-consumer smoke test (packed tarballs, Vite app, plain HTML page, locale and theme imports, TypeScript bundler/node16/node10) |
 
 **Run `pnpm build` first.** The demo page used by the e2e suite runs against the built packages
 (`AD_PKG=dist`, set by the Playwright config, no hot reload), so edits to the sources in the middle of a run
@@ -36,6 +36,7 @@ Install browsers once with `pnpm exec playwright install chromium firefox webkit
 | `core-upload.spec.ts`, `core-m3.spec.ts` | the headless core in a browser: tree, chunking, limits, pause and resume, offline, reload, errors (chromium; `core-m3` on all projects) |
 | `ui.spec.ts`, `cdn.spec.ts` | the UI and the CDN build on a plain page |
 | `ui-scenarios.spec.ts` | verify-upload 1 to 5 through the demo UI: 1,100 file folder drop and folder picker by SHA-256, offline mid-upload, pause at file, folder and global level, reload and pick again, server errors and "Retry failed" |
+| `ui-custom.spec.ts` | decision 0021: custom row actions and overrides (`actionclicked` before the action), RTL with `ar`, render-hook focus and leak counters (2,000 files), preset contrast (WCAG, `support/contrast.ts`), compact layout at 320 px, locale files on a plain page |
 | `large-file.spec.ts` | verify-upload 7: 1 GiB (Chromium), 256 MiB (Firefox), 64 MiB (mobile, WebKit) through the UI, `Blob.slice` only, JS heap sampled in Chromium, SHA-256 matches |
 | `wrapper-ready.spec.ts` | verify-upload 8: no leaked listeners, timers, observers, object URLs or requests after `destroy()`, independent instances, Node import without a DOM |
 | `docs-snippets.spec.ts` | verify-upload 9: AnyDrop's own documented snippets run as written (programmatic config, events, `processQueue`, `maxFiles`, rejection messages, headers, `sending` formData, `AnyDrop.options.<id>` presets, `.anydrop` auto-discovery) |

@@ -22,8 +22,17 @@
   --ad-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ad-list-max-height: 420px;
   --ad-indent: 20px;
+  --ad-icon-size: 22px;
+  --ad-border-width: 2px;
+  --ad-border-style: dashed;
+  --ad-btn-radius: var(--ad-radius);
+  --ad-shadow: none;
+  --ad-font-size: 1rem;
+  --ad-thumb-size: 40px;
+  --ad-backdrop: none;
   color: var(--ad-color-text);
   font-family: var(--ad-font);
+  font-size: var(--ad-font-size);
   box-sizing: border-box;
 }
 @media (prefers-color-scheme: dark) {
@@ -41,7 +50,7 @@
     --ad-color-success: #86efac;
     --ad-color-error: #fca5a5;
     --ad-color-warning: #fcd34d;
-    --ad-color-track: #4b5563;
+    --ad-color-track: #374151;
     --ad-color-focus: #93c5fd;
   }
 }
@@ -59,7 +68,7 @@
   --ad-color-success: #86efac;
   --ad-color-error: #fca5a5;
   --ad-color-warning: #fcd34d;
-  --ad-color-track: #4b5563;
+  --ad-color-track: #374151;
   --ad-color-focus: #93c5fd;
 }
 .ad-root *,
@@ -89,13 +98,18 @@
   position: relative;
   display: block;
   background: var(--ad-color-bg);
-  border: 2px dashed var(--ad-color-border);
+  border: var(--ad-border-width) var(--ad-border-style) var(--ad-color-border);
   border-radius: var(--ad-radius);
   padding: var(--ad-gap);
   padding-left: max(var(--ad-gap), env(safe-area-inset-left));
   padding-right: max(var(--ad-gap), env(safe-area-inset-right));
   padding-bottom: max(var(--ad-gap), env(safe-area-inset-bottom));
   min-width: 0;
+}
+.ad-root:not(.ad-panel) {
+  box-shadow: var(--ad-shadow);
+  -webkit-backdrop-filter: var(--ad-backdrop);
+  backdrop-filter: var(--ad-backdrop);
 }
 .ad-root.ad-clickable {
   cursor: pointer;
@@ -111,7 +125,7 @@
 .ad-message {
   text-align: center;
   margin: 0 0 var(--ad-gap);
-  font-size: 1rem;
+  font-size: 1em;
   color: var(--ad-color-muted);
 }
 .ad-actions {
@@ -129,7 +143,7 @@
   background: var(--ad-color-surface);
   color: var(--ad-color-warning);
   border: 1px solid var(--ad-color-border-soft);
-  font-size: 0.9rem;
+  font-size: 0.9em;
   text-align: center;
 }
 
@@ -140,11 +154,10 @@
   min-width: var(--ad-target);
   padding: 0 16px;
   font: inherit;
-  font-size: 1rem;
   color: var(--ad-color-text);
   background: var(--ad-color-surface);
   border: 1px solid var(--ad-color-border);
-  border-radius: var(--ad-radius);
+  border-radius: var(--ad-btn-radius);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -172,10 +185,15 @@
   align-items: center;
   justify-content: center;
 }
-.ad-icon-btn svg {
-  width: 22px;
-  height: 22px;
-  fill: currentColor;
+.ad-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ad-icon svg {
+  width: var(--ad-icon-size);
+  height: var(--ad-icon-size);
+  display: block;
 }
 .ad-link-btn {
   background: none;
@@ -207,7 +225,7 @@
 .ad-touch .ad-actions .ad-btn {
   width: 100%;
   min-height: 56px;
-  font-size: 1.1rem;
+  font-size: 1.1em;
 }
 .ad-touch .ad-btn-primary {
   order: -1;
@@ -218,7 +236,7 @@
   display: block;
   margin-top: var(--ad-gap);
   cursor: default;
-  text-align: left;
+  text-align: start;
 }
 .ad-toolbar {
   display: flex;
@@ -233,7 +251,7 @@
   min-width: 0;
 }
 .ad-summary {
-  font-size: 0.95rem;
+  font-size: 0.95em;
   margin-bottom: 4px;
 }
 .ad-toolbar-actions,
@@ -282,7 +300,7 @@
   display: inline-block;
   width: 10px;
   height: 10px;
-  margin-right: 8px;
+  margin-inline-end: 8px;
   border-radius: 50%;
   background: var(--ad-color-warning);
   animation: ad-pulse 1.2s ease-in-out infinite;
@@ -319,12 +337,12 @@
 .ad-row,
 .ad-error-row {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 8px 0 calc(8px + var(--ad-depth, 0) * var(--ad-indent));
+  padding-block: 0;
+  padding-inline: calc(8px + var(--ad-depth, 0) * var(--ad-indent)) 8px;
   border-bottom: 1px solid var(--ad-color-border-soft);
   overflow: hidden;
   background: var(--ad-color-bg);
@@ -346,6 +364,13 @@
 .ad-caret.ad-open svg {
   transform: rotate(90deg);
 }
+/* A closed folder points the other way in right-to-left text. */
+[dir='rtl'] .ad-caret:not(.ad-open) svg {
+  transform: scaleX(-1);
+}
+.ad-caret:dir(rtl):not(.ad-open) svg {
+  transform: scaleX(-1);
+}
 .ad-folder-main {
   flex: 1;
   min-width: 0;
@@ -356,11 +381,21 @@
   gap: 6px;
   min-width: 0;
 }
+.ad-folder-icon {
+  color: var(--ad-color-muted);
+}
 .ad-folder-icon svg {
   width: 20px;
   height: 20px;
-  fill: var(--ad-color-muted);
-  display: block;
+}
+.ad-folder-name,
+.ad-error-path,
+.ad-file-name,
+.ad-file-size,
+.ad-count,
+.ad-file-error-message,
+.ad-error-reason {
+  unicode-bidi: plaintext;
 }
 .ad-folder-name {
   overflow: hidden;
@@ -370,7 +405,7 @@
 .ad-count {
   color: var(--ad-color-muted);
   font-weight: 400;
-  font-size: 0.85rem;
+  font-size: 0.85em;
   white-space: nowrap;
 }
 .ad-folder-progress {
@@ -393,13 +428,27 @@
   background: none;
 }
 .ad-panel.ad-root .ad-row .ad-file-thumb {
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
+  flex: 0 0 var(--ad-thumb-size);
+  width: var(--ad-thumb-size);
+  height: var(--ad-thumb-size);
   border-radius: 4px;
   background: var(--ad-color-surface);
   overflow: hidden;
   position: relative;
+}
+.ad-panel.ad-root .ad-row .ad-file-icon {
+  position: absolute;
+  inset: 0;
+  color: var(--ad-color-muted);
+}
+.ad-panel.ad-root .ad-row .ad-file-icon svg {
+  width: 60%;
+  height: 60%;
+  max-width: var(--ad-icon-size);
+  max-height: var(--ad-icon-size);
+}
+.ad-panel.ad-root .ad-row .ad-image-preview .ad-file-icon {
+  display: none;
 }
 .ad-panel.ad-root .ad-row .ad-file-thumb img {
   width: 100%;
@@ -422,7 +471,7 @@
   position: static;
   padding: 0;
   opacity: 1;
-  text-align: left;
+  text-align: start;
   color: inherit;
 }
 .ad-panel.ad-root .ad-row .ad-file-name {
@@ -430,14 +479,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.95rem;
+  font-size: 0.95em;
 }
 .ad-panel.ad-root .ad-row .ad-file-name span {
   background: none;
 }
 .ad-panel.ad-root .ad-row .ad-file-size {
+  white-space: nowrap;
   order: 2;
-  font-size: 0.8rem;
+  font-size: 0.8em;
   color: var(--ad-color-muted);
   margin: 0;
 }
@@ -453,7 +503,7 @@
   pointer-events: auto;
   padding: 0;
   background: none;
-  font-size: 0.8rem;
+  font-size: 0.8em;
   color: var(--ad-color-error);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -508,7 +558,7 @@
 }
 .ad-badge {
   flex: 0 0 auto;
-  font-size: 0.75rem;
+  font-size: 0.75em;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
@@ -533,6 +583,34 @@
   flex: 0 0 auto;
 }
 
+/* Compact layout: 48px rows, no thumbnail, the size on the line of the name, a smaller badge */
+.ad-panel.ad-layout-compact .ad-row .ad-file-thumb {
+  display: none;
+}
+.ad-panel.ad-layout-compact .ad-row .ad-file-details {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+.ad-panel.ad-layout-compact .ad-row .ad-file-name {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.ad-panel.ad-layout-compact .ad-row .ad-file-size {
+  flex: 0 0 auto;
+}
+.ad-panel.ad-layout-compact .ad-row .ad-file-error-message {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.ad-panel.ad-layout-compact .ad-row .ad-error .ad-file-size {
+  display: none;
+}
+.ad-panel.ad-layout-compact .ad-badge {
+  font-size: 0.7em;
+  padding: 1px 6px;
+}
+
 /* Error panel */
 .ad-errors {
   margin-top: var(--ad-gap);
@@ -554,9 +632,6 @@
 .ad-error-list {
   max-height: 256px;
 }
-.ad-error-row {
-  height: 64px;
-}
 .ad-error-text {
   flex: 1;
   min-width: 0;
@@ -569,7 +644,7 @@
 }
 .ad-error-reason {
   color: var(--ad-color-error);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -595,6 +670,27 @@
 
 /* Narrow screens (from 320px) */
 @media (max-width: 480px) {
+  /* A phone: the file name keeps room; the badge gives way (it ellipsizes) before the name does. */
+  .ad-panel.ad-root .ad-row {
+    gap: 4px;
+  }
+  .ad-panel.ad-root .ad-row .ad-file-details {
+    flex: 1 1 40px;
+    min-width: 40px;
+  }
+  .ad-panel.ad-root .ad-row .ad-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 5.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Compact on a phone: the size goes under the name so the name keeps its room. */
+  .ad-panel.ad-layout-compact .ad-row .ad-file-details {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
   .ad-toolbar-actions .ad-btn,
   .ad-errors-actions .ad-btn {
     flex: 1 1 auto;
@@ -611,3 +707,14 @@
   }
 }
 /* Nothing here styles form fields of the page. Our own file inputs are hidden. */
+
+/* A long name or reason is clipped inside its own box (WebKit counts the overflow of a bidi span otherwise). */
+.ad-panel .ad-file-name > span,
+.ad-panel .ad-file-error-message > span,
+.ad-panel .ad-error-path,
+.ad-panel .ad-error-reason {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

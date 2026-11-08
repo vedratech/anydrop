@@ -116,7 +116,7 @@ area.addEventListener('drop', (e) => {
 
 ## Size
 
-Download size, measured the same way for every library (minified and gzipped with esbuild, 1 kB = 1024 bytes, measured 2026-11-08): AnyDrop ui + core 31.7 kB, FilePond 4.32.12 (core, no plugins) 40.5 kB, Uppy core + dashboard + xhr-upload 78.4 kB (CSS excluded). AnyDrop with the UI is less than half the size of Uppy with Dashboard. Method and the CSS numbers: [size comparison](https://vedratech.github.io/anydrop/size-comparison).
+Download size, measured the same way for every library (minified and gzipped with esbuild, 1 kB = 1024 bytes, measured 2026-11-08): AnyDrop ui + core 34.7 kB, FilePond 4.32.12 (core, no plugins) 40.5 kB, Uppy core + dashboard + xhr-upload 78.4 kB (CSS excluded). AnyDrop with the UI is less than half the size of Uppy with Dashboard. Method and the CSS numbers: [size comparison](https://vedratech.github.io/anydrop/size-comparison).
 
 ## Browser support
 

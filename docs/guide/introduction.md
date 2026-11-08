@@ -52,11 +52,11 @@ The one thing we publish is the download size, measured the same way for every l
 
 | | JavaScript (gzip) | CSS (gzip) |
 |---|---:|---:|
-| **AnyDrop ui + core** | 31.7 kB | 3.2 kB |
+| **AnyDrop ui + core** | 34.7 kB | 3.6 kB |
 | FilePond 4.32.12 (core, no plugins) | 40.5 kB | 5.2 kB |
 | Uppy core + dashboard + xhr-upload | 78.4 kB | 10.4 kB |
 
-AnyDrop with the UI is less than half the size of Uppy with Dashboard (the ready-made CDN file is 32.1 kB gzip). The size pays for folders and a tree view, chunking with pause and resume, an IndexedDB resume store, connectivity handling, an error registry and a mobile layout. The method, library versions and the headless numbers are on the [size comparison](/size-comparison) page.
+AnyDrop with the UI is less than half the size of Uppy with Dashboard (the ready-made CDN file is 34.8 kB gzip). The size pays for folders and a tree view, chunking with pause and resume, an IndexedDB resume store, connectivity handling, an error registry and a mobile layout. The method, library versions and the headless numbers are on the [size comparison](/size-comparison) page.
 
 ## Where next
 

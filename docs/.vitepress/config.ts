@@ -81,6 +81,12 @@ const guide: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Image previews and resizing', link: '/guide/previews' },
       { text: 'Customising the UI', link: '/guide/customising-ui' },
+      { text: 'Layouts', link: '/guide/layouts' },
+      { text: 'Render hooks', link: '/guide/render-hooks' },
+      { text: 'Row actions and icons', link: '/guide/row-actions-icons' },
+      { text: 'Languages and RTL', link: '/guide/languages' },
+      { text: 'Themes', link: '/guide/themes' },
+      { text: 'Theme builder', link: '/theme-builder' },
       { text: 'Mobile and iOS', link: '/guide/mobile-ios' },
     ],
   },
@@ -207,6 +213,7 @@ export default defineConfig({
       { text: 'API', link: '/api/', activeMatch: '^/api/' },
       { text: 'Backend', link: '/backend/', activeMatch: '^/(backend|protocol)' },
       { text: 'Demo', link: '/demo' },
+      { text: 'Theme builder', link: '/theme-builder' },
       { text: 'GitHub', link: REPO },
     ],
     sidebar: {
@@ -215,6 +222,7 @@ export default defineConfig({
       '/protocol': backend,
       '/use-cases/': guide,
       '/guide/': guide,
+      '/theme-builder': guide,
       '/size-comparison': guide,
       '/device-checks': guide,
     },

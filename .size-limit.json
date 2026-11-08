@@ -8,15 +8,21 @@
   {
     "name": "@vedratech/anydrop-ui (gzip, ESM, without core)",
     "path": "packages/ui/dist/index.js",
-    "limit": "16.5 kB",
+    "limit": "17.5 kB",
     "gzip": true,
     "ignore": ["@vedratech/anydrop-core"]
   },
   {
     "name": "@vedratech/anydrop-ui CDN file (gzip, IIFE, core + ui as downloaded)",
     "path": "packages/ui/dist/index.global.js",
-    "limit": "35 kB",
+    "limit": "36 kB",
     "gzip": true,
     "rolldown": false
+  },
+  {
+    "name": "@vedratech/anydrop-ui locale entry (gzip, ESM, one language pack: catches runtime code in a locale file)",
+    "path": "packages/ui/dist/locales/ar.js",
+    "limit": "2.5 kB",
+    "gzip": true
   }
 ]
