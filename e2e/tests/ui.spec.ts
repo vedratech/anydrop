@@ -510,27 +510,61 @@ test.describe('mobile layout', () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
-  test('every control is at least 44x44 and the layout holds at 320px', async ({ page, mock }) => {
-    await page.setViewportSize({ width: 320, height: 640 });
-    await open(page, mock);
-    await dropTree(page, '#tree-zone');
-    const zone = page.locator('#tree-zone');
-    await expect(zone.locator('.ad-file-row')).toHaveCount(2);
-    const small = await zone.locator('button').evaluateAll((bs) =>
-      bs
-        .map((b) => ({
-          r: b.getBoundingClientRect(),
-          label: b.getAttribute('aria-label') || b.textContent,
-        }))
-        .filter(({ r }) => r.width > 0 && (r.width < 43.5 || r.height < 43.5))
-        .map(({ label, r }) => `${label}: ${r.width}x${r.height}`),
-    );
-    expect(small).toEqual([]);
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
-  });
+  for (const wide of [false, true]) {
+    test(`every control is at least 44x44 and the layout holds at 320px${wide ? ' (wide fallback font)' : ''}`, async ({
+      page,
+      mock,
+    }, testInfo) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await open(page, mock);
+      if (wide) {
+        // Linux WebKit falls back to wider fonts than Windows/macOS: simulate that everywhere.
+        await page.addStyleTag({
+          content:
+            '* { font-family: Verdana, "DejaVu Sans", sans-serif !important; letter-spacing: .5px !important }',
+        });
+      }
+      await dropTree(page, '#tree-zone');
+      const zone = page.locator('#tree-zone');
+      await expect(zone.locator('.ad-file-row')).toHaveCount(2);
+      const small = await zone.locator('button').evaluateAll((bs) =>
+        bs
+          .map((b) => ({
+            r: b.getBoundingClientRect(),
+            label: b.getAttribute('aria-label') || b.textContent,
+          }))
+          .filter(({ r }) => r.width > 0 && (r.width < 43.5 || r.height < 43.5))
+          .map(({ label, r }) => `${label}: ${r.width}x${r.height}`),
+      );
+      expect(small).toEqual([]);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      if (overflow > 0) {
+        // Name the culprit in the CI log.
+        const culprits = await page.evaluate(() => {
+          const cw = document.documentElement.clientWidth;
+          const out: string[] = [];
+          for (const el of Array.from(document.querySelectorAll('body *'))) {
+            const r = el.getBoundingClientRect();
+            if (r.width > 0 && r.right > cw + 0.5) {
+              out.push(
+                `<${el.tagName.toLowerCase()} class="${el.getAttribute('class') ?? ''}"> right=${Math.round(r.right)} width=${Math.round(r.width)} text="${(el.textContent ?? '').trim().slice(0, 40)}"`,
+              );
+            }
+          }
+          return out.slice(0, 30);
+        });
+        const msg = [
+          'overflow ' + overflow + 'px; elements past the right edge:',
+          ...culprits,
+        ].join(String.fromCharCode(10));
+        console.log(msg);
+        testInfo.annotations.push({ type: 'overflow-culprits', description: msg });
+      }
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  }
 
   test('file pick works on mobile', async ({ page, mock }) => {
     await open(page, mock);

@@ -74,6 +74,16 @@
   display: none !important;
 }
 
+/* Long unbroken text (names, reasons, translations) wraps instead of widening the page */
+.ad-root,
+.ad-panel {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.ad-btn {
+  max-width: 100%;
+}
+
 /* Drop zone */
 .ad-root {
   position: relative;
