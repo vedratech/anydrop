@@ -80,7 +80,7 @@ features:
 
 AnyDrop is a **JavaScript folder upload** library: users can **drag and drop** whole folders or pick them, and your page uploads them with **chunked, resumable uploads**, **pause and resume**, retry and a persistent error list. It is configured with plain options and events. There is no server to install: your backend implements a [small HTTP contract](/backend/).
 
-AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 34.7 kB gzip, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
+AnyDrop ships two packages, with wrappers for [React and Next.js](/guide/react) and [Angular](/guide/angular) on top: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 34.7 kB gzip, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
 
 </div>
 
@@ -91,5 +91,5 @@ AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), t
 - [Upload large files (1 GB and more)](/use-cases/upload-large-files) without loading them into memory.
 - [Pause and resume uploads](/use-cases/pause-resume-uploads): everything, a folder or one file.
 - [File upload that survives a lost connection](/use-cases/upload-lost-connection).
-- [Folder upload with React, Angular and Vue](/use-cases/folder-upload-react-angular-vue): wrappers are planned, not shipped yet.
+- [Folder upload with React, Angular and Vue](/use-cases/folder-upload-react-angular-vue): official React, Next.js and Angular packages, and a pattern for Vue and others.
 - [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend).

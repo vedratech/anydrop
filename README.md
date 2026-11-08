@@ -9,13 +9,14 @@
 [![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-ui.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
 [![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
 
-AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured with plain options and events, and has a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
+AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured with plain options and events, and has a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md), with wrappers for [React and Next.js](packages/react/README.md) and [Angular](packages/angular/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
 
 ## Documentation: https://vedratech.github.io/anydrop/
 
 | | |
 |---|---|
 | [Get started](https://vedratech.github.io/anydrop/guide/introduction) | Guide: install, quick start, folders, chunking, resume, offline, errors |
+| [React and Next.js](https://vedratech.github.io/anydrop/guide/react), [Angular](https://vedratech.github.io/anydrop/guide/angular) | Frameworks: components, event props and outputs, custom rows, SSR |
 | [Live demo](https://vedratech.github.io/anydrop/demo) | The real UI, with a simulated network |
 | [API reference](https://vedratech.github.io/anydrop/api/) | Every option, method, event, error code and type |
 | [Backend](https://vedratech.github.io/anydrop/backend/) | The HTTP contract, with Express and Laravel examples |
@@ -103,6 +104,24 @@ area.addEventListener('drop', (e) => {
   core.drop(e); // call synchronously: the browser clears the dropped items afterwards
 });
 ```
+
+## Frameworks
+
+Official wrappers for React and Next.js and for Angular. They need `@vedratech/anydrop-ui` and `@vedratech/anydrop-core` next to them.
+
+```tsx
+// React and Next.js (@vedratech/anydrop-react)
+import { AnyDrop } from '@vedratech/anydrop-react';
+
+<AnyDrop url="/upload" options={{ chunking: true }} onQueuecomplete={() => console.log('done')} />;
+```
+
+```html
+<!-- Angular (@vedratech/anydrop-angular), standalone component -->
+<any-drop url="/upload" [options]="{ chunking: true }" (queuecomplete)="done()" />
+```
+
+Both give you an event prop or output for every event, custom rows written as real components, and a headless hook or service. Guides: [React and Next.js](https://vedratech.github.io/anydrop/guide/react), [Angular](https://vedratech.github.io/anydrop/guide/angular).
 
 ## Features
 

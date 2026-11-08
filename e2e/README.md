@@ -13,6 +13,8 @@ Test-only. Nothing in this folder is published.
 | `pnpm compare <expectedDir> <actualDir>`              | Exit 1 when paths, sizes, SHA-256 or empty folders differ                 |
 | `pnpm test:e2e [--project=chromium] [file]`           | Playwright. Starts the mock server and the demo itself (`webServer`).     |
 | `pnpm e2e:clean`                                      | Removes `e2e/test-results` and `e2e/playwright-report`                    |
+| `pnpm examples:build` then `pnpm test:e2e:examples [--project=chromium]` | M7: production builds of `examples/{react-vite,nextjs,angular}`, then `e2e/examples/frameworks.spec.ts` against them (own config `playwright.examples.config.ts`: mock server + `vite preview` + `next start` + the Angular SSR server, per-run ports) |
+| `node scripts/consumer-wrappers.mjs --app react-vite\|nextjs\|angular [--next 14] [--angular 18]` | Fresh consumer of the wrappers from packed tarballs (Angular from `packages/angular/dist`), built and run in Chromium |
 | `pnpm check:consumer`                                 | Fresh-consumer smoke test (packed tarballs, Vite app, plain HTML page, locale and theme imports, TypeScript bundler/node16/node10) |
 
 **Run `pnpm build` first.** The demo page used by the e2e suite runs against the built packages
@@ -41,6 +43,7 @@ Install browsers once with `pnpm exec playwright install chromium firefox webkit
 | `wrapper-ready.spec.ts` | verify-upload 8: no leaked listeners, timers, observers, object URLs or requests after `destroy()`, independent instances, Node import without a DOM |
 | `docs-snippets.spec.ts` | verify-upload 9: AnyDrop's own documented snippets run as written (programmatic config, events, `processQueue`, `maxFiles`, rejection messages, headers, `sending` formData, `AnyDrop.options.<id>` presets, `.anydrop` auto-discovery) |
 | `connectivity.spec.ts` | decision 0017: offline, lie-fi, stalls, server restart, offline at start, manifest and finalize, reload during an outage, long outage (fake clock), Retry now, 5xx and 429 storms, the loop guard (chromium and webkit; `AD_SLOW=1` adds a real 2 minute outage) |
+| `examples/frameworks.spec.ts` | decision 0022 section 8.4, on each of the three example apps (chromium, firefox, webkit, iphone): page loads with server HTML and no console or hydration errors, folder upload equals the source tree, Pause all / Resume all (no request after the pause, no duplicate chunk), forced 500 then "Retry failed" resends only that file, custom row with app context and focus and state surviving progress, mounted = destroyed row views, language and theme changed mid-upload. Uses one shared mock, a unique root folder per test and the mock's atomic `addFailRule` / `addSlowRule` |
 | `connectivity-engines.spec.ts` | records how each engine fails a request (refused, DNS, aborted, held) and whether upload progress events fire |
 
 WebKit note: in Playwright's WebKit build a `Blob.slice()` of a file chosen with `setInputFiles(path)` is sent as an
@@ -74,7 +77,7 @@ in the page) and `large-file.spec.ts` builds its file in the page. See `docs/dev
 | `GET /__health`             | liveness and current config                                                                         |
 | `GET /__report[?session=]`  | received tree with SHA-256 (read from disk), uploads bookkeeping, stats                             |
 | `GET /__log[?since=&uploadId=]` | request log (`seq`, `status`, `code`, `uploadId`, `chunkIndex`, `duplicate`, `note`)           |
-| `GET/POST /__config`        | read or patch `failRate`, `latencyMs`, `latencyJitterMs`, `autoAssemble`, `maxFileBytes`, `failRules` |
+| `GET/POST /__config`        | read or patch `failRate`, `latencyMs`, `latencyJitterMs`, `autoAssemble`, `maxFileBytes`, `failRules`, `slowRules`; atomic `addFailRule` / `removeFailRules {relativePath}` and `addSlowRule` / `removeSlowRules {pathPrefix, ms}` (extra delay for the chunks of a path prefix) |
 | `POST /__reset[?keepConfig=1]` | forget all uploads and wipe the storage dir                                                      |
 
 Errors are `{ code, message }` with the codes from the protocol (`INVALID_PATH`, `INVALID_CHUNK`,

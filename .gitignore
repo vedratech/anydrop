@@ -4,6 +4,10 @@ coverage/
 *.tsbuildinfo
 .turbo/
 .vite/
+.angular/
+out-tsc/
+.next/
+next-env.d.ts
 
 # test output
 e2e/fixtures/generated/
@@ -35,4 +39,5 @@ CLAUDE.md
 docs/api/generated/
 docs/public/demo/
 docs/.vitepress/cache/
+docs/.vitepress/.temp/
 docs/.vitepress/dist/

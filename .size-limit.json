@@ -24,5 +24,31 @@
     "path": "packages/ui/dist/locales/ar.js",
     "limit": "2.5 kB",
     "gzip": true
+  },
+  {
+    "name": "@vedratech/anydrop-react (gzip, ESM, without react, core and ui; decision 0022 7.3)",
+    "path": "packages/react/dist/index.js",
+    "limit": "3.5 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "@vedratech/anydrop-core",
+      "@vedratech/anydrop-ui"
+    ]
+  },
+  {
+    "name": "@vedratech/anydrop-angular (gzip, FESM2022 partial, without Angular, rxjs, core and ui; decision 0022 7.3)",
+    "path": "packages/angular/dist/fesm2022/vedratech-anydrop-angular.mjs",
+    "limit": "6 kB",
+    "gzip": true,
+    "ignore": [
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "@vedratech/anydrop-core",
+      "@vedratech/anydrop-ui"
+    ]
   }
 ]

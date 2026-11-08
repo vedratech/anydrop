@@ -10,6 +10,11 @@
  *   HEAD {connectivityProbeUrl}  optional connectivity probe, 204 (protocol v1.4, decision 0017)
  * plus test-only endpoints under /__ (report, log, config, reset, health).
  *
+ * GET /__report?prefix=<root> narrows the report to one root folder (sessions, uploads, merged tree).
+ * /__config also takes the atomic ops addFailRule / removeFailRules ({ relativePath }) and
+ * addSlowRule / removeSlowRules ({ pathPrefix, ms }), so tests that share one server do not
+ * overwrite each other's rules.
+ *
  * No dependencies: only Node built-ins. Start with `pnpm mock-server` (port 3001).
  *
  * Environment variables (all optional):
@@ -191,6 +196,8 @@ export function createMockServer(opts = {}) {
     /** Seconds sent as `Retry-After` with random failures (0 = header omitted). */
     failRetryAfter: opts.failRetryAfter ?? num(env.AD_FAIL_RETRY_AFTER, 0),
     failRules: [],
+    /** Per-path extra latency for chunk POSTs: [{ pathPrefix, ms }] (added and removed atomically, see /__config). */
+    slowRules: [],
   };
 
   let rng = makeRng(config.seed);
@@ -268,6 +275,14 @@ export function createMockServer(opts = {}) {
     const ms = config.latencyMs + (config.latencyJitterMs ? rng() * config.latencyJitterMs : 0);
     if (ms > 0) await new Promise((r) => setTimeout(r, ms));
   }
+
+  /** Extra delay (ms) for chunk uploads whose relativePath starts with a slow rule's pathPrefix. */
+  const slowMs = (relativePath) =>
+    config.slowRules.reduce(
+      (ms, r) =>
+        typeof relativePath === 'string' && relativePath.startsWith(r.pathPrefix) ? ms + r.ms : ms,
+      0,
+    );
 
   /** Returns an HttpError if a forced rule or the random fail rate says this request must fail. */
   function injectedFailure(where, info) {
@@ -532,6 +547,8 @@ export function createMockServer(opts = {}) {
     }
 
     await delay();
+    const slow = slowMs(relativePath);
+    if (slow > 0) await new Promise((r) => setTimeout(r, slow));
     if (res.destroyed || res.socket?.destroyed) {
       entry.note = 'client-aborted-before-commit';
       return null;
@@ -715,7 +732,7 @@ export function createMockServer(opts = {}) {
     return { files, folders };
   }
 
-  async function buildReport(sessionFilter) {
+  async function buildReport(sessionFilter, prefix) {
     let ids = [];
     try {
       ids = (await readdir(config.uploadDir, { withFileTypes: true }))
@@ -725,6 +742,21 @@ export function createMockServer(opts = {}) {
       /* nothing uploaded yet */
     }
     if (sessionFilter) ids = ids.filter((i) => i === sessionFilter);
+    // `prefix`: only what concerns one root folder (cheap on a server shared by many tests: no walk,
+    // no hashing of the other tests' sessions).
+    const inPrefix = (p) => typeof p === 'string' && (p === prefix || p.startsWith(prefix + '/'));
+    if (prefix) {
+      const wanted = new Set();
+      for (const u of uploads.values()) {
+        if (inPrefix(u.relativePath))
+          for (const sid of u.sessionIds ?? [u.sessionId]) wanted.add(sid);
+      }
+      for (const [sid, sess] of sessions) {
+        const m = sess.manifest;
+        if (m && [...(m.roots ?? []), ...(m.folders ?? [])].some(inPrefix)) wanted.add(sid);
+      }
+      ids = ids.filter((i) => wanted.has(i));
+    }
     const out = {};
     for (const id of ids) {
       const tree = await walk(sessionDir(id));
@@ -738,6 +770,7 @@ export function createMockServer(opts = {}) {
       .filter(
         (u) => !sessionFilter || u.sessionIds?.has(sessionFilter) || u.sessionId === sessionFilter,
       )
+      .filter((u) => !prefix || inPrefix(u.relativePath))
       .map((u) => ({
         uploadId: u.uploadId,
         sessionId: u.sessionId,
@@ -784,6 +817,7 @@ export function createMockServer(opts = {}) {
     'maxBodyBytes',
     'strictManifest',
     'failRules',
+    'slowRules',
   ];
   const publicConfig = () => Object.fromEntries(PUBLIC_CONFIG_KEYS.map((k) => [k, config[k]]));
 
@@ -792,7 +826,14 @@ export function createMockServer(opts = {}) {
     if (path === '/__health')
       return send(res, 200, { ok: true, uploadDir: config.uploadDir, config: publicConfig() });
     if (path === '/__report' && req.method === 'GET') {
-      return send(res, 200, await buildReport(url.searchParams.get('session') || undefined));
+      return send(
+        res,
+        200,
+        await buildReport(
+          url.searchParams.get('session') || undefined,
+          url.searchParams.get('prefix') || undefined,
+        ),
+      );
     }
     if (path === '/__log' && req.method === 'GET') {
       const since = Number(url.searchParams.get('since') || 0);
@@ -808,6 +849,18 @@ export function createMockServer(opts = {}) {
       const patch = await readJson(req, 1 << 20);
       for (const k of PUBLIC_CONFIG_KEYS) if (k in patch) config[k] = patch[k];
       if ('seed' in patch) rng = makeRng(config.seed);
+      // Atomic add/remove, for several tests sharing one server (e2e of the example apps): a plain
+      // `failRules` / `slowRules` patch replaces the whole list, which would drop other tests' rules.
+      if (patch.addFailRule) config.failRules.push({ ...patch.addFailRule, hits: 0 });
+      if (patch.removeFailRules)
+        config.failRules = config.failRules.filter(
+          (r) => r.relativePath !== patch.removeFailRules.relativePath,
+        );
+      if (patch.addSlowRule) config.slowRules.push({ ...patch.addSlowRule });
+      if (patch.removeSlowRules)
+        config.slowRules = config.slowRules.filter(
+          (r) => r.pathPrefix !== patch.removeSlowRules.pathPrefix,
+        );
       return send(res, 200, publicConfig());
     }
     if (path === '/__reset' && req.method === 'POST') {
@@ -815,6 +868,7 @@ export function createMockServer(opts = {}) {
       resetState();
       if (!keepConfig) {
         config.failRules = [];
+        config.slowRules = [];
         config.failRate = opts.failRate ?? num(env.AD_FAIL_RATE, 0);
         config.latencyMs = opts.latencyMs ?? num(env.AD_LATENCY_MS, 0);
         config.autoAssemble = opts.autoAssemble ?? (env.AD_AUTO_ASSEMBLE ?? '1') !== '0';

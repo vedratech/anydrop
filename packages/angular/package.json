@@ -1,0 +1,74 @@
+{
+  "name": "@vedratech/anydrop-angular",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Angular component, template slots and service for AnyDrop: folder upload with chunked, resumable uploads.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vedratech/anydrop.git",
+    "directory": "packages/angular"
+  },
+  "homepage": "https://vedratech.github.io/anydrop/",
+  "bugs": {
+    "url": "https://github.com/vedratech/anydrop/issues"
+  },
+  "author": "Jayesh Gupta",
+  "keywords": [
+    "angular",
+    "angular file upload",
+    "angular folder upload",
+    "upload",
+    "folder-upload",
+    "drag-and-drop",
+    "chunked-upload",
+    "resumable-upload",
+    "ssr"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
+  },
+  "scripts": {
+    "sync": "node ../../scripts/sync-wrapper-shared.mjs",
+    "build": "node ../../scripts/sync-wrapper-shared.mjs && ng-packagr -p ng-package.json -c tsconfig.lib.prod.json && node scripts/postbuild.mjs",
+    "test": "node ../../scripts/sync-wrapper-shared.mjs && vitest run",
+    "typecheck": "ngc -p tsconfig.lib.json --noEmit"
+  },
+  "peerDependencies": {
+    "@angular/common": ">=18.0.0",
+    "@angular/core": ">=18.0.0",
+    "@vedratech/anydrop-core": "^0.1.0",
+    "@vedratech/anydrop-ui": "^0.1.0",
+    "rxjs": "^6.5.3 || ^7.4.0"
+  },
+  "devDependencies": {
+    "@angular/common": "~18.2.0",
+    "@angular/compiler": "~18.2.0",
+    "@angular/compiler-cli": "~18.2.0",
+    "@angular/core": "~18.2.0",
+    "@angular/platform-browser": "~18.2.0",
+    "@angular/platform-browser-dynamic": "~18.2.0",
+    "@angular/platform-server": "~18.2.0",
+    "@vedratech/anydrop-core": "workspace:*",
+    "@vedratech/anydrop-ui": "workspace:*",
+    "fake-indexeddb": "^6.2.7",
+    "happy-dom": "^21.0.4",
+    "ng-packagr": "~18.2.0",
+    "rxjs": "~7.8.0",
+    "typescript": "~5.5.4",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0",
+    "zone.js": "~0.14.10"
+  }
+}

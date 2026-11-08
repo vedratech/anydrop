@@ -1,0 +1,35 @@
+{
+  "name": "@vedratech/anydrop-example-angular",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AnyDrop Angular example: latest Angular, standalone, server rendering with hydration.",
+  "scripts": {
+    "ng": "ng",
+    "dev": "node scripts/vendor-lib.mjs && ng serve",
+    "build": "node scripts/vendor-lib.mjs && ng build",
+    "start": "node dist/anydrop-example-angular/server/server.mjs",
+    "typecheck": "node scripts/vendor-lib.mjs && ngc -p tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "@angular/platform-server": "^22.2.0",
+    "@angular/ssr": "^22.2.6",
+    "@vedratech/anydrop-angular": "workspace:*",
+    "@vedratech/anydrop-core": "workspace:*",
+    "@vedratech/anydrop-ui": "workspace:*",
+    "express": "^5.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.6",
+    "@angular/cli": "^22.2.6",
+    "@angular/compiler-cli": "^22.2.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.12.0",
+    "typescript": "~6.0.2"
+  }
+}

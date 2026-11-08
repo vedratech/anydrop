@@ -1,0 +1,28 @@
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.controls button,
+.errors button {
+  min-height: 44px;
+  padding: 0 12px;
+}
+any-drop {
+  margin: 12px 0;
+}
+pre {
+  background: #101018;
+  color: #d8e0ff;
+  padding: 8px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+}

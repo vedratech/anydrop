@@ -1,11 +1,11 @@
 ---
 title: "Folder upload with React, Angular and Vue"
-description: "Add drag and drop folder upload to React, Next.js, Vue, Nuxt and Angular with the vanilla AnyDrop API in a component. Official wrappers are planned, not shipped."
+description: "Add drag and drop folder upload to React, Next.js, Vue, Nuxt and Angular with the vanilla AnyDrop API in a component. Official React, Next.js and Angular packages, and the plain API for Vue, Nuxt and Svelte."
 ---
 
 # Folder upload with React, Angular and Vue
 
-There are **no official framework wrappers yet**: `@vedratech/anydrop-react` and `@vedratech/anydrop-angular` are planned, but not published. You do not need them. AnyDrop is driven only by options, methods and events, with no framework assumptions, so a component of a few lines wraps it.
+There are official packages for **React and Next.js** ([`@vedratech/anydrop-react`](/guide/react)) and **Angular** ([`@vedratech/anydrop-angular`](/guide/angular)). They give you a component, an event prop or output for every event, custom rows written as real components, and a headless hook or service. For Vue, Nuxt, Svelte and others there is no package, and you do not need one: AnyDrop is driven only by options, methods and events, with no framework assumptions, so a component of a few lines wraps it, as shown below.
 
 ## The pattern
 

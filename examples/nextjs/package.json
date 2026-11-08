@@ -1,0 +1,26 @@
+{
+  "name": "@vedratech/anydrop-example-nextjs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "AnyDrop React example: Next.js App Router with server rendering.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vedratech/anydrop-core": "workspace:*",
+    "@vedratech/anydrop-react": "workspace:*",
+    "@vedratech/anydrop-ui": "workspace:*",
+    "next": "^16.4.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "~6.0.3"
+  }
+}

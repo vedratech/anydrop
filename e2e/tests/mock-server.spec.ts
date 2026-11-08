@@ -381,3 +381,86 @@ test.describe('strict manifest mode (AD_STRICT_MANIFEST, protocol v1.3, decision
     expect(other.status()).toBe(400);
   });
 });
+
+test('atomic rule operations: addFailRule / removeFailRules and addSlowRule / removeSlowRules leave other rules alone', async ({
+  request,
+  mock,
+}) => {
+  const post = async (patch: Record<string, unknown>) =>
+    (await request.post(`${mock.url}/__config`, { data: patch })).json() as Promise<{
+      failRules: Array<{ relativePath: string }>;
+      slowRules: unknown[];
+    }>;
+  await mock.configure({ failRules: [{ relativePath: 'keep.bin', status: 500 }] });
+  let c = await post({ addFailRule: { relativePath: 'a.bin', chunkIndex: 0, status: 500 } });
+  expect(c.failRules.map((r) => r.relativePath)).toEqual(['keep.bin', 'a.bin']);
+  await post({ addFailRule: { relativePath: 'b.bin', status: 500 } });
+  c = await post({ removeFailRules: { relativePath: 'a.bin' } });
+  expect(c.failRules.map((r) => r.relativePath)).toEqual(['keep.bin', 'b.bin']);
+
+  // A slow rule delays the chunks of its path prefix only.
+  c = await post({ addSlowRule: { pathPrefix: 'slow/', ms: 300 } });
+  expect(c.slowRules).toEqual([{ pathPrefix: 'slow/', ms: 300 }]);
+  const send = async (relativePath: string) => {
+    const t = Date.now();
+    const r = await request.post(`${mock.url}/upload`, {
+      multipart: chunkForm({
+        sessionId: randomUUID(),
+        uploadId: randomUUID(),
+        relativePath,
+        index: 0,
+        total: 1,
+        chunkSize: 4,
+        totalSize: 4,
+        data: Buffer.from('abcd'),
+      }),
+    });
+    expect(r.status()).toBe(200);
+    return Date.now() - t;
+  };
+  expect(await send('slow/x.bin')).toBeGreaterThanOrEqual(280);
+  expect(await send('fast/x.bin')).toBeLessThan(250);
+  c = await post({ removeSlowRules: { pathPrefix: 'slow/' } });
+  expect(c.slowRules).toEqual([]);
+});
+
+test('report?prefix= narrows the report to one root folder', async ({ request, mock }) => {
+  const upload = async (relativePath: string) => {
+    const sessionId = randomUUID();
+    const uploadId = randomUUID();
+    const root = relativePath.split('/')[0]!;
+    await request.post(`${mock.url}/upload/manifest`, {
+      data: {
+        sessionId,
+        roots: [root],
+        folders: [root],
+        files: [{ uploadId, relativePath, size: 4, lastModified: 1, type: '' }],
+      },
+    });
+    const r = await request.post(`${mock.url}/upload`, {
+      multipart: chunkForm({
+        sessionId,
+        uploadId,
+        relativePath,
+        index: 0,
+        total: 1,
+        chunkSize: 4,
+        totalSize: 4,
+        data: Buffer.from('abcd'),
+      }),
+    });
+    expect(r.status()).toBe(200);
+  };
+  await upload('one/a.bin');
+  await upload('two/b.bin');
+  const get = async (q: string) =>
+    (await (await request.get(`${mock.url}/__report${q}`)).json()) as {
+      merged: { files: Array<{ path: string }> };
+      uploads: Array<{ relativePath: string }>;
+    };
+  expect((await get('')).merged.files.map((f) => f.path)).toEqual(['one/a.bin', 'two/b.bin']);
+  const only = await get('?prefix=one');
+  expect(only.merged.files.map((f) => f.path)).toEqual(['one/a.bin']);
+  expect(only.uploads.map((u) => u.relativePath)).toEqual(['one/a.bin']);
+  expect((await get('?prefix=on')).uploads).toEqual([]); // a folder name, not a string prefix
+});

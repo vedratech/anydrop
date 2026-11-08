@@ -3,7 +3,32 @@ packages:
   - demo
   - e2e
   - docs
+  - examples/*
 
 # pnpm 10+ blocks dependency install scripts unless approved. esbuild needs its postinstall.
+# @parcel/watcher, lmdb and msgpackr-extract are optional native accelerators of the Angular
+# toolchain (dev only in packages/angular and examples/angular); they are not needed.
 allowBuilds:
+  '@parcel/watcher': false
   esbuild: true
+  lmdb: false
+  msgpackr-extract: false
+
+# @angular/core/testing imports @angular/compiler without declaring it. Without this, pnpm hoists one
+# arbitrary Angular version of it, and the Angular 22 example breaks the Angular 18 unit tests of
+# packages/angular (two compilers fight over the JIT facade). Declared as an optional peer, each
+# workspace project then gets its own compiler.
+packageExtensions:
+  '@angular/core':
+    peerDependencies:
+      '@angular/compiler': '*'
+    peerDependenciesMeta:
+      '@angular/compiler':
+        optional: true
+  # @angular/animations imports @angular/common without declaring it (same reason).
+  '@angular/animations':
+    peerDependencies:
+      '@angular/common': '*'
+    peerDependenciesMeta:
+      '@angular/common':
+        optional: true

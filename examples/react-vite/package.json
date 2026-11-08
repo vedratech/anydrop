@@ -1,0 +1,26 @@
+{
+  "name": "@vedratech/anydrop-example-react-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "AnyDrop React example: Vite, React 19, StrictMode.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vedratech/anydrop-core": "workspace:*",
+    "@vedratech/anydrop-react": "workspace:*",
+    "@vedratech/anydrop-ui": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.6"
+  }
+}

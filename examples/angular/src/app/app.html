@@ -1,0 +1,84 @@
+<main>
+  <h1>AnyDrop for Angular</h1>
+
+  <section class="controls" aria-label="Controls">
+    <label>
+      Theme
+      <select data-testid="preset" (change)="setPreset($any($event.target).value)">
+        <option value="">default</option>
+        <option value="glass">glass</option>
+        <option value="rounded">rounded</option>
+        <option value="enterprise">enterprise</option>
+        <option value="minimal">minimal</option>
+      </select>
+    </label>
+    <label>
+      Language
+      <select data-testid="locale" (change)="language.set($any($event.target).value)">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+    </label>
+    <button
+      type="button"
+      data-testid="add-sample"
+      (click)="addSampleFolder()"
+      [disabled]="!ready()"
+    >
+      Add sample folder
+    </button>
+    <button type="button" data-testid="pause-all" (click)="pauseAll()" [disabled]="!ready()">
+      Pause all
+    </button>
+    <button type="button" data-testid="resume-all" (click)="resumeAll()" [disabled]="!ready()">
+      Resume all
+    </button>
+  </section>
+
+  <any-drop
+    id="zone"
+    [options]="options"
+    [themePreset]="preset()"
+    [locale]="lang()"
+    (ready)="onReady($event)"
+    (success)="onSuccess($event)"
+    (error)="onError($event)"
+    (errorlistchanged)="onErrors($event)"
+    (queuecomplete)="say('queue complete')"
+    (addedfolder)="say('folder ' + $event.path)"
+  >
+    <ng-template anyDropFile let-ctx>
+      <app-file-row [ctx]="ctx" />
+    </ng-template>
+  </any-drop>
+
+  <section class="errors" aria-label="Errors">
+    <h2>Failed uploads: <span data-testid="error-count">{{ errorCount() }}</span></h2>
+    <button
+      type="button"
+      data-testid="retry-failed"
+      (click)="retryFailed()"
+      [disabled]="errorCount() === 0"
+    >
+      Retry failed
+    </button>
+    <ul data-testid="error-list">
+      @for (e of errorList(); track $index) {
+      <li>{{ e.relativePath }}: {{ e.message }}</li>
+      }
+    </ul>
+  </section>
+
+  <section class="stats" aria-label="Rows">
+    <p>
+      Custom row views: mounted <span data-testid="slot-mounts">{{ counter.mounted() }}</span>,
+      destroyed
+      <span data-testid="slot-destroys">{{ counter.destroyed() }}</span>
+    </p>
+  </section>
+
+  <section aria-label="Event log">
+    <h2>Events</h2>
+    <pre data-testid="event-log">{{ log().join('\n') }}</pre>
+  </section>
+</main>

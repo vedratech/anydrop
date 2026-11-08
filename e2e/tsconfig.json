@@ -1,5 +1,15 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "types": ["node"], "allowJs": false },
-  "include": ["tests", "playwright.config.ts", "fixtures/*.d.mts", "mock-server/*.d.mts"]
+  "compilerOptions": {
+    "types": ["node"],
+    "allowJs": false
+  },
+  "include": [
+    "tests",
+    "examples",
+    "playwright.config.ts",
+    "playwright.examples.config.ts",
+    "fixtures/*.d.mts",
+    "mock-server/*.d.mts"
+  ]
 }

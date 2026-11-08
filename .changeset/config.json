@@ -7,5 +7,18 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@vedratech/anydrop-demo", "@vedratech/anydrop-e2e", "anydrop-monorepo"]
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
+  "privatePackages": {
+    "version": true,
+    "tag": false
+  },
+  "ignore": [
+    "@vedratech/anydrop-demo",
+    "@vedratech/anydrop-e2e",
+    "@vedratech/anydrop-example-react-vite",
+    "@vedratech/anydrop-example-nextjs",
+    "@vedratech/anydrop-example-angular",
+    "@vedratech/anydrop-docs",
+    "anydrop-monorepo"
+  ]
 }
