@@ -1,3 +1,8 @@
+---
+title: "Upload backend overview: the HTTP contract"
+description: "The four endpoints a backend implements for AnyDrop chunked and folder uploads, compatible with Dropzone chunk fields. No server is shipped."
+---
+
 # Backend overview
 
 AnyDrop is a front-end library. It ships no server: your backend implements a small HTTP contract. A backend that already handles Dropzone's chunk fields keeps working, because AnyDrop uses the same field names (`dzuuid`, `dzchunkindex`, ...) and adds a few of its own with the `ad` prefix.

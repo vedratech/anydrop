@@ -1,3 +1,8 @@
+---
+title: "Laravel chunked upload backend example"
+description: "A Laravel controller and routes implementing chunked, resumable and folder uploads: chunk, status, manifest and finalize endpoints."
+---
+
 # Laravel example
 
 A minimal implementation of the [backend contract](/protocol) with Laravel. It is a documentation example, not a shipped server, and the PHP has been syntax-checked but **not run** against the client: test it in your own project. Add authentication, check that an `uploadId` belongs to the current user, and limit sizes before using anything like it in production.

@@ -1,3 +1,8 @@
+---
+title: "Events reference"
+description: "Every AnyDrop event with its arguments: Dropzone-compatible file events plus folder, pause, resume, connectivity and error list events."
+---
+
 # Events
 
 Subscribe with `ad.on(name, handler)`. It returns a function that removes the listener. Handlers run with `this` set to the instance, and a handler that throws is reported without stopping the other listeners. As in Dropzone, an event can also be passed as an option: `new AnyDrop('#el', { success(file, response) { ... } })`.

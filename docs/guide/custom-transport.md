@@ -1,3 +1,8 @@
+---
+title: "Custom upload transport: presigned S3, tus and more"
+description: "Replace the XMLHttpRequest transport to upload to presigned S3 URLs, speak tus or log requests, while keeping chunking, pause, resume and progress."
+---
+
 # Custom transport
 
 All requests go through a **transport**, an object with one method. The built-in transport uses `XMLHttpRequest` (because `fetch` has no upload progress). Replace it to upload to S3 with presigned URLs, to speak tus, to add logging, or to fake the network in tests. The [live demo](/demo) uses a fake transport.

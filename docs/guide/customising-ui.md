@@ -1,3 +1,8 @@
+---
+title: "Customising the upload UI: themes, texts and templates"
+description: "Change the AnyDrop interface: CSS variables, dark mode, translated texts, the preview template, toolbar and error panel options, and rendering it yourself."
+---
+
 # Customising the UI
 
 You can change the texts, the markup of a file row, and the colours.

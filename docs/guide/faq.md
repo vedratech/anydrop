@@ -1,3 +1,8 @@
+---
+title: "FAQ and troubleshooting"
+description: "Answers about AnyDrop: server needs, Dropzone compatibility, CORS, large files, resume after reload, iOS limits and fixes for common upload problems."
+---
+
 # FAQ and troubleshooting
 
 ## General

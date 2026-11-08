@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="AnyDrop: folder upload for the browser">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g transform="translate(80 90) scale(2.2)">
+    <rect width="64" height="64" rx="14" fill="#1d4ed8"/>
+    <path d="M12 22a4 4 0 0 1 4-4h10l5 5h17a4 4 0 0 1 4 4v19a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" fill="#fff" opacity=".95"/>
+    <path d="M32 44V29m0 0-6 6m6-6 6 6" fill="none" stroke="#1d4ed8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="240" y="170" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="84" font-weight="700" fill="#ffffff">AnyDrop</text>
+  <text x="80" y="330" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="54" font-weight="600" fill="#ffffff">Folder upload for the browser</text>
+  <text x="80" y="400" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#bfdbfe">Drag and drop folders. Chunked, resumable uploads.</text>
+  <text x="80" y="450" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#bfdbfe">Pause and resume. Dropzone-compatible.</text>
+  <rect x="80" y="505" width="470" height="56" rx="12" fill="#ffffff" fill-opacity=".12"/>
+  <text x="104" y="544" font-family="Consolas, 'Courier New', monospace" font-size="28" fill="#e0f2fe">npm i @vedratech/anydrop-ui</text>
+  <text x="1120" y="544" text-anchor="end" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#93c5fd">vedratech.github.io/anydrop</text>
+</svg>

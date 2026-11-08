@@ -1,3 +1,8 @@
+---
+title: "Upload errors and retry failed files"
+description: "A persistent error list with one reason per failed file, retry of failed files only or by folder, and export of the list as JSON or CSV."
+---
+
 # Errors and retry
 
 Failures are never lost in a console message. AnyDrop keeps a **persistent error list**: one entry per file that is currently in `error`, with a reason, so users can see what failed, retry only the failures, and export the list.

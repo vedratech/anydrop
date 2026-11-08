@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vedratech.github.io/anydrop/sitemap.xml

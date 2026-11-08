@@ -1,3 +1,8 @@
+---
+title: "Size comparison: AnyDrop, Dropzone, Uppy, FilePond"
+description: "Measured minified and gzipped download sizes of AnyDrop, Dropzone, Uppy, FilePond and Resumable.js, with the method and versions so you can reproduce them."
+---
+
 # Size comparison: AnyDrop and the libraries people compare it with
 
 Measured on **2026-11-07** and re-measured on **2026-11-08** (AnyDrop `0.1.0` build). The compared libraries are the same versions in both runs; only the AnyDrop rows moved, by a few bytes (see the end of this page). Numbers are **minified + gzip** of what a browser downloads. Brotli is shown as a second column because most CDNs serve it.

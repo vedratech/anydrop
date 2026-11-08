@@ -1,3 +1,8 @@
+---
+title: "Headless upload engine for custom UIs"
+description: "Use the AnyDrop core with no UI: read dropped files and folders, build the tree, upload in chunks, pause and resume. No dependencies, works with any framework."
+---
+
 # Headless core
 
 `@vedratech/anydrop-core` is the engine without any interface. Use it when you build your own UI, or a wrapper for a framework. It reads dropped and picked files, validates them, builds the folder tree, uploads in chunks, and pauses, resumes and retries. It has no dependencies and renders nothing.

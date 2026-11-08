@@ -1,3 +1,8 @@
+---
+title: "Quick start: add a folder upload zone"
+description: "Add a drag and drop folder upload zone to a page in a few lines: install AnyDrop, create the drop zone, set the upload URL and listen for events."
+---
+
 # Quick start (UI)
 
 The UI package gives you a drop zone, a folder tree, a toolbar and an error panel in a few lines.

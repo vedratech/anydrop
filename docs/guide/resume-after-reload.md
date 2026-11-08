@@ -1,3 +1,8 @@
+---
+title: "Resume uploads after a page reload"
+description: "Continue an interrupted upload after the tab was closed or the page reloaded: AnyDrop saves chunk progress in IndexedDB and sends only the missing chunks."
+---
+
 # Resume after reload
 
 If the user closes the tab, the browser crashes or the page reloads in the middle of an upload, AnyDrop can continue from where it stopped. It remembers the chunks the server acknowledged, and when the user drops or picks the same files again, only the missing chunks are sent.

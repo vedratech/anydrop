@@ -1,3 +1,8 @@
+---
+title: "File validation: size, type, count and paths"
+description: "Validate files before upload: maxFilesize, acceptedFiles, maxFiles, a custom accept function and hidden-file rules, with the error codes you get back."
+---
+
 # Validation
 
 Files are checked when they are added, before anything is uploaded. A rejected file stays in the list with an error (`error` event, an entry in the [error list](/guide/errors-retry)) and is never sent.

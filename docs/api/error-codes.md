@@ -1,3 +1,8 @@
+---
+title: "Error codes reference"
+description: "The error codes AnyDrop reports for failed uploads, such as validation, network, stall and finalize failures, with what each means and how to react."
+---
+
 # Error codes
 
 Every entry of the error list ([`getErrors()`](/api/methods#geterrors), [`ErrorEntry`](/api/types#errorentry)) has a `code`, a `message`, a `stage` and a `retryable` flag. The code is typed `ErrorCode`, which is `KnownErrorCode | (string & {})`: the 18 codes below autocomplete, and a backend may send any other string in its JSON error body (`{ "code": "...", "message": "..." }`).

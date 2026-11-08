@@ -1,3 +1,8 @@
+---
+title: "Install AnyDrop from npm or a CDN"
+description: "Install the AnyDrop upload library with npm, pnpm or yarn, or load it from the jsDelivr CDN with a pinned version. ESM, CommonJS, IIFE and TypeScript types."
+---
+
 # Installation
 
 ## npm

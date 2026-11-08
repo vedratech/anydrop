@@ -1,3 +1,8 @@
+---
+title: "Offline uploads and lost-connection handling"
+description: "Uploads pause by themselves when the browser is offline, the tab is hidden or the server is unreachable, probe with backoff, and resume when the connection returns."
+---
+
 # Offline and connectivity
 
 Uploads often happen on bad connections: a train, a phone in a lift, a captive portal. AnyDrop handles this without losing work. It pauses by itself, probes the connection with growing delays, and carries on when it returns.

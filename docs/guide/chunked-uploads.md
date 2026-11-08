@@ -1,3 +1,8 @@
+---
+title: "Chunked file uploads in the browser"
+description: "Split large files into chunks with Blob.slice(), upload them in parallel with retry and backoff, and assemble them on the server. Dropzone-compatible chunk fields."
+---
+
 # Chunked uploads
 
 A chunked upload splits a large file into pieces and sends each piece in its own request. If a request fails, only that chunk is sent again; if the user pauses or the connection drops, the file continues from the last finished chunk.

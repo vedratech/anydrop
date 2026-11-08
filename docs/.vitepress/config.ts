@@ -1,7 +1,58 @@
-import { defineConfig, type DefaultTheme } from 'vitepress';
+import { defineConfig, type DefaultTheme, type HeadConfig } from 'vitepress';
 import typedocSidebar from '../api/generated/typedoc-sidebar.json';
 
 const REPO = 'https://github.com/vedratech/anydrop';
+const SITE = 'https://vedratech.github.io/anydrop/';
+const SITE_NAME = 'AnyDrop';
+const SITE_DESCRIPTION =
+  'Folder upload for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry. A Dropzone-compatible JavaScript and TypeScript library.';
+const OG_IMAGE = SITE + 'og-image.png';
+const OG_IMAGE_ALT =
+  'AnyDrop: folder upload for the browser, chunked and resumable, Dropzone-compatible';
+
+/** Absolute, canonical URL of a page (clean URLs, no .html). */
+function canonicalUrl(relativePath: string): string {
+  const path = relativePath.replace(/\.md$/, '').replace(/(^|\/)index$/, '$1');
+  return SITE + path;
+}
+
+const homeJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['SoftwareApplication', 'SoftwareSourceCode'],
+  name: 'AnyDrop',
+  alternateName: ['@vedratech/anydrop-ui', '@vedratech/anydrop-core'],
+  description: SITE_DESCRIPTION,
+  url: SITE,
+  image: OG_IMAGE,
+  codeRepository: REPO,
+  programmingLanguage: ['TypeScript', 'JavaScript'],
+  license: 'https://opensource.org/licenses/MIT',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'Web browser',
+  author: {
+    '@type': 'Person',
+    name: 'Jayesh Gupta',
+    url: 'https://github.com/jayeshgupta91',
+  },
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
+
+const useCases: DefaultTheme.SidebarItem = {
+  text: 'Use cases',
+  items: [
+    { text: 'Upload a folder in JavaScript', link: '/use-cases/upload-folder-javascript' },
+    { text: 'Chunked and resumable uploads', link: '/use-cases/chunked-resumable-uploads' },
+    { text: 'Dropzone.js alternative with folders', link: '/use-cases/dropzone-alternative' },
+    { text: 'Upload large files (1 GB+)', link: '/use-cases/upload-large-files' },
+    { text: 'Pause and resume uploads', link: '/use-cases/pause-resume-uploads' },
+    { text: 'Uploads that survive a lost connection', link: '/use-cases/upload-lost-connection' },
+    {
+      text: 'Folder upload in React, Angular, Vue',
+      link: '/use-cases/folder-upload-react-angular-vue',
+    },
+    { text: 'Laravel and Express chunked backend', link: '/use-cases/chunked-upload-backend' },
+  ],
+};
 
 const guide: DefaultTheme.SidebarItem[] = [
   {
@@ -13,6 +64,7 @@ const guide: DefaultTheme.SidebarItem[] = [
       { text: 'Headless core', link: '/guide/headless-core' },
     ],
   },
+  useCases,
   {
     text: 'Uploading',
     items: [
@@ -88,9 +140,9 @@ const backend: DefaultTheme.SidebarItem[] = [
 
 export default defineConfig({
   lang: 'en-US',
-  title: 'AnyDrop',
-  description:
-    'Folder-first file uploads for the browser, configured like Dropzone. Chunked, resumable, works on phones.',
+  title: SITE_NAME,
+  titleTemplate: ':title | AnyDrop',
+  description: SITE_DESCRIPTION,
   base: '/anydrop/',
   cleanUrls: true,
   lastUpdated: true,
@@ -98,22 +150,61 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anydrop/logo.svg' }],
     ['meta', { name: 'theme-color', content: '#1d4ed8' }],
-    ['meta', { property: 'og:title', content: 'AnyDrop' }],
     [
       'meta',
       {
-        property: 'og:description',
-        content: 'Folder-first file uploads for the browser, configured like Dropzone.',
+        name: 'keywords',
+        content:
+          'folder upload, file upload, drag and drop, dropzone alternative, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library',
       },
     ],
+    ['meta', { name: 'author', content: 'Jayesh Gupta' }],
+    ['meta', { property: 'og:site_name', content: SITE_NAME }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:locale', content: 'en_US' }],
+    ['meta', { property: 'og:image', content: OG_IMAGE }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { property: 'og:image:alt', content: OG_IMAGE_ALT }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:image', content: OG_IMAGE }],
+    ['meta', { name: 'twitter:image:alt', content: OG_IMAGE_ALT }],
   ],
+  sitemap: { hostname: SITE },
+  transformPageData(pageData) {
+    // Pages without their own description (the generated API pages) get one built from the title.
+    if (!pageData.frontmatter.description && pageData.relativePath !== 'index.md') {
+      const title = (pageData.title || SITE_NAME).replace(/<.*>/, '');
+      pageData.description = `${title}: reference for the AnyDrop folder upload library (chunked, resumable, Dropzone-compatible).`;
+    }
+  },
+  transformHead({ pageData }) {
+    const url = canonicalUrl(pageData.relativePath);
+    const isHome = pageData.relativePath === 'index.md';
+    const title = isHome
+      ? 'AnyDrop: folder upload, chunked and resumable uploads for the browser'
+      : `${pageData.title} | ${SITE_NAME}`;
+    const description = pageData.description || SITE_DESCRIPTION;
+    const head: HeadConfig[] = [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: description }],
+    ];
+    if (isHome) {
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify(homeJsonLd)]);
+    }
+    return head;
+  },
   themeConfig: {
     logo: '/logo.svg',
     nav: [
       {
         text: 'Guide',
         link: '/guide/introduction',
-        activeMatch: '^/(guide|migrating|size|device)',
+        activeMatch: '^/(guide|migrating|size|device|use-cases)',
       },
       { text: 'API', link: '/api/', activeMatch: '^/api/' },
       { text: 'Backend', link: '/backend/', activeMatch: '^/(backend|protocol)' },
@@ -124,6 +215,7 @@ export default defineConfig({
       '/api/': api,
       '/backend/': backend,
       '/protocol': backend,
+      '/use-cases/': guide,
       '/guide/': guide,
       '/migrating-from-dropzone': guide,
       '/size-comparison': guide,

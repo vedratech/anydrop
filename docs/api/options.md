@@ -1,3 +1,8 @@
+---
+title: "Options reference"
+description: "Every AnyDrop option with type, default and example: Dropzone-compatible core options plus folder, chunking, resume, connectivity and UI options."
+---
+
 # Options
 
 Pass options to the constructor, and change them later with [`setOption(name, value)`](/api/methods#setoption-name-value). The core options come from `@vedratech/anydrop-core`; the UI options (and the texts) only exist in `@vedratech/anydrop-ui`, which accepts every core option as well.

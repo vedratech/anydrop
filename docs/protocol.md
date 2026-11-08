@@ -1,3 +1,8 @@
+---
+title: "Upload protocol v1.4: the backend contract"
+description: "The full AnyDrop HTTP contract: chunk fields, manifest, chunk status, finalize, status codes, error format and edge cases for backend authors."
+---
+
 # AnyDrop backend contract (protocol v1.4)
 
 > This page is generated from the project's protocol specification. AnyDrop ships no server: you implement this contract in your own backend ([Express](/backend/express) and [Laravel](/backend/laravel) examples, and a [backend overview](/backend/)). Client packages: `@vedratech/anydrop-core` ([guide](/guide/headless-core)) and `@vedratech/anydrop-ui` ([guide](/guide/quick-start)).

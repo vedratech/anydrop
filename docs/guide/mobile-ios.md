@@ -1,3 +1,8 @@
+---
+title: "Mobile and iOS file upload: browser support and limits"
+description: "Browser support table and iOS Safari limits for file and folder upload: no folder picker on iOS, background tab suspension, HEIC photos and IndexedDB."
+---
+
 # Mobile and iOS
 
 AnyDrop is built for phones as well as desktops. It feature-detects what it needs and never sniffs the user agent.

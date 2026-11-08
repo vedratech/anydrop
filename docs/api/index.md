@@ -1,3 +1,8 @@
+---
+title: "API reference: options, methods, events"
+description: "The AnyDrop API reference: every option, method, event, error code and type, with Dropzone parity notes and generated TypeScript definitions."
+---
+
 # API reference
 
 AnyDrop has two packages. `@vedratech/anydrop-core` is the headless engine (class `AnyDropCore`). `@vedratech/anydrop-ui` adds the drop zone, the folder tree and the mobile layout (class `AnyDrop`, which extends `AnyDropCore`). Everything in the core also works in the UI.

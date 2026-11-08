@@ -1,3 +1,8 @@
+---
+title: "Methods reference"
+description: "Every AnyDrop method: queue control, files and folders, pause and resume, errors and retry, connection state, and lifecycle with destroy()."
+---
+
 # Methods
 
 Every public method and property of `AnyDropCore` (from `@vedratech/anydrop-core`) and of `AnyDrop` (from `@vedratech/anydrop-ui`, which extends the core, so everything here works on both). Methods that exist only in the UI are marked **UI**. The generated type reference is at [`AnyDropCore`](/api/generated/anydrop-core/classes/AnyDropCore) and [`AnyDrop`](/api/generated/anydrop-ui/classes/AnyDrop).

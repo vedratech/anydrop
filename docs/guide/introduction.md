@@ -1,3 +1,8 @@
+---
+title: "Introduction: folder-first file uploads for the browser"
+description: "What AnyDrop is: a Dropzone-compatible JavaScript upload library with folder drop, chunked and resumable uploads, pause and resume, and mobile support."
+---
+
 # Introduction
 
 AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured like [Dropzone.js](https://www.dropzone.dev/), so most Dropzone code keeps working, and it adds a folder picker and tree view, chunked uploads, pause and resume, a persistent error list and a layout that works on phones.

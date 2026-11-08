@@ -1,3 +1,8 @@
+---
+title: "Pause and resume uploads: all, folder or file"
+description: "Pause and resume browser uploads for the whole queue, one folder or one file. How the pause flags combine, pause modes and the events to listen for."
+---
+
 # Pause and resume
 
 Uploads can be paused at three levels: the whole instance, one folder, or one file. Each pause has its own flag, so they do not undo each other.

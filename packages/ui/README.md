@@ -1,5 +1,14 @@
 # @vedratech/anydrop-ui
 
+**Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry, Dropzone-compatible. Part of [AnyDrop](https://github.com/vedratech/anydrop).**
+
+[![npm version](https://img.shields.io/npm/v/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
+[![npm downloads](https://img.shields.io/npm/dm/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
+[![bundle size](https://deno.bundlejs.com/badge?q=@vedratech/anydrop-ui)](https://bundlejs.com/?q=@vedratech/anydrop-ui)
+[![CI](https://github.com/vedratech/anydrop/actions/workflows/ci.yml/badge.svg)](https://github.com/vedratech/anydrop/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-ui.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
+[![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
+
 Plain-JavaScript UI for AnyDrop: a drop zone with file and folder pickers, a virtualized folder tree (or flat list), a toolbar, a persistent error panel, thumbnails and a mobile layout. It extends `AnyDropCore` from [`@vedratech/anydrop-core`](https://www.npmjs.com/package/@vedratech/anydrop-core) and is configured like Dropzone.js, so `new Dropzone(el, opts)` becomes `new AnyDrop(el, opts)`.
 
 **Documentation: https://vedratech.github.io/anydrop/** ([quick start](https://vedratech.github.io/anydrop/guide/quick-start), [API reference](https://vedratech.github.io/anydrop/api/), [backend contract](https://vedratech.github.io/anydrop/protocol), [live demo](https://vedratech.github.io/anydrop/demo))

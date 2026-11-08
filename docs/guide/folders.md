@@ -1,3 +1,8 @@
+---
+title: "Folder upload and the folder tree"
+description: "Accept dropped and picked folders in the browser, keep relative paths and empty folders, read the folder tree and send the structure to your backend as a manifest."
+---
+
 # Folders and the tree
 
 Folders are first-class: users can drop or pick whole folders, several at once and mixed with loose files. Every file keeps its relative path, empty folders are kept, and your backend can receive the whole structure as a manifest.

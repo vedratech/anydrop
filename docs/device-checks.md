@@ -1,3 +1,8 @@
+---
+title: "Real-device checks for iPhone and Android"
+description: "The checklist used to verify AnyDrop on real iPhone and Android phones: folder limits, background tabs, large files, offline recovery and what has been tested."
+---
+
 # Real-device checks (iPhone and Android)
 
 Playwright's WebKit is **not** iOS Safari and its Pixel is a desktop Chromium with a phone viewport. This checklist is what only a real phone can prove. It covers every mobile and iOS item that emulation cannot show: background suspension, the WebKit behaviour of aborted chunks, and network loss.

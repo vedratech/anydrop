@@ -1,3 +1,8 @@
+---
+title: "Migrating from Dropzone.js to AnyDrop"
+description: "Switch from Dropzone 6 to AnyDrop: swap the script and constructor, keep your options, events and backend. What stays the same and every intentional difference."
+---
+
 # Migrating from Dropzone
 
 AnyDrop is configured like Dropzone.js (version 6.3.5): in most pages you replace `Dropzone` with `AnyDrop` and keep your options, events and markup. This page lists what stays the same, what is new, and every place where AnyDrop behaves differently on purpose.

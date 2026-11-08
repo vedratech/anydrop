@@ -1,6 +1,15 @@
-# AnyDrop
+# AnyDrop: folder upload for the browser
 
-A front-end upload library that treats **folders as first-class objects**. It is configured like [Dropzone.js](https://www.dropzone.dev/) and adds a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones.
+**Drag and drop folder upload in JavaScript and TypeScript, with chunked and resumable uploads, pause and resume, retry and a persistent error list. Dropzone-compatible, works on phones.**
+
+[![npm version](https://img.shields.io/npm/v/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
+[![npm downloads](https://img.shields.io/npm/dm/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
+[![bundle size](https://deno.bundlejs.com/badge?q=@vedratech/anydrop-ui)](https://bundlejs.com/?q=@vedratech/anydrop-ui)
+[![CI](https://github.com/vedratech/anydrop/actions/workflows/ci.yml/badge.svg)](https://github.com/vedratech/anydrop/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-ui.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
+[![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
+
+AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured like [Dropzone.js](https://www.dropzone.dev/) and adds a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
 
 ## Documentation: https://vedratech.github.io/anydrop/
 
@@ -11,6 +20,34 @@ A front-end upload library that treats **folders as first-class objects**. It is
 | [API reference](https://vedratech.github.io/anydrop/api/) | Every option, method, event, error code and type |
 | [Backend](https://vedratech.github.io/anydrop/backend/) | The HTTP contract, with Express and Laravel examples |
 | [Migrating from Dropzone](https://vedratech.github.io/anydrop/migrating-from-dropzone) | What stays the same and what is different |
+
+## Why AnyDrop
+
+Use it when users upload **whole folders**, when files are **large or the connection is unreliable**, when people use **phones**, or when you already use Dropzone and want the same configuration with these features added.
+
+| | Dropzone 6.3.5 | AnyDrop |
+|---|---|---|
+| Same options and events as Dropzone | yes | yes |
+| Folder tree, empty folders, folder manifest for the backend | no | yes |
+| Chunked uploads | yes | yes, with retry on by default |
+| Pause and resume (all, a folder, a file) | no | yes |
+| Resume after a page reload | no | yes (IndexedDB) |
+| Automatic handling of offline and unreachable servers | no | yes |
+| Persistent error list with retry and export | no | yes |
+| Headless core without a UI | no | yes |
+| Download size (UI, gzip) | 11.7 kB | 31.8 kB |
+
+Dropzone is the smaller download and has a long track record, and Uppy and FilePond have plugin ecosystems that AnyDrop does not. If you only need plain file uploads, one of them may suit you better. Sizes are in the [Size](#size) section.
+
+Guides for common tasks:
+[upload a folder in JavaScript](https://vedratech.github.io/anydrop/use-cases/upload-folder-javascript),
+[chunked and resumable uploads](https://vedratech.github.io/anydrop/use-cases/chunked-resumable-uploads),
+[Dropzone.js alternative with folder support](https://vedratech.github.io/anydrop/use-cases/dropzone-alternative),
+[upload large files](https://vedratech.github.io/anydrop/use-cases/upload-large-files),
+[pause and resume uploads](https://vedratech.github.io/anydrop/use-cases/pause-resume-uploads),
+[uploads that survive a lost connection](https://vedratech.github.io/anydrop/use-cases/upload-lost-connection),
+[folder upload with React, Angular or Vue](https://vedratech.github.io/anydrop/use-cases/folder-upload-react-angular-vue),
+[Laravel and Express chunked upload backend](https://vedratech.github.io/anydrop/use-cases/chunked-upload-backend).
 
 ## Two packages
 

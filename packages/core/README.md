@@ -1,5 +1,14 @@
 # @vedratech/anydrop-core
 
+**Headless folder upload engine: drag and drop folders, chunked and resumable uploads, pause and resume, retry, Dropzone-compatible. Part of [AnyDrop](https://github.com/vedratech/anydrop).**
+
+[![npm version](https://img.shields.io/npm/v/@vedratech/anydrop-core.svg)](https://www.npmjs.com/package/@vedratech/anydrop-core)
+[![npm downloads](https://img.shields.io/npm/dm/@vedratech/anydrop-core.svg)](https://www.npmjs.com/package/@vedratech/anydrop-core)
+[![bundle size](https://deno.bundlejs.com/badge?q=@vedratech/anydrop-core)](https://bundlejs.com/?q=@vedratech/anydrop-core)
+[![CI](https://github.com/vedratech/anydrop/actions/workflows/ci.yml/badge.svg)](https://github.com/vedratech/anydrop/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-core.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
+[![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
+
 Headless engine for AnyDrop: folder-first, chunked, resumable uploads, configured like Dropzone.js. No runtime dependencies, no DOM rendering, safe to import during server-side rendering (nothing touches `window` or `document` at import time).
 
 It reads input (drop, paste, file and folder inputs), validates, builds the folder tree, uploads whole files or chunks with retry, sends a folder manifest, pauses and resumes at three levels, resumes after a reload (IndexedDB), pauses by itself when the browser is offline, the page is hidden or the server cannot be reached, and keeps a persistent error list. The UI is in [`@vedratech/anydrop-ui`](https://www.npmjs.com/package/@vedratech/anydrop-ui).

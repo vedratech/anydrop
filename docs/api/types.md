@@ -1,3 +1,8 @@
+---
+title: "Types reference"
+description: "The TypeScript types of AnyDrop: files, FolderNode, upload state, error entries and transport interfaces, with the fields of each."
+---
+
 # Types
 
 Every exported type of both packages, with a short description and where it is used. The complete generated definitions are in the [core reference](/api/generated/anydrop-core/) and the [UI reference](/api/generated/anydrop-ui/). All types are exported by name, for example `import type { AnyDropFile } from '@vedratech/anydrop-core'`.

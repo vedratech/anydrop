@@ -1,3 +1,8 @@
+---
+title: "Upload events cookbook"
+description: "Recipes for AnyDrop events: progress bars, completion, errors, folder events, pause and resume events and DOM events, with copy-paste code."
+---
+
 # Events cookbook
 
 Short recipes for common tasks. In all of them `ad` is an instance, created as `new AnyDrop('#uploader', { url: '/upload' })` (or `new AnyDropCore(...)`). See [Events](/api/events) for the full list.

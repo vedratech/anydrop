@@ -1,3 +1,8 @@
+---
+title: "Image previews, thumbnails and resizing"
+description: "Show capped, lazy image thumbnails and optionally resize photos before upload, designed so thousands of images do not exhaust memory on a phone."
+---
+
 # Image previews and resizing
 
 The UI shows a thumbnail for image files, and can scale images down before they are uploaded. Both are designed so that thousands of photos do not exhaust the memory of a phone.

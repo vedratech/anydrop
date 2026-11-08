@@ -1,3 +1,8 @@
+---
+title: "Express chunked upload backend example"
+description: "A working Express 5 and multer backend for chunked, resumable and folder uploads with manifest, chunk status and finalize endpoints."
+---
+
 # Express example
 
 A minimal implementation of the [backend contract](/protocol) with Express 5 and multer. It is a documentation example, not a shipped server: add authentication, check that an `uploadId` belongs to the current user, and limit sizes before using anything like it in production.

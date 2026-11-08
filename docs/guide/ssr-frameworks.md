@@ -1,3 +1,8 @@
+---
+title: "SSR and frameworks: React, Next.js, Vue, Angular, Svelte"
+description: "Use AnyDrop in React, Next.js, Vue, Nuxt, Angular and Svelte: create the instance after mount, call destroy on unmount. Safe to import during server rendering."
+---
+
 # SSR and frameworks
 
 Both packages are safe to import on the server: nothing touches `window` or `document` when you import them. Create the instance only in the browser, after your component has mounted, and destroy it when the component unmounts.
