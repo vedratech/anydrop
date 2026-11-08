@@ -471,6 +471,9 @@ export function createMockServer(opts = {}) {
 
   async function handleUpload(req, res, entry) {
     const raw = await readBody(req, config.maxBodyBytes);
+    // Whole request body as received (a chunk the browser sent without its payload shows here).
+    entry.bodyBytes = raw.length;
+    entry.contentLength = req.headers['content-length'];
     const { fields, file, files } = parseMultipart(raw, req.headers['content-type']);
     if (!file) throw new HttpError(400, 'INVALID_CHUNK', 'No file part in the request');
     // uploadMultiple (non-chunked only): file[0], adRelativePath[0], file[1], adRelativePath[1], ...

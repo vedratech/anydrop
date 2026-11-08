@@ -197,32 +197,97 @@ export const abortCount = (page: Page) =>
 
 export const summary = (page: Page, zone: string) => page.locator(`${zone} .ad-summary`);
 
+/**
+ * What a failed "N of N uploaded, 0 failed" check needs to be understood from a CI log alone: the
+ * error registry (code, message, httpStatus, relativePath, attempt), the connection state, and the
+ * mock's log of requests with status >= 400 (with `bytes`) plus the requests right before the first
+ * of them. Also attached as test annotations. Classifies the case from decision 0019.
+ */
+export async function describeFailure(
+  page: Page,
+  zone: string,
+  mock?: IsolatedMock,
+): Promise<string> {
+  const name = zone.replace(/^#/, '').replace(/-zone$/, '');
+  const inst = await page
+    .evaluate((n) => {
+      type I = { getErrors(): unknown[]; getConnectionState?: () => unknown };
+      const i = (window as unknown as Record<string, Record<string, I>>).anydrop?.[n];
+      return i ? { errors: i.getErrors(), connection: i.getConnectionState?.() ?? null } : null;
+    }, name)
+    .catch(() => null);
+  const errors = (inst?.errors ?? []) as Array<{
+    code?: string;
+    message?: string;
+    httpStatus?: number;
+    relativePath?: string;
+    attempt?: number;
+    chunkIndex?: number;
+    stage?: string;
+    at?: number;
+  }>;
+  const log = mock ? await mock.log().catch(() => [] as MockLogEntry[]) : [];
+  const bad = log.filter((e) => (e.status ?? 0) >= 400);
+  const firstBad = bad.length ? log.indexOf(bad[0]!) : -1;
+  const before = firstBad >= 0 ? log.slice(Math.max(0, firstBad - 12), firstBad) : [];
+  const slim = (e: MockLogEntry) =>
+    `#${e.seq} ${e.method} ${e.path} ${e.status ?? '-'}${e.code ? ' ' + e.code : ''}` +
+    `${e.relativePath ? ' ' + e.relativePath : ''}${e.chunkIndex !== undefined ? ' chunk=' + e.chunkIndex : ''}` +
+    `${e.bytes !== undefined ? ' bytes=' + e.bytes : ''}${e.bodyBytes !== undefined ? ' body=' + e.bodyBytes + '/CL=' + e.contentLength : ''}${e.ts ? ' t=' + (e.ts % 1_000_000) : ''}${e.note ? ' note=' + e.note : ''}`;
+  // WEBKIT-FLAKE-1 (decision 0019): the only errors are 400 INVALID_CHUNK with an empty chunk body.
+  const emptyBody = (m?: string) => /length 0 do not match/.test(m ?? '');
+  const flake1 =
+    errors.length > 0 &&
+    errors.every(
+      (e) => e.code === 'INVALID_CHUNK' && e.httpStatus === 400 && emptyBody(e.message),
+    ) &&
+    bad.every((e) => e.code === 'INVALID_CHUNK' && e.bytes === 0);
+  const verdict = flake1
+    ? 'WEBKIT-FLAKE-1 (decision 0019): every failure is 400 INVALID_CHUNK with an empty chunk body, a known WebKit test-browser artefact'
+    : errors.length
+      ? 'NOT WEBKIT-FLAKE-1: unexpected error codes or statuses, treat as a possible product bug'
+      : 'no entries in the error registry: files are not failing with errors, look at the connection state and the server log';
+  const text = [
+    `verdict: ${verdict}`,
+    `connection state: ${JSON.stringify(inst?.connection ?? null)}`,
+    `error registry (${errors.length}): ${JSON.stringify(
+      errors.map((e) => ({
+        code: e.code,
+        message: e.message,
+        httpStatus: e.httpStatus,
+        relativePath: e.relativePath,
+        attempt: e.attempt,
+        chunkIndex: e.chunkIndex,
+        stage: e.stage,
+        at: e.at,
+      })),
+    )}`,
+    `mock log entries with status >= 400 (${bad.length}):\n  ${bad.map(slim).join('\n  ')}`,
+    `mock log, the ${before.length} requests before the first of them:\n  ${before.map(slim).join('\n  ')}`,
+  ].join('\n');
+  try {
+    const t = test.info();
+    t.annotations.push({ type: flake1 ? 'WEBKIT-FLAKE-1' : 'upload-failure', description: text });
+  } catch {
+    /* not inside a test */
+  }
+  return text;
+}
+
 /** Waits until the zone's toolbar says every file is uploaded and none failed. */
 export async function expectAllUploaded(
   page: Page,
   zone: string,
   total: number,
   timeout = 120_000,
+  mock?: IsolatedMock,
 ): Promise<void> {
   try {
     await expect(summary(page, zone)).toContainText(`${total} of ${total} uploaded, 0 failed`, {
       timeout,
     });
   } catch (e) {
-    // Say why files failed: the error registry of the instance behind this zone (demo: `anydrop.<name>`).
-    const errors = await page
-      .evaluate(
-        (name) => {
-          const inst = (
-            window as unknown as Record<string, Record<string, { getErrors(): unknown[] }>>
-          ).anydrop?.[name];
-          return inst ? inst.getErrors() : null;
-        },
-        zone.replace(/^#/, '').replace(/-zone$/, ''),
-      )
-      .catch(() => null);
-    (e as Error).message += `
-error registry: ${JSON.stringify(errors)}`;
+    (e as Error).message += '\n' + (await describeFailure(page, zone, mock));
     throw e;
   }
 }

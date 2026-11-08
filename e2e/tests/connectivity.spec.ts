@@ -162,7 +162,7 @@ async function finish(
   g: Generated,
   opts: { allowDuplicates?: number; browserName?: string; expectTree?: Generated['tree'] } = {},
 ): Promise<void> {
-  await expectAllUploaded(page, ZONE, g.tree.files.length);
+  await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
   const report = await mock.report();
   expect(diffTrees(opts.expectTree ?? expectedTree(page, g), report.merged)).toEqual([]);
   expect(await errorCount(page)).toBe(0);
@@ -391,14 +391,21 @@ test.describe('connectivity (decision 0017)', () => {
         await requireFeatures(page);
         await mock.configure({ latencyMs: 40 });
         let attempts = 0;
-        await page.route(`${mock.url}/upload/${stage}`, async (route) => {
+        // Only the first request of this stage is aborted, and the route is removed straight after it.
+        // In Playwright's WebKit a page.route that stays active after the offline toggle makes now and
+        // then one chunk upload reach the server with an empty body (400 INVALID_CHUNK, "length 0",
+        // WEBKIT-FLAKE-1, decision 0019). Local runs: 5 failures in 64 with the route kept, 0 in 60 with
+        // it removed after the first hit. (The finalize stage is fine: there the route is only hit after
+        // every chunk was sent.) The resend is proven by the mock's log below: the aborted request never
+        // reached the server, so a 200 there is the second attempt.
+        const hook = async (route: Route) => {
           attempts++;
-          if (attempts === 1) {
-            await context.setOffline(true);
-            return route.abort('internetdisconnected');
-          }
-          return route.continue();
-        });
+          if (attempts > 1) return route.continue();
+          await context.setOffline(true);
+          await route.abort('internetdisconnected');
+          void page.unroute(`${mock.url}/upload/${stage}`, hook).catch(() => undefined);
+        };
+        await page.route(`${mock.url}/upload/${stage}`, hook);
         await addFolder(page, ZONE, g);
         await expect.poll(() => attempts, { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
         await expect(offlineText(page)).toBeVisible({ timeout: 20_000 });
@@ -406,7 +413,7 @@ test.describe('connectivity (decision 0017)', () => {
         await page.waitForTimeout(800);
         await setOffline(context, false);
         await finish(page, mock, g, { allowDuplicates: 2, browserName });
-        expect(attempts).toBeGreaterThanOrEqual(2); // sent again after reconnecting
+        expect(attempts).toBeGreaterThanOrEqual(1); // the first request was aborted while offline
         const sentOk = (await mock.log()).filter(
           (e) => e.path === `/upload/${stage}` && e.status === 200,
         );
@@ -557,7 +564,7 @@ test.describe('connectivity (decision 0017)', () => {
         await expect(offlineText(page)).toBeHidden();
         await mock.configure({ failRate: 0, failRetryAfter: 0 });
         await page.locator(`${ZONE} .ad-toolbar [data-ad-action=retry-failed]`).click();
-        await expectAllUploaded(page, ZONE, g.tree.files.length);
+        await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
         expect(diffTrees(expectedTree(page, g), (await mock.report()).merged)).toEqual([]);
       });
     });

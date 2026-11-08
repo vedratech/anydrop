@@ -73,7 +73,7 @@ test.describe('S1 a nested folder with 1,000+ files and empty folders', () => {
       const errors = await openDemo(page, mock);
       await mock.configure({ latencyMs: 0 });
       await dropGenerated(page, ZONE, g);
-      await expectAllUploaded(page, ZONE, g.tree.files.length, 240_000);
+      await expectAllUploaded(page, ZONE, g.tree.files.length, 240_000, mock);
       const report = await mock.report();
       expect(diffTrees(g.tree, report.merged)).toEqual([]);
       expect(report.uploads.every((u) => u.complete)).toBe(true);
@@ -110,7 +110,7 @@ test.describe('S1 a nested folder with 1,000+ files and empty folders', () => {
         'the UI feature-detects webkitdirectory and offers no folder picker on this engine',
       );
       await addFolder(page, ZONE, g, { picker: true });
-      await expectAllUploaded(page, ZONE, g.tree.files.length, 200_000);
+      await expectAllUploaded(page, ZONE, g.tree.files.length, 200_000, mock);
       const report = await mock.report();
       expect(diffTrees(expectedTree(page, g), report.merged)).toEqual([]);
     } finally {
@@ -159,7 +159,7 @@ test.describe('S2 the network dies mid-upload', () => {
       expect((await mock.log()).length).toBe(logAt);
 
       await context.setOffline(false);
-      await expectAllUploaded(page, ZONE, g.tree.files.length);
+      await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
       const report = await mock.report();
       expect(diffTrees(expectedTree(page, g), report.merged)).toEqual([]);
       // Only the missing chunks: nothing the server held at the snapshot is sent again (a chunk
@@ -351,7 +351,7 @@ test.describe('S3 pause and resume at file, folder and global level', () => {
       // Finally the single file.
       await expect(fileRow().locator('[data-ad-action=resume]')).toBeVisible();
       await fileRow().locator('[data-ad-action=resume]').click();
-      await expectAllUploaded(page, ZONE, g.tree.files.length);
+      await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
 
       const report = await mock.report();
       expect(diffTrees(expectedTree(page, g), report.merged)).toEqual([]);
@@ -461,7 +461,7 @@ test.describe('S4 reload mid-upload, pick the same folder again', () => {
       const logAt = (await mock.log()).length;
 
       await addFolder(page, ZONE, g); // the same folder, again
-      await expectAllUploaded(page, ZONE, g.tree.files.length);
+      await expectAllUploaded(page, ZONE, g.tree.files.length, undefined, mock);
       const report = await mock.report();
       expect(diffTrees(expectedTree(page, g), report.merged)).toEqual([]);
       const log = (await mock.log()).slice(logAt);

@@ -30,6 +30,10 @@ export interface MockLogEntry {
   chunkIndex?: number;
   relativePath?: string;
   bytes?: number;
+  /** Size of the whole request body the server read, and the Content-Length header it came with. */
+  bodyBytes?: number;
+  contentLength?: string;
+  ts?: number;
   duplicate?: boolean;
   note?: string;
 }
