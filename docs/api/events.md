@@ -1,11 +1,11 @@
 ---
 title: "Events reference"
-description: "Every AnyDrop event with its arguments: Dropzone-compatible file events plus folder, pause, resume, connectivity and error list events."
+description: "Every AnyDrop event with its arguments: file events plus folder, pause, resume, connectivity and error list events."
 ---
 
 # Events
 
-Subscribe with `ad.on(name, handler)`. It returns a function that removes the listener. Handlers run with `this` set to the instance, and a handler that throws is reported without stopping the other listeners. As in Dropzone, an event can also be passed as an option: `new AnyDrop('#el', { success(file, response) { ... } })`.
+Subscribe with `ad.on(name, handler)`. It returns a function that removes the listener. Handlers run with `this` set to the instance, and a handler that throws is reported without stopping the other listeners. An event can also be passed as an option: `new AnyDrop('#el', { success(file, response) { ... } })`.
 
 ```ts
 const off = ad.on('success', (file, response) => console.log(file.relativePath, response));
@@ -36,7 +36,7 @@ Jump to: [Input](#input-events) / [Files](#file-events) / [Upload](#upload-event
 
 `(event: DragEvent)` (**UI**)
 
-Drag events over the element, as in Dropzone. The element also gets the class `dz-drag-hover` while a drag is over it.
+Drag events over the element. The element also gets the class `ad-drag-hover` while a drag is over it.
 
 ```ts
 ad.on('dragenter', () => ad.element.classList.add('highlight'));
@@ -104,7 +104,7 @@ A file was rejected because of `maxFiles` (after its `error` and `complete`).
 
 `(files: AnyDropFile[])`
 
-A check found exactly `maxFiles` accepted files. As in Dropzone it can repeat.
+A check found exactly `maxFiles` accepted files. It can repeat.
 
 ## Upload events
 
@@ -288,7 +288,7 @@ ad.on('reconnecting', (n, ms) => {
 
 `(file: AnyDropFile, message: unknown, xhr?: XMLHttpRequest)`
 
-A file was rejected, or its upload finally failed (once, after any retries). `message` is the Dropzone message, what your `accept()` passed, the parsed JSON error body, or a string. It is followed by `complete`.
+A file was rejected, or its upload finally failed (once, after any retries). `message` is the built-in message, what your `accept()` passed, the parsed JSON error body, or a string. It is followed by `complete`.
 
 ```ts
 ad.on('error', (file, message) => console.warn(file.relativePath, message));

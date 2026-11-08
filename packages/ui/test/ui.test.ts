@@ -7,7 +7,7 @@ afterEach(() => {
 });
 
 describe('construction', () => {
-  it('throws like Dropzone without an element or a url', () => {
+  it('throws without an element or a url', () => {
     document.body.innerHTML = '<div id="z"></div>';
     expect(() => new AnyDrop('#nope', { url: '/u' })).toThrow('Invalid');
     expect(() => new AnyDrop('#z')).toThrow('No URL provided.');
@@ -22,11 +22,11 @@ describe('construction', () => {
     ad.destroy();
   });
 
-  it('builds the message, buttons and Dropzone classes', () => {
+  it('builds the message, buttons and ad-* classes', () => {
     const { el, ad } = mount();
     expect(el.classList.contains('ad-root')).toBe(true);
-    expect(el.classList.contains('dz-clickable')).toBe(true);
-    expect(el.querySelector('.dz-message')?.textContent).toContain('Drop files');
+    expect(el.classList.contains('ad-clickable')).toBe(true);
+    expect(el.querySelector('.ad-message')?.textContent).toContain('Drop files');
     expect(el.querySelector('[data-ad-action=pick-files]')?.textContent).toBe('Select files');
     ad.destroy();
   });
@@ -63,7 +63,7 @@ describe('construction', () => {
 });
 
 describe('drop zone', () => {
-  it('toggles dz-drag-hover with nested enter/leave and forwards drop to core', () => {
+  it('toggles ad-drag-hover with nested enter/leave and forwards drop to core', () => {
     const { el, ad } = mount();
     const drop = vi.spyOn(ad, 'drop');
     const ev = (type: string) => {
@@ -75,17 +75,17 @@ describe('drop zone', () => {
     };
     el.dispatchEvent(ev('dragenter'));
     el.dispatchEvent(ev('dragenter'));
-    expect(el.classList.contains('dz-drag-hover')).toBe(true);
+    expect(el.classList.contains('ad-drag-hover')).toBe(true);
     el.dispatchEvent(ev('dragleave'));
-    expect(el.classList.contains('dz-drag-hover')).toBe(true);
+    expect(el.classList.contains('ad-drag-hover')).toBe(true);
     el.dispatchEvent(ev('dragleave'));
-    expect(el.classList.contains('dz-drag-hover')).toBe(false);
+    expect(el.classList.contains('ad-drag-hover')).toBe(false);
     el.dispatchEvent(ev('dragenter'));
     const d = ev('drop');
     el.dispatchEvent(d);
     expect(d.defaultPrevented).toBe(true);
     expect(drop).toHaveBeenCalled();
-    expect(el.classList.contains('dz-drag-hover')).toBe(false);
+    expect(el.classList.contains('ad-drag-hover')).toBe(false);
     ad.destroy();
   });
 
@@ -93,7 +93,7 @@ describe('drop zone', () => {
     const { el, ad } = mount();
     const input = document.querySelector<HTMLInputElement>('input[data-ad-input=files]')!;
     const click = vi.spyOn(input, 'click');
-    el.querySelector<HTMLElement>('.dz-message')!.click();
+    el.querySelector<HTMLElement>('.ad-message')!.click();
     el.click();
     expect(click).toHaveBeenCalledTimes(2);
     ad.destroy();
@@ -129,28 +129,28 @@ describe('drop zone', () => {
 });
 
 describe('previews', () => {
-  it('creates dz-started and a lazy previewElement with data-dz hooks', async () => {
+  it('creates ad-started and a lazy previewElement with data-ad hooks', async () => {
     const { el, ad } = mount();
     ad.addFile(file('hello.txt', 2048));
-    expect(el.classList.contains('dz-started')).toBe(true);
+    expect(el.classList.contains('ad-started')).toBe(true);
     const p = ad.files[0]!.previewElement!;
-    expect(p.querySelector('[data-dz-name]')).not.toBeNull();
+    expect(p.querySelector('[data-ad-name]')).not.toBeNull();
     await settle(ad);
-    expect(p.querySelector('[data-dz-name]')!.textContent).toBe('hello.txt');
-    expect(p.querySelector('[data-dz-size]')!.innerHTML).toContain('<strong>');
+    expect(p.querySelector('[data-ad-name]')!.textContent).toBe('hello.txt');
+    expect(p.querySelector('[data-ad-size]')!.innerHTML).toContain('<strong>');
     ad.destroy();
   });
 
   it('honours a custom previewTemplate and addRemoveLinks', async () => {
     const tpl =
-      '<div class="my-preview"><span data-dz-name></span><progress data-dz-uploadprogress max="100"></progress><span data-dz-errormessage></span></div>';
+      '<div class="my-preview"><span data-ad-name></span><progress data-ad-uploadprogress max="100"></progress><span data-ad-errormessage></span></div>';
     const { ad } = mount({ previewTemplate: tpl, addRemoveLinks: true });
     ad.addFile(file('x.txt'));
     await settle(ad);
     const p = ad.files[0]!.previewElement!;
     expect(p.className).toContain('my-preview');
-    expect(p.querySelector('[data-dz-name]')!.textContent).toBe('x.txt');
-    expect(p.querySelector('.dz-remove')!.textContent).toBe('Remove file');
+    expect(p.querySelector('[data-ad-name]')!.textContent).toBe('x.txt');
+    expect(p.querySelector('.ad-file-remove')!.textContent).toBe('Remove file');
     ad.destroy();
   });
 
@@ -163,13 +163,13 @@ describe('previews', () => {
     t.ad.destroy();
   });
 
-  it('data-dz-remove removes the file', async () => {
+  it('data-ad-remove removes the file', async () => {
     const { el, ad } = mount({ addRemoveLinks: true });
     ad.addFile(file('x.txt'));
     await settle(ad);
-    el.querySelector<HTMLElement>('[data-dz-remove]')!.click();
+    el.querySelector<HTMLElement>('[data-ad-remove]')!.click();
     expect(ad.files.length).toBe(0);
-    expect(el.classList.contains('dz-started')).toBe(false);
+    expect(el.classList.contains('ad-started')).toBe(false);
     ad.destroy();
   });
 
@@ -188,7 +188,7 @@ describe('previews', () => {
     expect(done).toHaveBeenCalled();
     expect(ad.files.length).toBe(0);
     expect(ad.getTree().counts.total).toBe(0);
-    expect(el.querySelector('.ad-row [data-dz-name]')!.textContent).toBe('old.png');
+    expect(el.querySelector('.ad-row [data-ad-name]')!.textContent).toBe('old.png');
     ad.destroy();
   });
 });
@@ -293,8 +293,8 @@ describe('lifecycle', () => {
   it('disable() detaches listeners and enable() restores them', () => {
     const { el, ad } = mount();
     ad.disable();
-    expect(el.classList.contains('dz-disabled')).toBe(true);
-    expect(el.classList.contains('dz-clickable')).toBe(false);
+    expect(el.classList.contains('ad-disabled')).toBe(true);
+    expect(el.classList.contains('ad-clickable')).toBe(false);
     const input = document.querySelector<HTMLInputElement>('input[data-ad-input=files]')!;
     const click = vi.spyOn(input, 'click');
     el.click();
@@ -331,8 +331,8 @@ describe('lifecycle', () => {
 
   it('forceFallback renders the plain form', () => {
     const { el, ad } = mount({ forceFallback: true });
-    expect(el.querySelector('.fallback input[type=file]')).not.toBeNull();
-    expect(el.classList.contains('dz-browser-not-supported')).toBe(true);
+    expect(el.querySelector('.ad-fallback input[type=file]')).not.toBeNull();
+    expect(el.classList.contains('ad-browser-not-supported')).toBe(true);
     ad.destroy();
   });
 
@@ -345,44 +345,43 @@ describe('lifecycle', () => {
     ad.cancelUpload(f);
     await settle(ad);
     expect(err).not.toHaveBeenCalled();
-    expect(el.querySelector('[data-dz-errormessage]')!.textContent).toBe('Upload canceled.');
+    expect(el.querySelector('[data-ad-errormessage]')!.textContent).toBe('Upload canceled.');
     ad.destroy();
   });
 });
 
-describe('Dropzone configuration copied from the docs', () => {
-  // The default preview template of Dropzone 6.3.5 (src/preview-template.html), unchanged.
-  const template = `<div class="dz-preview dz-file-preview">
-  <div class="dz-image"><img data-dz-thumbnail draggable="false" /></div>
-  <div class="dz-details">
-    <div class="dz-size"><span data-dz-size></span></div>
-    <div class="dz-filename"><span data-dz-name></span></div>
+describe('Configuration, preview template and presets', () => {
+  // A custom preview template that uses every hook.
+  const template = `<div class="ad-file-preview">
+  <div class="ad-file-thumb"><img data-ad-thumbnail draggable="false" /></div>
+  <div class="ad-file-details">
+    <div class="ad-file-size"><span data-ad-size></span></div>
+    <div class="ad-file-name"><span data-ad-name></span></div>
   </div>
-  <div class="dz-progress">
-    <span class="dz-upload" data-dz-uploadprogress></span>
+  <div class="ad-file-progress">
+    <span class="ad-file-bar" data-ad-uploadprogress></span>
   </div>
-  <div class="dz-error-message"><span data-dz-errormessage></span></div>
-  <div class="dz-success-mark"><svg width="54" height="54"><path d="M0 0"/></svg></div>
-  <div class="dz-error-mark"><svg width="54" height="54"><path d="M0 0"/></svg></div>
+  <div class="ad-error-message"><span data-ad-errormessage></span></div>
+  <div class="ad-file-success-mark"><svg width="54" height="54"><path d="M0 0"/></svg></div>
+  <div class="ad-error-mark"><svg width="54" height="54"><path d="M0 0"/></svg></div>
 </div>`;
 
-  it('Dropzone.options.myAwesomeDropzone + a form action, unchanged', async () => {
+  it('AnyDrop.options.<id> + a form action', async () => {
     document.body.innerHTML =
-      '<form action="/file/post" class="dropzone" id="my-awesome-dropzone"></form>';
-    AnyDrop.options.myAwesomeDropzone = {
+      '<form action="/file/post" class="anydrop" id="my-awesome-zone"></form>';
+    AnyDrop.options.myAwesomeZone = {
       paramName: 'file',
       maxFilesize: 2,
       autoProcessQueue: false,
       accept: function (file, done) {
-        // eslint-disable-next-line eqeqeq -- copied unchanged from the Dropzone docs
-        if (file.name == 'justinbieber.jpg') {
+        if (file.name === 'justinbieber.jpg') {
           done("Naha, you don't.");
         } else {
           done();
         }
       },
     };
-    const ad = new AnyDrop('#my-awesome-dropzone');
+    const ad = new AnyDrop('#my-awesome-zone');
     const rejected = vi.fn();
     ad.on('error', rejected);
     ad.addFile(file('justinbieber.jpg', 4, 'image/jpeg'));
@@ -391,8 +390,8 @@ describe('Dropzone configuration copied from the docs', () => {
     expect(rejected).toHaveBeenCalledTimes(1);
     expect(rejected.mock.calls[0]![1]).toBe("Naha, you don't.");
     const [bad, good] = ad.files;
-    expect(bad!.previewElement!.classList.contains('dz-error')).toBe(true);
-    expect(bad!.previewElement!.querySelector('[data-dz-errormessage]')!.textContent).toBe(
+    expect(bad!.previewElement!.classList.contains('ad-error')).toBe(true);
+    expect(bad!.previewElement!.querySelector('[data-ad-errormessage]')!.textContent).toBe(
       "Naha, you don't.",
     );
     expect(good!.accepted).toBe(true);
@@ -404,7 +403,7 @@ describe('Dropzone configuration copied from the docs', () => {
     document.body.innerHTML =
       '<div id="myId"></div><button id="pick">Pick</button><div id="previews"></div>';
     const added = vi.fn();
-    const dz = new AnyDrop('div#myId', {
+    const zone = new AnyDrop('div#myId', {
       url: '/file/post',
       autoProcessQueue: false,
       clickable: '#pick',
@@ -422,29 +421,29 @@ describe('Dropzone configuration copied from the docs', () => {
         });
       },
     });
-    dz.on('addedfile', (f) => added('x' + f.name)).on('removedfile', () => added('removed'));
-    expect(document.getElementById('pick')!.classList.contains('dz-clickable')).toBe(true);
+    zone.on('addedfile', (f) => added('x' + f.name)).on('removedfile', () => added('removed'));
+    expect(document.getElementById('pick')!.classList.contains('ad-clickable')).toBe(true);
     const input = document.querySelector<HTMLInputElement>('input[data-ad-input=files]')!;
     const click = vi.spyOn(input, 'click');
     document.getElementById('pick')!.click();
     expect(click).toHaveBeenCalled();
-    dz.addFile(file('a.txt'));
-    await settle(dz);
+    zone.addFile(file('a.txt'));
+    await settle(zone);
     expect(added).toHaveBeenCalledWith('a.txt');
     expect(added).toHaveBeenCalledWith('xa.txt');
-    expect(document.querySelectorAll('#previews .dz-preview').length).toBe(1);
-    expect(document.querySelector('#previews [data-dz-name]')!.textContent).toBe('a.txt');
-    expect(document.querySelector('#previews .dz-remove')!.textContent).toBe('Delete');
-    dz.removeFile(dz.files[0]!);
+    expect(document.querySelectorAll('#previews .ad-file-preview').length).toBe(1);
+    expect(document.querySelector('#previews [data-ad-name]')!.textContent).toBe('a.txt');
+    expect(document.querySelector('#previews .ad-file-remove')!.textContent).toBe('Delete');
+    zone.removeFile(zone.files[0]!);
     expect(added).toHaveBeenCalledWith('removed');
-    dz.destroy();
+    zone.destroy();
   });
 
-  it('adds dz-max-files-reached', async () => {
+  it('adds ad-max-files-reached', async () => {
     const { el, ad } = mount({ maxFiles: 1 });
     ad.addFile(file('a.txt'));
     await settle(ad);
-    expect(el.classList.contains('dz-max-files-reached')).toBe(true);
+    expect(el.classList.contains('ad-max-files-reached')).toBe(true);
     ad.destroy();
   });
 });

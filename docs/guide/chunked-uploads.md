@@ -1,6 +1,6 @@
 ---
 title: "Chunked file uploads in the browser"
-description: "Split large files into chunks with Blob.slice(), upload them in parallel with retry and backoff, and assemble them on the server. Dropzone-compatible chunk fields."
+description: "Split large files into chunks with Blob.slice(), upload them in parallel with retry and backoff, and assemble them on the server."
 ---
 
 # Chunked uploads
@@ -24,17 +24,17 @@ Files are only read with `Blob.slice()`, one chunk per request, so even a multi-
 
 ## What the server receives
 
-Each chunk is a `multipart/form-data` `POST` with the file slice in the field `file` and Dropzone's chunk fields, so an existing Dropzone chunk backend keeps working:
+Each chunk is a `multipart/form-data` `POST` with the file slice in the field `file` and these fields:
 
 | Field | Meaning |
 |---|---|
-| `dzuuid` | The uploadId of the file (UUID). |
-| `dzchunkindex` | Index of this chunk, from 0. |
-| `dztotalchunkcount` | Number of chunks. |
-| `dzchunksize` | The chunk size. |
-| `dzchunkbyteoffset` | Byte offset of this chunk. |
-| `dztotalfilesize` | Size of the whole file. |
-| `adRelativePath`, `adSessionId` | AnyDrop's own fields: the file's path and the batch id. |
+| `adUploadId` | The uploadId of the file (UUID). |
+| `adChunkIndex` | Index of this chunk, from 0. |
+| `adChunkCount` | Number of chunks. |
+| `adChunkSize` | The chunk size. |
+| `adChunkOffset` | Byte offset of this chunk. |
+| `adTotalSize` | Size of the whole file. |
+| `adRelativePath`, `adSessionId` | The file's path and the batch id. |
 
 Your server must accept chunks in any order and more than once (writing the same chunk again is harmless). When the last chunk arrived, AnyDrop sends the **finalize** request (`finalizeUrl`) so the server can assemble the file. All details are in the [protocol](/protocol), and the [Express example](/backend/express) implements it.
 

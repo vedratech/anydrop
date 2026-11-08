@@ -181,7 +181,7 @@ describe('errors and retryFailedOnly (0007)', () => {
   const failOn = (paths: string[]) => (c: Call) =>
     c.kind === 'upload' &&
     paths.includes(c.field('adRelativePath') || '') &&
-    c.field('dzchunkindex') === '1'
+    c.field('adChunkIndex') === '1'
       ? c.reply(400, { code: 'INVALID_CHUNK', message: 'bad' })
       : okAll(c);
 
@@ -349,9 +349,11 @@ describe('M2 review fixes', () => {
     core.resume();
     await settle();
     const c = openUploads(t)[0]!;
-    expect([c.field('dzchunkindex'), c.field('dzchunkbyteoffset'), c.field('dzchunksize')]).toEqual(
-      ['1', '10', '10'],
-    );
+    expect([c.field('adChunkIndex'), c.field('adChunkOffset'), c.field('adChunkSize')]).toEqual([
+      '1',
+      '10',
+      '10',
+    ]);
     expect(f.upload.chunkSize).toBe(10);
     expect(f.upload.totalChunkCount).toBe(3);
   });

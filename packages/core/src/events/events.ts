@@ -1,11 +1,10 @@
-// The one typed map of every event AnyDrop emits. Dropzone events keep Dropzone's
-// arguments; the new events follow. Events marked (ui) are typed here so
+// The one typed map of every event AnyDrop emits. Events marked (ui) are typed here so
 // wrappers get one map, and are emitted by @vedratech/anydrop-ui.
 import type { AnyDropFile, ErrorEntry, FolderNode, PauseTarget } from '../types';
 
 /** Every event with its arguments. Events marked (ui) are emitted by `@vedratech/anydrop-ui`. */
 export interface AnyDropEvents {
-  // Dropzone: input (drag events are emitted by @vedratech/anydrop-ui)
+  // Input (drag events are emitted by @vedratech/anydrop-ui)
   /** A drop was handled with `drop(event)`. */
   drop: [event: DragEvent];
   /** (ui) A drag started over the element. */
@@ -20,9 +19,9 @@ export interface AnyDropEvents {
   dragleave: [event: DragEvent];
   /** A paste was handled with `paste(event)`. */
   paste: [event: ClipboardEvent];
-  /** Dropzone 6.3: a dropped directory with no entries at all. Path without leading slash. */
+  /** A dropped directory with no entries at all. Path without leading slash. */
   emptyfolder: [path: string];
-  // Dropzone: files
+  // Files
   /** A file was added; validation may still be running. */
   addedfile: [file: AnyDropFile];
   /** Once per batch, after the walk and validation, with every file of the batch. */
@@ -41,7 +40,7 @@ export interface AnyDropEvents {
   maxfilesexceeded: [file: AnyDropFile];
   /** The number of accepted files reached `maxFiles`. */
   maxfilesreached: [files: AnyDropFile[]];
-  // Dropzone: upload
+  // Upload
   /** A file started uploading. */
   processing: [file: AnyDropFile];
   /** Only with `uploadMultiple`: a request with these files started. */
@@ -103,7 +102,7 @@ export function isEventName(name: unknown): name is AnyDropEventName {
   return EVENT_NAMES.indexOf(name as AnyDropEventName) >= 0;
 }
 
-/** Event handlers that can be passed as options, as in Dropzone (`{ success(file, res) {} }`). */
+/** Event handlers that can be passed as options, (`{ success(file, res) {} }`). */
 export type AnyDropEventHandlers<Self = unknown> = {
   [K in AnyDropEventName]?: ((this: Self, ...args: AnyDropEvents[K]) => void) | null;
 };

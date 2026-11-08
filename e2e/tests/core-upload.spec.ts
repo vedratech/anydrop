@@ -99,7 +99,7 @@ async function runInPage(
             if (before) before(x);
             if (!isUpload) return;
             const fd = req.body as FormData;
-            key = String(fd.get('dzuuid') || fd.get('adRelativePath'));
+            key = String(fd.get('adUploadId') || fd.get('adRelativePath'));
             const sid = String(fd.get('adSessionId'));
             if (!res.sessionIds.includes(sid)) res.sessionIds.push(sid);
             inFlight++;

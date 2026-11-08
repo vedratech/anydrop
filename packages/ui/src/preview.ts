@@ -1,4 +1,4 @@
-// Preview elements (Dropzone's previewTemplate and `data-dz-*` hooks) and lazy, capped thumbnails.
+// Preview elements (the previewTemplate and its `data-ad-*` hooks) and lazy, capped thumbnails.
 // A preview element is created the first time something asks for it (a row scrolling into view, or
 // user code reading `file.previewElement`) and is rebuilt from the file's state, so 5,000 files do not
 // mean 5,000 DOM subtrees.
@@ -6,7 +6,7 @@ import type { AnyDropFile } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
 import { DEFAULT_TEMPLATE } from './options';
 import { h, mark } from './dom';
-import { drawImage, isImage, loadImage, thumbType } from './image';
+import { decodeImage, looksLikeImage, renderScaled, thumbMime } from './image';
 
 /** A file-like object for `displayExistingFile()`: not part of the tree or the upload queue. */
 export interface MockFile {
@@ -41,9 +41,9 @@ const CACHE = 300;
 const TERMINAL = /^(success|error|canceled)$/;
 
 export class Previews {
-  /** Message shown in `data-dz-errormessage` (upload error, rejection, or "canceled"). */
+  /** Message shown in `data-ad-errormessage` (upload error, rejection, or "canceled"). */
   readonly msgs = new WeakMap<object, string>();
-  /** Preview element to its file (for `data-dz-remove` clicks). */
+  /** Preview element to its file (for `data-ad-remove` clicks). */
   readonly owner = new WeakMap<HTMLElement, Item>();
   private els = new WeakMap<object, HTMLElement>();
   private refs = new WeakMap<HTMLElement, Refs>();
@@ -87,7 +87,10 @@ export class Previews {
       this.use(f, e);
       const r = this.refs.get(e) as Refs;
       if (this.ad.options.addRemoveLinks && !r.remove.length) {
-        r.auto = h('button', 'dz-remove ad-link-btn', { type: 'button', 'data-dz-remove': '' });
+        r.auto = h('button', 'ad-file-remove ad-link-btn', {
+          type: 'button',
+          'data-ad-remove': '',
+        });
         r.remove.push(r.auto);
         e.appendChild(r.auto);
       }
@@ -103,12 +106,12 @@ export class Previews {
     this.els.set(f, e);
     this.owner.set(e, f);
     this.refs.set(e, {
-      name: all(e, 'data-dz-name'),
-      size: all(e, 'data-dz-size'),
-      bar: all(e, 'data-dz-uploadprogress'),
-      err: all(e, 'data-dz-errormessage'),
-      thumb: all(e, 'data-dz-thumbnail') as HTMLImageElement[],
-      remove: all(e, 'data-dz-remove'),
+      name: all(e, 'data-ad-name'),
+      size: all(e, 'data-ad-size'),
+      bar: all(e, 'data-ad-uploadprogress'),
+      err: all(e, 'data-ad-errormessage'),
+      thumb: all(e, 'data-ad-thumbnail') as HTMLImageElement[],
+      remove: all(e, 'data-ad-remove'),
       auto: null,
     });
     const r = this.refs.get(e) as Refs;
@@ -162,7 +165,7 @@ export class Previews {
     return (
       o.createImageThumbnails &&
       f instanceof Blob &&
-      isImage(f) &&
+      looksLikeImage(f) &&
       f.size <= o.maxThumbnailFilesize * 1048576
     );
   }
@@ -176,7 +179,7 @@ export class Previews {
     this.soon();
   }
 
-  /** A thumbnail for every accepted image, in add order, even without a visible row (Dropzone's `thumbnail` event). */
+  /** A thumbnail for every accepted image, in add order, even without a visible row. */
   eager(f: Item): void {
     if (!this.wanted(f) || this.tried.has(f)) return;
     this.tried.add(f);
@@ -209,15 +212,19 @@ export class Previews {
 
   private async make(f: AnyDropFile): Promise<void> {
     const o = this.ad.options;
-    // Both null = full size (as in Dropzone), but never above MAX_THUMB: big images crash iOS Safari.
+    // Both null = full size, but never above MAX_THUMB: big images crash iOS Safari.
     const none = !o.thumbnailWidth && !o.thumbnailHeight;
     const w = none ? MAX_THUMB : o.thumbnailWidth && Math.min(o.thumbnailWidth, MAX_THUMB);
     const t = none ? MAX_THUMB : o.thumbnailHeight && Math.min(o.thumbnailHeight, MAX_THUMB);
     try {
-      const img = await loadImage(f);
+      const img = await decodeImage(f);
       if (this.dead) return;
-      const c = drawImage(img, w || null, t || null, none ? 'contain' : o.thumbnailMethod);
-      this.thumbReady(f, c.toDataURL(thumbType(f)));
+      const c = renderScaled(
+        img,
+        { width: w || null, height: t || null },
+        none ? 'contain' : o.thumbnailMethod,
+      );
+      this.thumbReady(f, c.toDataURL(thumbMime(f)));
     } catch {
       if (!this.dead) this.fail(f);
     }
@@ -227,16 +234,20 @@ export class Previews {
   async fromUrl(f: MockFile, src: string, cors?: string | null): Promise<void> {
     const o = this.ad.options;
     try {
-      const img = await loadImage(src, cors);
+      const img = await decodeImage(src, cors);
       if (this.dead) return;
-      const c = drawImage(img, o.thumbnailWidth, o.thumbnailHeight, o.thumbnailMethod);
-      this.thumbReady(f, c.toDataURL(thumbType(f)));
+      const c = renderScaled(
+        img,
+        { width: o.thumbnailWidth, height: o.thumbnailHeight },
+        o.thumbnailMethod,
+      );
+      this.thumbReady(f, c.toDataURL(thumbMime(f)));
     } catch {
       if (!this.dead) this.fail(f);
     }
   }
 
-  /** Stores, shows and announces a thumbnail (the `thumbnail` event, as in Dropzone). */
+  /** Stores, shows and announces a thumbnail (the `thumbnail` event). */
   thumbReady(f: Item, url: string): void {
     this.cache.set(f, url);
     if (this.cache.size > CACHE) {
@@ -264,7 +275,7 @@ export class Previews {
     const e = this.els.get(f);
     if (!e) return;
     mark(e, 'thumb-error', true);
-    const box = e.querySelector('.dz-image') || e;
+    const box = e.querySelector('.ad-file-thumb') || e;
     const msg = this.ad.options.dictThumbnailError;
     box.setAttribute('title', msg);
     // Visible to screen readers too, not only as a tooltip.
@@ -280,7 +291,7 @@ export class Previews {
   }
 }
 
-/** Parses a preview template into its root element (Dropzone's `createElement`). */
+/** Parses a preview template into its root element. */
 export function parseTemplate(html: string): HTMLElement {
   const d = h('div');
   d.innerHTML = html.trim();

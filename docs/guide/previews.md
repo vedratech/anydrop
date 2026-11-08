@@ -49,7 +49,6 @@ Images are scaled down in the browser before they are sent, which saves bandwidt
 ::: warning Limits of resizing
 - The resize re-encodes the image, so **EXIF data (orientation, GPS) is lost**. The pixels are drawn upright by the browser.
 - A transform may produce different bytes on each run, so a resized file cannot be chunk-resumed after a reload. Finished files are still skipped.
-- Dropzone's `resize(file, w, h, method)` override and `resizeTransparencyFill` are not supported.
 :::
 
 ## Without previews
@@ -62,7 +61,7 @@ No preview elements, no list, no toolbar and no error panel. The zone and the pi
 
 ## Your own preview markup
 
-`previewTemplate` is the markup of one file. The `data-dz-name`, `data-dz-size`, `data-dz-thumbnail`, `data-dz-uploadprogress`, `data-dz-errormessage` and `data-dz-remove` hooks are filled in. Dropzone's own default template works unchanged. See [Customising the UI](/guide/customising-ui).
+`previewTemplate` is the markup of one file. The `data-ad-name`, `data-ad-size`, `data-ad-thumbnail`, `data-ad-uploadprogress`, `data-ad-errormessage` and `data-ad-remove` hooks are filled in. See [Customising the UI](/guide/customising-ui).
 
 ## Existing files
 

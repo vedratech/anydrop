@@ -234,7 +234,7 @@ describe('resume records (0004)', () => {
     const { core, t, f } = await reloadAndAdd({ transformFile }, null);
     await until(() => openUploads(t).length === 1);
     expect(f.upload.uuid).not.toBe(UID); // the transform changed the bytes: fresh upload
-    expect(openUploads(t)[0]!.field('dzchunkindex')).toBe('0');
+    expect(openUploads(t)[0]!.field('adChunkIndex')).toBe('0');
     openUploads(t)[0]!.reply();
     core.destroy();
     await sleep(50);

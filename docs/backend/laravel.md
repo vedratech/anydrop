@@ -63,8 +63,8 @@ class UploadController extends Controller
         }
         $file = $r->file('file');
 
-        // Not chunked (a file of at most chunkSize, or chunking is off): no dz* fields, write the file in place.
-        if (!$r->has('dzuuid')) {
+        // Not chunked (a file of at most chunkSize, or chunking is off): no `ad*` chunk fields, write the file in place.
+        if (!$r->has('adUploadId')) {
             $dest = $this->target((string) $r->input('adRelativePath'));
             if (!$dest) {
                 return $this->fail(400, 'INVALID_PATH', 'Invalid path');
@@ -78,14 +78,14 @@ class UploadController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $id = (string) $r->input('dzuuid');
+        $id = (string) $r->input('adUploadId');
         if (!Str::isUuid($id)) {
             return $this->fail(400, 'INVALID_CHUNK', 'Invalid chunk request');
         }
-        $index = (int) $r->input('dzchunkindex');
-        $size = (int) $r->input('dzchunksize');
-        $total = (int) $r->input('dztotalfilesize');
-        $offset = (int) $r->input('dzchunkbyteoffset');
+        $index = (int) $r->input('adChunkIndex');
+        $size = (int) $r->input('adChunkSize');
+        $total = (int) $r->input('adTotalSize');
+        $offset = (int) $r->input('adChunkOffset');
         if ($index < 0 || $file->getSize() !== min($size, $total - $offset)) {
             return $this->fail(400, 'INVALID_CHUNK', 'Chunk length does not match');
         }

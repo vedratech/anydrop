@@ -59,7 +59,7 @@ export type SourceItem =
   | {
       kind: 'folder';
       path: string;
-      /** The directory had no entries at all (Dropzone's `emptyfolder`). */
+      /** The directory had no entries at all (the `emptyfolder` event). */
       raw: boolean;
     };
 

@@ -1,17 +1,16 @@
-// Core options. Dropzone options keep Dropzone 6.3.5's names, types and defaults (src/options.ts)
-// unless noted; new options follow the dropzone-parity skill.
-// UI-only Dropzone options (clickable, previewTemplate, thumbnails, ...) belong to @vedratech/anydrop-ui.
+// Core options. UI-only options (clickable, previewTemplate, thumbnails, ...) belong to
+// @vedratech/anydrop-ui.
 import type { AnyDropCore } from './AnyDropCore';
 import type { AnyDropEventHandlers } from './events/events';
 import type { Transport } from './transport/types';
 import type { AcceptDone, AnyDropFile, ChunkInfo, DataBlock } from './types';
-import type { FileSizeUnits } from './validate/dropzone-port';
+import type { FileSizeUnits } from './validate/accept';
 
-/** `Self` is the type of `this` inside callbacks (the instance, as in Dropzone). */
+/** `Self` is the type of `this` inside callbacks (the instance). */
 export interface AnyDropCoreOptions<Self = AnyDropCore> {
   // Request (used from M2)
   /**
-   * Upload URL, or a function of the files being sent and their data blocks (Dropzone 6.3.5).
+   * Upload URL, or a function of the files being sent and their data blocks.
    * Without it, `processQueue()` starts nothing.
    */
   url: string | ((this: Self, files: AnyDropFile[], dataBlocks: DataBlock[]) => string) | null;
@@ -19,14 +18,14 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
   method: string | ((this: Self, files: AnyDropFile[], dataBlocks: DataBlock[]) => string);
   /** Send cookies and credentials on cross-origin requests. Default `false`. */
   withCredentials: boolean;
-  /** Request timeout in ms, or a function of the files; `null` = none (Dropzone 6 default). */
+  /** Request timeout in ms, or a function of the files; `null` = none. */
   timeout: number | null | ((this: Self, files: AnyDropFile[]) => number | null);
   /** Extra headers sent with every request (uploads, manifest, chunk status, finalize). Empty values are not sent. Default `null`. */
   headers: Record<string, string> | null;
-  /** Send Dropzone's `Accept`, `Cache-Control` and `X-Requested-With` headers. Default `true`. */
+  /** Send the `Accept: application/json`, `Cache-Control: no-cache` and `X-Requested-With: XMLHttpRequest` headers. Default `true`. */
   defaultHeaders: boolean;
   /**
-   * Extra form fields, or a function returning them. Merged over the built-in `dz*`/`ad*`
+   * Extra form fields, or a function returning them. Merged over the built-in `ad*`
    * fields; a `null` or `undefined` value drops a built-in field (to rename it).
    */
   params:
@@ -44,7 +43,7 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
   uploadMultiple: boolean;
   /** Send the file (or chunk) as the raw request body, with no form fields. Not with `uploadMultiple`. Default `false`. */
   binaryBody: boolean;
-  /** Files uploading at once (Dropzone meaning). */
+  /** Files uploading at once. */
   parallelUploads: number;
   /** Optional instance-wide cap on upload POSTs in flight; `null` = no cap. */
   maxChunksInFlight: number | null;
@@ -53,16 +52,16 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
   chunking: boolean;
   /** Chunk files smaller than `chunkSize` too. Default `false`. */
   forceChunking: boolean;
-  /** Bytes. Dropzone 6 default: 2 MiB. */
+  /** Bytes. Default 2 MiB. */
   chunkSize: number;
-  /** Chunks of one file in flight: `false` = 1, `true` = `parallelUploads`, or a number (Dropzone 6.3.5). */
+  /** Chunks of one file in flight: `false` = 1, `true` = `parallelUploads`, or a number. */
   parallelChunkUploads: boolean | number;
-  /** Default `true` (Dropzone: `false`). */
+  /** Default `true`. */
   retryChunks: boolean;
   /** How many times a failed request is retried, so at most this plus one attempts. Default `3`. */
   retryChunksLimit: number;
   /**
-   * Replaces the built-in finalize request. `this` is the options object (Dropzone);
+   * Replaces the built-in finalize request. `this` is the options object;
    * the instance is the third argument. `done()` succeeds; `done(error)` with an Error or a
    * non-empty string fails the file (`FINALIZE_FAILED`).
    */
@@ -75,7 +74,7 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
       ) => void)
     | null;
   /**
-   * Dropzone's `transformFile(file, done)`: called when the file starts processing; pass the blob
+   * `transformFile(file, done)`: called when the file starts processing; pass the blob
    * to upload to `done`. Chunk info is recomputed from it.
    */
   transformFile: ((this: Self, file: AnyDropFile, done: (blob: Blob) => void) => void) | null;
@@ -132,7 +131,7 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
   stallTimeout: number | null;
   /** `HEAD` target that tells whether the server is reachable while the connection is lost. */
   connectivityProbeUrl: string | null;
-  // Messages (Dropzone dict*)
+  // Messages (dict*)
   /** Message when a file exceeds `maxFilesize`; `{{filesize}}` and `{{maxFilesize}}` are replaced. */
   dictFileTooBig: string;
   /** Message when a file does not match `acceptedFiles`. */
@@ -151,17 +150,13 @@ export interface AnyDropCoreOptions<Self = AnyDropCore> {
   dictFileSizeUnits: FileSizeUnits;
 }
 
-/** What the constructor and `setOption` accept: options plus event handlers (Dropzone style). */
+/** What the constructor and `setOption` accept: options plus event handlers. */
 export type AnyDropCoreConfig<Self = AnyDropCore> = Partial<AnyDropCoreOptions<Self>> &
   AnyDropEventHandlers<Self> & {
     /** @internal Deterministic id generator for tests. */
     _uuid?: () => string;
     /** @internal Seeded random for backoff jitter in tests. */
     _random?: () => number;
-    /** @deprecated Dropzone's old name of `acceptedFiles` (copied to it; setting both throws). */
-    acceptedMimeTypes?: string | null;
-    /** @deprecated Dropzone's old `renameFile`: `(name, file) => newName`. */
-    renameFilename?: ((this: Self, name: string, file: AnyDropFile) => string) | null;
   };
 
 /** Fresh defaults (a new object each call: instances share no state). */
@@ -221,7 +216,7 @@ export function defaultOptions(): AnyDropCoreOptions<unknown> {
   };
 }
 
-/** Throws for option combinations Dropzone also rejects. */
+/** Throws for option combinations that cannot work together. */
 export function assertValidOptions(
   o: Pick<AnyDropCoreOptions, 'uploadMultiple' | 'chunking' | 'binaryBody'>,
 ): void {

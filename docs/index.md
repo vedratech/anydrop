@@ -2,12 +2,12 @@
 layout: home
 title: "AnyDrop: folder upload, chunked and resumable uploads for the browser"
 titleTemplate: false
-description: "Folder upload for the browser in JavaScript: drag and drop folders, chunked and resumable uploads, pause and resume, retry, mobile. Dropzone-compatible, TypeScript, MIT."
+description: "Folder upload for the browser in JavaScript: drag and drop folders, chunked and resumable uploads, pause and resume, retry, mobile. TypeScript, MIT."
 
 hero:
   name: AnyDrop
   text: Folder upload for the browser
-  tagline: Drag and drop folders, chunked and resumable uploads, pause and resume, and recovery from a bad connection. A Dropzone-compatible JavaScript and TypeScript library that works on phones.
+  tagline: Drag and drop folders, chunked and resumable uploads, pause and resume, and recovery from a bad connection. A JavaScript and TypeScript library that works on phones.
   actions:
     - theme: brand
       text: Get started
@@ -35,7 +35,7 @@ features:
       width: 48
       height: 48
     title: Chunked uploads
-    details: Big files are sent in pieces with Blob.slice(), so a file is never loaded into memory. Dropzone's field names, retries with backoff, parallel chunks.
+    details: Big files are sent in pieces with Blob.slice(), so a file is never loaded into memory. Retries with backoff, parallel chunks.
     link: /guide/chunked-uploads
     linkText: Chunked uploads
   - icon:
@@ -78,9 +78,9 @@ features:
 
 <div class="home-note">
 
-AnyDrop is a **JavaScript folder upload** library: users can **drag and drop** whole folders or pick them, and your page uploads them with **chunked, resumable uploads**, **pause and resume**, retry and a persistent error list. It is configured like Dropzone (it takes Dropzone 6.3.5's options and events), so most Dropzone code keeps working. There is no server to install: your backend implements a [small HTTP contract](/backend/).
+AnyDrop is a **JavaScript folder upload** library: users can **drag and drop** whole folders or pick them, and your page uploads them with **chunked, resumable uploads**, **pause and resume**, retry and a persistent error list. It is configured with plain options and events. There is no server to install: your backend implements a [small HTTP contract](/backend/).
 
-AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 31.8 kB gzip, Dropzone 11.7 kB, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
+AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), the headless engine with no dependencies, and [`@vedratech/anydrop-ui`](/guide/quick-start), the drop zone, folder tree and mobile layout on top of it. Download size, measured the same way for every library: [AnyDrop ui + core 31.7 kB gzip, FilePond 40.5 kB, Uppy with Dashboard 78.4 kB](/size-comparison).
 
 </div>
 
@@ -88,7 +88,6 @@ AnyDrop ships two packages: [`@vedratech/anydrop-core`](/guide/headless-core), t
 
 - [Upload a folder in JavaScript](/use-cases/upload-folder-javascript): drag and drop and a folder picker, with paths and empty folders.
 - [Chunked and resumable file uploads](/use-cases/chunked-resumable-uploads) in the browser.
-- [Dropzone.js alternative with folder support](/use-cases/dropzone-alternative): an honest comparison.
 - [Upload large files (1 GB and more)](/use-cases/upload-large-files) without loading them into memory.
 - [Pause and resume uploads](/use-cases/pause-resume-uploads): everything, a folder or one file.
 - [File upload that survives a lost connection](/use-cases/upload-lost-connection).

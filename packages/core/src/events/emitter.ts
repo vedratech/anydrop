@@ -1,7 +1,7 @@
-// Typed event emitter. Same semantics as Dropzone's Emitter (listeners run with `this` bound to
-// the instance, `emit` iterates over a snapshot, `off()` / `off(name)` / `off(name, fn)`), except
-// that `on()` returns an unsubscribe function that also carries `on` and `once` for Dropzone-style
-// chaining, and a listener that throws is reported without stopping the other listeners.
+// Typed event emitter. Listeners run with `this` bound to the instance, `emit` iterates over a
+// snapshot, and `off()` / `off(name)` / `off(name, fn)` remove listeners. `on()` returns an
+// unsubscribe function that also carries `on` and `once` for chaining, and a listener that
+// throws is reported without stopping the other listeners.
 import { reportError } from '../util/env';
 
 export type Listener<A extends unknown[]> = (...args: A) => void;

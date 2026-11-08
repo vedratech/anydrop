@@ -335,7 +335,7 @@ export class RowList {
     const action = btn?.getAttribute('data-ad-action');
     if (action === 'toggle' && isFolder(item)) return this.toggle(item);
     if (action) return this.ad._uiRun(action, item);
-    if (t.closest('[data-dz-remove]')) {
+    if (t.closest('[data-ad-remove]')) {
       e.preventDefault();
       e.stopPropagation();
       return this.ad._uiRemoveLink(item as Item);

@@ -5,10 +5,10 @@ const REPO = 'https://github.com/vedratech/anydrop';
 const SITE = 'https://vedratech.github.io/anydrop/';
 const SITE_NAME = 'AnyDrop';
 const SITE_DESCRIPTION =
-  'Folder upload for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry. A Dropzone-compatible JavaScript and TypeScript library.';
+  'Folder upload for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry. A JavaScript and TypeScript library that works on phones.';
 const OG_IMAGE = SITE + 'og-image.png';
 const OG_IMAGE_ALT =
-  'AnyDrop: folder upload for the browser, chunked and resumable, Dropzone-compatible';
+  'AnyDrop: folder upload for the browser, chunked and resumable, works on phones';
 
 /** Absolute, canonical URL of a page (clean URLs, no .html). */
 function canonicalUrl(relativePath: string): string {
@@ -42,7 +42,6 @@ const useCases: DefaultTheme.SidebarItem = {
   items: [
     { text: 'Upload a folder in JavaScript', link: '/use-cases/upload-folder-javascript' },
     { text: 'Chunked and resumable uploads', link: '/use-cases/chunked-resumable-uploads' },
-    { text: 'Dropzone.js alternative with folders', link: '/use-cases/dropzone-alternative' },
     { text: 'Upload large files (1 GB+)', link: '/use-cases/upload-large-files' },
     { text: 'Pause and resume uploads', link: '/use-cases/pause-resume-uploads' },
     { text: 'Uploads that survive a lost connection', link: '/use-cases/upload-lost-connection' },
@@ -96,7 +95,6 @@ const guide: DefaultTheme.SidebarItem[] = [
   {
     text: 'More',
     items: [
-      { text: 'Migrating from Dropzone', link: '/migrating-from-dropzone' },
       { text: 'Size comparison', link: '/size-comparison' },
       { text: 'FAQ and troubleshooting', link: '/guide/faq' },
     ],
@@ -155,7 +153,7 @@ export default defineConfig({
       {
         name: 'keywords',
         content:
-          'folder upload, file upload, drag and drop, dropzone alternative, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library',
+          'folder upload, file upload, drag and drop, chunked upload, resumable upload, pause and resume, large file upload, javascript, typescript, upload library',
       },
     ],
     ['meta', { name: 'author', content: 'Jayesh Gupta' }],
@@ -175,7 +173,7 @@ export default defineConfig({
     // Pages without their own description (the generated API pages) get one built from the title.
     if (!pageData.frontmatter.description && pageData.relativePath !== 'index.md') {
       const title = (pageData.title || SITE_NAME).replace(/<.*>/, '');
-      pageData.description = `${title}: reference for the AnyDrop folder upload library (chunked, resumable, Dropzone-compatible).`;
+      pageData.description = `${title}: reference for the AnyDrop folder upload library (chunked, resumable, folders).`;
     }
   },
   transformHead({ pageData }) {
@@ -204,7 +202,7 @@ export default defineConfig({
       {
         text: 'Guide',
         link: '/guide/introduction',
-        activeMatch: '^/(guide|migrating|size|device|use-cases)',
+        activeMatch: '^/(guide|size|device|use-cases)',
       },
       { text: 'API', link: '/api/', activeMatch: '^/api/' },
       { text: 'Backend', link: '/backend/', activeMatch: '^/(backend|protocol)' },
@@ -217,7 +215,6 @@ export default defineConfig({
       '/protocol': backend,
       '/use-cases/': guide,
       '/guide/': guide,
-      '/migrating-from-dropzone': guide,
       '/size-comparison': guide,
       '/device-checks': guide,
     },
@@ -231,7 +228,7 @@ export default defineConfig({
     outline: { level: [2, 3] },
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT).',
+      copyright: 'Copyright © 2026 Jayesh Gupta.',
     },
   },
 });

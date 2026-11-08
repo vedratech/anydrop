@@ -83,7 +83,7 @@ jobs:
       # Every spec makes its own fixtures from the seeded generator (e2e/fixtures/generate.mjs) in a temp
       # directory, so no generation step is needed here. Specs: demo, mock-server, core-upload, core-m3,
       # ui, ui-scenarios (verify-upload 1 to 5), large-file (7: 1 GiB in Chromium, 256 MiB in Firefox,
-      # 64 MiB on mobile and WebKit), wrapper-ready (8), dropzone-docs (9), cdn (the IIFE on a plain
+      # 64 MiB on mobile and WebKit), wrapper-ready (8), docs-snippets (9), cdn (the IIFE on a plain
       # page), connectivity (decision 0017).
       - run: pnpm test:e2e --project=${{ matrix.project }}
         env:

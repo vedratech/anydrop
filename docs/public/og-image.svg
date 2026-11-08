@@ -14,7 +14,7 @@
   <text x="240" y="170" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="84" font-weight="700" fill="#ffffff">AnyDrop</text>
   <text x="80" y="330" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="54" font-weight="600" fill="#ffffff">Folder upload for the browser</text>
   <text x="80" y="400" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#bfdbfe">Drag and drop folders. Chunked, resumable uploads.</text>
-  <text x="80" y="450" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#bfdbfe">Pause and resume. Dropzone-compatible.</text>
+  <text x="80" y="450" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" fill="#bfdbfe">Pause and resume. Works on phones.</text>
   <rect x="80" y="505" width="470" height="56" rx="12" fill="#ffffff" fill-opacity=".12"/>
   <text x="104" y="544" font-family="Consolas, 'Courier New', monospace" font-size="28" fill="#e0f2fe">npm i @vedratech/anydrop-ui</text>
   <text x="1120" y="544" text-anchor="end" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#93c5fd">vedratech.github.io/anydrop</text>

@@ -1,13 +1,13 @@
 ---
 title: "Options reference"
-description: "Every AnyDrop option with type, default and example: Dropzone-compatible core options plus folder, chunking, resume, connectivity and UI options."
+description: "Every AnyDrop option with type, default and example: core options plus folder, chunking, resume, connectivity and UI options."
 ---
 
 # Options
 
 Pass options to the constructor, and change them later with [`setOption(name, value)`](/api/methods#setoption-name-value). The core options come from `@vedratech/anydrop-core`; the UI options (and the texts) only exist in `@vedratech/anydrop-ui`, which accepts every core option as well.
 
-Dropzone options keep Dropzone 6.3.5's names, types and defaults unless the description says otherwise. A function option runs with `this` set to the instance. The full TypeScript definitions are generated from the source: [`AnyDropCoreOptions`](/api/generated/anydrop-core/interfaces/AnyDropCoreOptions) and [`AnyDropUIOptions`](/api/generated/anydrop-ui/interfaces/AnyDropUIOptions).
+A function option runs with `this` set to the instance. The full TypeScript definitions are generated from the source: [`AnyDropCoreOptions`](/api/generated/anydrop-core/interfaces/AnyDropCoreOptions) and [`AnyDropUIOptions`](/api/generated/anydrop-ui/interfaces/AnyDropUIOptions).
 
 ```ts
 import { AnyDrop } from '@vedratech/anydrop-ui';
@@ -28,16 +28,16 @@ Jump to: [Request and queue](#request-and-queue) / [Chunking](#chunking) / [Vali
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `url` | `string \| (files, dataBlocks) => string \| null` | `null` | Upload URL. A function gets the files and Dropzone's data blocks `[{ name, data, filename, chunkIndex? }]`. Without a URL nothing is uploaded (files stay `queued`; the UI constructor throws `No URL provided.`); setting one later with `setOption('url', ...)` starts the queue. A `<form action>` can supply it in the UI. Example: `'/upload'`. |
+| `url` | `string \| (files, dataBlocks) => string \| null` | `null` | Upload URL. A function gets the files and the data blocks `[{ name, data, filename, chunkIndex? }]`. Without a URL nothing is uploaded (files stay `queued`; the UI constructor throws `No URL provided.`); setting one later with `setOption('url', ...)` starts the queue. A `<form action>` can supply it in the UI. Example: `'/upload'`. |
 | `method` | `string \| (files, dataBlocks) => string` | `'post'` | HTTP method, upper-cased. Example: `'put'`. |
 | `withCredentials` | `boolean` | `false` | Send cookies on cross-origin requests. |
 | `timeout` | `number \| null \| (files) => number \| null` | `null` | Request timeout in ms; `null` means none. A timeout fails with code `TIMEOUT` and is retried like a network error. Example: `30000`. |
 | `headers` | `Record<string, string> \| null` | `null` | Extra headers on every request (uploads, manifest, status, finalize). Empty values are not sent. Example: `{ Authorization: 'Bearer ...' }`. |
-| `defaultHeaders` | `boolean` | `true` | Send Dropzone's `Accept: application/json`, `Cache-Control: no-cache` and `X-Requested-With: XMLHttpRequest`. |
-| `params` | `object \| (files, xhr, chunk) => object \| null` | `null` | Extra form fields, merged over the built-in `dz*` and `ad*` fields. A `null` value drops a built-in field, so you can rename it. `chunk` is `{ file, index, start, end, retries }` or `null`. Example: `params: (files, xhr, chunk) => ({ dzuuid: null, uploadId: files[0].upload.uuid })`. |
+| `defaultHeaders` | `boolean` | `true` | Send `Accept: application/json`, `Cache-Control: no-cache` and `X-Requested-With: XMLHttpRequest`. |
+| `params` | `object \| (files, xhr, chunk) => object \| null` | `null` | Extra form fields, merged over the built-in `ad*` fields. A `null` value drops a built-in field, so you can rename it. `chunk` is `{ file, index, start, end, retries }` or `null`. Example: `params: (files, xhr, chunk) => ({ adUploadId: null, uploadId: files[0].upload.uuid })`. |
 | `paramName` | `string \| (n) => string` | `'file'` | Form field of the file (`file[0]`, `file[1]`, ... with `uploadMultiple`). |
 | `uploadMultiple` | `boolean` | `false` | Send several files in one request, with indexed fields (`file[0]`, `adRelativePath[0]`, ...). The `*multiple` events fire once per request. Cannot be combined with `chunking` (the constructor throws). |
-| `binaryBody` | `boolean` | `false` | Send the file (or chunk) as the raw body with `Content-Type` set to the file type, and no form fields. With `chunking` that means no `dz*` metadata reaches the server. Cannot be combined with `uploadMultiple`. |
+| `binaryBody` | `boolean` | `false` | Send the file (or chunk) as the raw body with `Content-Type` set to the file type, and no form fields. With `chunking` that means no `ad*` metadata reaches the server. Cannot be combined with `uploadMultiple`. |
 | `parallelUploads` | `number` | `2` | Files uploading at once. A file holds its slot from `processing` to `complete`. |
 | `maxChunksInFlight` | `number \| null` | `null` | Optional cap on upload requests in flight across the instance, shared round-robin between files. `null` means no cap (then at most `parallelUploads` times `parallelChunkUploads`). Example: `4`. |
 | `autoQueue` | `boolean` | `true` | Queue accepted files when their batch closes. With `false`, files stay `added` until you call `enqueueFile()`. |
@@ -54,9 +54,9 @@ Jump to: [Request and queue](#request-and-queue) / [Chunking](#chunking) / [Vali
 | `forceChunking` | `boolean` | `false` | Chunk files smaller than `chunkSize` too (a zero-byte file is one empty chunk). |
 | `chunkSize` | `number` | `2097152` (2 MiB) | Chunk size in bytes. It is fixed per file when its first chunk is sent, so changing it later never moves the offsets of a file that already started. Example: `5 * 1024 * 1024`. |
 | `parallelChunkUploads` | `boolean \| number` | `false` | Chunks of one file in flight: `false` means 1, `true` means `parallelUploads`, a number is that many (at least 1, `Infinity` for all). |
-| `retryChunks` | `boolean` | `true` | Retry failed chunk, manifest, chunk-status and finalize requests with backoff. Dropzone's default is `false`. Whole-file uploads are never retried automatically. |
+| `retryChunks` | `boolean` | `true` | Retry failed chunk, manifest, chunk-status and finalize requests with backoff. Whole-file uploads are never retried automatically. |
 | `retryChunksLimit` | `number` | `3` | Retries per request, so at most 4 attempts. |
-| `chunksUploaded` | `(file, done, instance) => void \| null` | `null` | Replaces the built-in finalize request. `this` is the options object, as in Dropzone. `done()` succeeds; `done(new Error('...'))`, `done('message')` or throwing fails the file with `FINALIZE_FAILED`. Example: `chunksUploaded(file, done) { fetch('/merge?id=' + file.upload.uuid).then(() => done(), done); }`. |
+| `chunksUploaded` | `(file, done, instance) => void \| null` | `null` | Replaces the built-in finalize request. `this` is the options object. `done()` succeeds; `done(new Error('...'))`, `done('message')` or throwing fails the file with `FINALIZE_FAILED`. Example: `chunksUploaded(file, done) { fetch('/merge?id=' + file.upload.uuid).then(() => done(), done); }`. |
 | `finalizeUrl` | `string \| null` | `null` | `POST` target of the finalize request after the last chunk of a chunked file. Without it (and without `chunksUploaded`) the file succeeds after its last chunk. |
 | `chunkStatusUrl` | `string \| null` | `null` | `GET ?uploadId=` that returns the chunks the server already has. Asked only for files that are being resumed, never for fresh files. The server's answer wins; a `404` restarts the file with a new uploadId; `complete: true` lets a file finished in an earlier session be skipped. Without it, a `409` is not retried and the file fails with `CHUNK_MISMATCH`. |
 
@@ -68,7 +68,7 @@ Jump to: [Request and queue](#request-and-queue) / [Chunking](#chunking) / [Vali
 | `maxFilesize` | `number \| null` | `256` | Maximum size in MiB. `null` or `0` disables the check. Example: `2048`. |
 | `maxFiles` | `number \| null` | `null` | Maximum number of accepted files. Extra files are rejected and emit `maxfilesexceeded`. Example: `10`. |
 | `accept` | `(file, done) => void` | calls `done()` | Your own check, called after the built-in ones. `done()` accepts, `done(message)` rejects (code `REJECTED`). It may be asynchronous; the batch waits for it. Example: `accept(file, done) { file.size === 0 ? done('Empty file') : done(); }`. |
-| `ignoreHiddenFiles` | `boolean` | `true` | Skip files whose name starts with `.` inside dropped or picked folders. Loose files and hidden folders are not skipped, as in Dropzone. |
+| `ignoreHiddenFiles` | `boolean` | `true` | Skip files whose name starts with `.` inside dropped or picked folders. Loose files and hidden folders are not skipped. |
 | `filesizeBase` | `number` | `1000` | Base used by `filesize()`. Example: `1024`. |
 
 ## Folders
@@ -105,7 +105,7 @@ These options exist in `@vedratech/anydrop-ui` only.
 |---|---|---|---|
 | `clickable` | `boolean \| string \| HTMLElement \| (string \| HTMLElement)[]` | `true` | `true` (the element itself), `false`, a selector (every match), an element or an array. Clicking opens the file dialog. A selector that matches nothing throws. |
 | `previewsContainer` | `string \| HTMLElement \| null \| false` | `null` | Where the toolbar, list and error panel go. `null` means inside the element; `false` means no previews. |
-| `previewTemplate` | `string` | Dropzone's template | Markup of one file's preview. The `data-dz-name`, `data-dz-size`, `data-dz-thumbnail`, `data-dz-uploadprogress`, `data-dz-errormessage` and `data-dz-remove` hooks are filled in. |
+| `previewTemplate` | `string` | the built-in template | Markup of one file's preview. The `data-ad-name`, `data-ad-size`, `data-ad-thumbnail`, `data-ad-uploadprogress`, `data-ad-errormessage` and `data-ad-remove` hooks are filled in. See [Customising the UI](/guide/customising-ui). |
 | `hiddenInputContainer` | `string \| HTMLElement` | `'body'` | Where the hidden `<input type=file>` elements go. |
 | `addRemoveLinks` | `boolean` | `false` | Add a "Remove file" or "Cancel upload" link to each preview. |
 | `capture` | `string \| null` | `null` | Passed to the file input (`'environment'`, `'user'`) to open the camera. |
@@ -120,15 +120,15 @@ These options exist in `@vedratech/anydrop-ui` only.
 | `resizeMimeType` | `string \| null` | `null` | MIME type of the resized image; `null` keeps the type. |
 | `resizeQuality` | `number` | `0.8` | Encoder quality from 0 to 1. |
 | `disablePreviews` | `boolean` | `false` | No preview elements, no list, no toolbar, no error panel. The zone and the pickers still work, and `thumbnail` events still fire. |
-| `forceFallback` | `boolean` | `false` | Render a plain form with a file input, as Dropzone does, even when the browser supports everything. |
+| `forceFallback` | `boolean` | `false` | Render a plain form with a file input even when the browser supports everything. |
 | `fallback` | `(() => void) \| null` | `null` | Runs when the browser lacks the needed APIs, or with `forceFallback`. `null` means the default form. |
-| `init` | `(() => void) \| null` | `null` | Called at the end of the constructor, like Dropzone's `init`. |
+| `init` | `(() => void) \| null` | `null` | Called at the end of the constructor. |
 | `folderView` | `'tree' \| 'flat'` | `'tree'` | A collapsible tree, or a flat list of files with their full path. Can be changed with `setOption`. |
 | `rowHeight` | `number` | `56` | Row height in px of the virtualised list. Use a larger value for a taller `previewTemplate`. |
 | `toolbar` | `boolean` | `true` | Show the toolbar. |
 | `errorPanel` | `boolean` | `true` | Show the error panel when files failed. |
 | `pickerButtons` | `boolean` | `true` | The "Select files" and "Select folder" buttons. They appear only when the element itself is clickable. |
-| `enablePaste` | `boolean` | `false` | Add files pasted into the element. Off by default, as Dropzone 6.3.5 does not wire `paste` either. |
+| `enablePaste` | `boolean` | `false` | Add files pasted into the element. Off by default. |
 | `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | `'auto'` follows `prefers-color-scheme`. |
 
 ## Texts
@@ -207,15 +207,6 @@ These come from `@vedratech/anydrop-core` and are used in `error` events and err
 | `dictConnectionRestored` | `Connection restored` | Announced when the banner hides. |
 | `dictWaitingForConnection` | `Waiting for connection` | Row text instead of "Paused" while only the system holds the file. |
 
-## Deprecated options
-
-Dropzone's deprecated names are mapped as Dropzone 6.3.5 does.
-
-| Option | Description |
-|---|---|
-| `renameFilename` | `(name, file) => newName`. Becomes `renameFile`. |
-| `acceptedMimeTypes` | Copied to `acceptedFiles`. Setting both throws. |
-
 ## Event handlers as options
 
-As in Dropzone, any [event](/api/events) name can be given as an option: `new AnyDropCore({ addedfile(file) { ... } })`. The handler runs with `this` set to the instance. `setOption('addedfile', fn)` replaces it and `setOption('addedfile', null)` removes it. In the UI, handlers given as options run in addition to the built-in rendering; they do not replace it as in Dropzone (set `disablePreviews: true` to render everything yourself).
+Any [event](/api/events) name can be given as an option: `new AnyDropCore({ addedfile(file) { ... } })`. The handler runs with `this` set to the instance. `setOption('addedfile', fn)` replaces it and `setOption('addedfile', null)` removes it. In the UI, handlers given as options run in addition to the built-in rendering; they do not replace it (set `disablePreviews: true` to render everything yourself).

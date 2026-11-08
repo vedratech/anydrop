@@ -1,6 +1,6 @@
 # AnyDrop: folder upload for the browser
 
-**Drag and drop folder upload in JavaScript and TypeScript, with chunked and resumable uploads, pause and resume, retry and a persistent error list. Dropzone-compatible, works on phones.**
+**Drag and drop folder upload in JavaScript and TypeScript, with chunked and resumable uploads, pause and resume, retry and a persistent error list. Works on phones.**
 
 [![npm version](https://img.shields.io/npm/v/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
 [![npm downloads](https://img.shields.io/npm/dm/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
@@ -9,7 +9,7 @@
 [![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-ui.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
 [![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
 
-AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured like [Dropzone.js](https://www.dropzone.dev/) and adds a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
+AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured with plain options and events, and has a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
 
 ## Documentation: https://vedratech.github.io/anydrop/
 
@@ -19,30 +19,23 @@ AnyDrop is a front-end upload library that treats **folders as first-class objec
 | [Live demo](https://vedratech.github.io/anydrop/demo) | The real UI, with a simulated network |
 | [API reference](https://vedratech.github.io/anydrop/api/) | Every option, method, event, error code and type |
 | [Backend](https://vedratech.github.io/anydrop/backend/) | The HTTP contract, with Express and Laravel examples |
-| [Migrating from Dropzone](https://vedratech.github.io/anydrop/migrating-from-dropzone) | What stays the same and what is different |
 
 ## Why AnyDrop
 
-Use it when users upload **whole folders**, when files are **large or the connection is unreliable**, when people use **phones**, or when you already use Dropzone and want the same configuration with these features added.
+Use it when users upload **whole folders**, when files are **large or the connection is unreliable**, or when people use **phones**.
 
-| | Dropzone 6.3.5 | AnyDrop |
-|---|---|---|
-| Same options and events as Dropzone | yes | yes |
-| Folder tree, empty folders, folder manifest for the backend | no | yes |
-| Chunked uploads | yes | yes, with retry on by default |
-| Pause and resume (all, a folder, a file) | no | yes |
-| Resume after a page reload | no | yes (IndexedDB) |
-| Automatic handling of offline and unreachable servers | no | yes |
-| Persistent error list with retry and export | no | yes |
-| Headless core without a UI | no | yes |
-| Download size (UI, gzip) | 11.7 kB | 31.8 kB |
+- Folder tree, empty folders and a folder manifest for the backend.
+- Chunked uploads with retry on by default.
+- Pause and resume (everything, a folder or one file), also after a page reload (IndexedDB).
+- Automatic handling of offline and unreachable servers.
+- A persistent error list with retry and export.
+- A headless core without a UI.
 
-Dropzone is the smaller download and has a long track record, and Uppy and FilePond have plugin ecosystems that AnyDrop does not. If you only need plain file uploads, one of them may suit you better. Sizes are in the [Size](#size) section.
+Uppy and FilePond have plugin ecosystems that AnyDrop does not. If you only need plain file uploads, one of them may suit you better. Sizes are in the [Size](#size) section.
 
 Guides for common tasks:
 [upload a folder in JavaScript](https://vedratech.github.io/anydrop/use-cases/upload-folder-javascript),
 [chunked and resumable uploads](https://vedratech.github.io/anydrop/use-cases/chunked-resumable-uploads),
-[Dropzone.js alternative with folder support](https://vedratech.github.io/anydrop/use-cases/dropzone-alternative),
 [upload large files](https://vedratech.github.io/anydrop/use-cases/upload-large-files),
 [pause and resume uploads](https://vedratech.github.io/anydrop/use-cases/pause-resume-uploads),
 [uploads that survive a lost connection](https://vedratech.github.io/anydrop/use-cases/upload-lost-connection),
@@ -114,16 +107,16 @@ area.addEventListener('drop', (e) => {
 ## Features
 
 - Drag and drop of **files and folders together**, folder and file pickers, paste. Empty folders are kept, and the backend can receive the structure as a manifest.
-- **Chunked uploads** with Dropzone's field names, retry with backoff, and `Blob.slice()` so a file is never loaded into memory whole.
+- **Chunked uploads** with retry with backoff, and `Blob.slice()` so a file is never loaded into memory whole.
 - **Pause and resume** for everything, a folder or one file, and resume after a reload (IndexedDB).
 - **Bad connections handled:** uploads pause by themselves when the browser is offline, the tab is hidden or the server cannot be reached, and carry on when it returns.
 - A **persistent error list** with a reason per file, retry of failed files only, and JSON or CSV export.
-- The same options and events as Dropzone, plus folder events. Mobile friendly, accessible, dark mode, every text translatable.
+- Folder events next to the file events. Mobile friendly, accessible, dark mode, every text translatable.
 - ESM, CJS and IIFE builds, TypeScript types, and a pluggable `transport` for S3, tus or fetch adapters.
 
 ## Size
 
-Download size, measured the same way for every library (minified and gzipped with esbuild, 1 kB = 1024 bytes, measured 2026-11-08): Dropzone 6.3.5 is 11.7 kB, AnyDrop ui + core 31.8 kB, FilePond 4.32.12 (core, no plugins) 40.5 kB, Uppy core + dashboard + xhr-upload 78.4 kB (CSS excluded). AnyDrop with the UI is about 2.7 times the size of Dropzone. Method and the CSS numbers: [size comparison](https://vedratech.github.io/anydrop/size-comparison).
+Download size, measured the same way for every library (minified and gzipped with esbuild, 1 kB = 1024 bytes, measured 2026-11-08): AnyDrop ui + core 31.7 kB, FilePond 4.32.12 (core, no plugins) 40.5 kB, Uppy core + dashboard + xhr-upload 78.4 kB (CSS excluded). AnyDrop with the UI is less than half the size of Uppy with Dashboard. Method and the CSS numbers: [size comparison](https://vedratech.github.io/anydrop/size-comparison).
 
 ## Browser support
 
@@ -148,4 +141,4 @@ Created and maintained by **Jayesh Gupta** ([@jayeshgupta91](https://github.com/
 
 ## License
 
-MIT © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT © 2026 Jayesh Gupta.

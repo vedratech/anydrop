@@ -28,7 +28,7 @@ To put markup in the drop message, put your own element in the page and it is us
 
 ```html
 <div id="uploader">
-  <div class="dz-message"><strong>Drop</strong> your holiday photos here</div>
+  <div class="ad-message"><strong>Drop</strong> your holiday photos here</div>
 </div>
 ```
 
@@ -55,12 +55,12 @@ new AnyDrop('#uploader', {
 
 | Attribute | Filled with |
 |---|---|
-| `data-dz-name` | The file name |
-| `data-dz-size` | The size, as text |
-| `data-dz-thumbnail` | An `<img>` that gets the thumbnail |
-| `data-dz-uploadprogress` | An element whose width is the progress |
-| `data-dz-errormessage` | The error message |
-| `data-dz-remove` | A link or button that removes or cancels the file |
+| `data-ad-name` | The file name |
+| `data-ad-size` | The size, as text |
+| `data-ad-thumbnail` | An `<img>` that gets the thumbnail |
+| `data-ad-uploadprogress` | An element whose width is the progress |
+| `data-ad-errormessage` | The error message |
+| `data-ad-remove` | A link or button that removes or cancels the file |
 
 ```js
 new AnyDrop('#uploader', {
@@ -68,14 +68,14 @@ new AnyDrop('#uploader', {
   addRemoveLinks: true,
   previewTemplate: `
     <div class="my-row">
-      <img data-dz-thumbnail alt="" />
-      <span data-dz-name></span> <span data-dz-size></span>
-      <span class="my-error" data-dz-errormessage></span>
+      <img data-ad-thumbnail alt="" />
+      <span data-ad-name></span> <span data-ad-size></span>
+      <span class="my-error" data-ad-errormessage></span>
     </div>`,
 });
 ```
 
-The hooks and the `dz-*` classes are the same as Dropzone's, so an existing template and your own CSS keep working.
+The default template uses the classes `ad-file-preview`, `ad-file-thumb`, `ad-file-details`, `ad-file-size`, `ad-file-name`, `ad-file-progress`, `ad-file-bar`, `ad-file-error-message`, `ad-file-success-mark`, `ad-file-error-mark` and `ad-file-remove`. Reuse them in your own template to keep the built-in styling, or use your own classes.
 
 ## CSS variables
 
@@ -109,15 +109,13 @@ ad.setOption('theme', isDark ? 'dark' : 'light');
 
 ## CSS classes
 
-Dropzone's classes are set too, so Dropzone stylesheets keep working: on the element `dz-clickable`, `dz-started`, `dz-drag-hover`, `dz-max-files-reached`, `dz-disabled`, `dz-browser-not-supported`; on previews `dz-preview`, `dz-processing`, `dz-success`, `dz-error`, `dz-complete`, `dz-image-preview`. Each is also set with the prefix `ad-` (`ad-started`, `ad-drag-hover`, `ad-success`, ...). Our own hooks include `ad-root`, `ad-touch`, `ad-toolbar`, `ad-list`, `ad-row` (with `ad-folder-row` and `ad-file-row`), `ad-badge`, `ad-errors`, `ad-banner` and `ad-live`.
-
-Our rules for the rows are written with a higher specificity than `dropzone.css`, so the two can be loaded together, but Dropzone's styles for its own card layout are not needed.
+State classes on the element: `ad-clickable`, `ad-started`, `ad-drag-hover`, `ad-max-files-reached`, `ad-disabled`, `ad-browser-not-supported`. State classes on a preview: `ad-processing`, `ad-success`, `ad-error`, `ad-complete`, `ad-canceled`, `ad-paused`, `ad-image-preview`, `ad-thumb-error`. An element with the class `ad-message` inside your element replaces the default drop message, and an element with the class `ad-fallback` is removed while the UI runs (use it for a plain `<form>` that only users without JavaScript see). Other hooks include `ad-root`, `ad-touch`, `ad-toolbar`, `ad-list`, `ad-row` (with `ad-folder-row` and `ad-file-row`), `ad-badge`, `ad-errors`, `ad-banner` and `ad-live`.
 
 Buttons carry `data-ad-action` (`pick-files`, `pick-folder`, `pause-all`, `resume-all`, `retry-failed`, `clear`, `pause`, `resume`, `retry`, `cancel`, `toggle`, `export-json`, `export-csv`, `copy-errors`, `dismiss-errors`), which is handy for tests.
 
 ## Render everything yourself
 
-Event handlers passed as options **add** to the built-in rendering; they do not replace it as in Dropzone. To take over completely, set `disablePreviews: true` and use the [events](/api/events) and the [tree](/guide/folders).
+Event handlers passed as options **add** to the built-in rendering; they do not replace it. To take over completely, set `disablePreviews: true` and use the [events](/api/events) and the [tree](/guide/folders).
 
 ## Accessibility
 

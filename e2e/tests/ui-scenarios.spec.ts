@@ -312,13 +312,13 @@ test.describe('S3 pause and resume at file, folder and global level', () => {
       const sizeOf = (n: string) =>
         g.tree.files.find((f) => f.path.endsWith('/' + n.trim()))?.size ?? 0;
       const names = await zone
-        .locator('.ad-file-row[data-status=uploading] [data-dz-name]')
+        .locator('.ad-file-row[data-status=uploading] [data-ad-name]')
         .allTextContents();
       const fileName = [...names].sort((a, b) => sizeOf(b) - sizeOf(a))[0] ?? '';
       const fileRow = () =>
         zone
           .locator('.ad-file-row')
-          .filter({ has: page.locator(`[data-dz-name]`, { hasText: fileName }) });
+          .filter({ has: page.locator(`[data-ad-name]`, { hasText: fileName }) });
       await fileRow().locator('[data-ad-action=pause]').click();
       await expect(fileRow()).toHaveAttribute('data-status', 'paused');
       const progressedFrom = heldTotal(await mock.report());

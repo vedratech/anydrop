@@ -25,9 +25,8 @@ export function resolve(ref: unknown, scope?: ParentNode): HTMLElement | null {
   return ref && (ref as Node).nodeType === 1 ? (ref as HTMLElement) : null;
 }
 
-/** Toggles both the Dropzone class (`dz-x`) and ours (`ad-x`). */
+/** Toggles the state class `ad-<name>`. */
 export function mark(e: Element, name: string, on: boolean): void {
-  e.classList.toggle('dz-' + name, on);
   e.classList.toggle('ad-' + name, on);
 }
 

@@ -1,4 +1,4 @@
-// AnyDrop: the Dropzone-compatible UI on top of AnyDropCore. It listens to core events and calls core
+// AnyDrop: the UI on top of AnyDropCore. It listens to core events and calls core
 // methods; it never reimplements engine logic. All UI-only state lives in `_ui*` fields so nothing
 // can collide with core members.
 import {
@@ -12,7 +12,7 @@ import {
   type FolderNode,
 } from '@vedratech/anydrop-core';
 import { fmt, frame, h, Listeners, mark, resolve, textBtn } from './dom';
-import { resizeFile } from './image';
+import { scaleBlob } from './image';
 import { isFolder, RowList } from './list';
 import {
   type AnyDropConfig,
@@ -45,7 +45,7 @@ const camelize = (str: string) => str.replace(/[-_](\w)/g, (m) => m.charAt(1).to
 const plain = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
 
-/** Dropzone's `extend(true, ...)`: nested plain objects are merged, everything else is replaced. */
+/** Deep merge: nested plain objects are merged, everything else is replaced. */
 function merge(into: Record<string, unknown>, from: unknown): void {
   if (!from) return;
   for (const k in from as object) {
@@ -88,12 +88,12 @@ function prepare(element: string | HTMLElement, config: AnyDropConfig): AnyDropC
       'Invalid `clickable` option provided. Please set it to true, a selector or an element.',
     );
   }
-  // Dropzone: the url comes from a <form action> when not given (the check itself comes later).
+  // The url comes from a <form action> when not given (the check itself comes later).
   if (!out.url) out.url = el.getAttribute('action');
   return out as AnyDropConfig;
 }
 
-/** The elements a `clickable` option stands for (selectors use `querySelectorAll`, as in Dropzone). */
+/** The elements a `clickable` option stands for (selectors use `querySelectorAll`). */
 function clickables(el: HTMLElement, c: AnyDropUIOptions['clickable']): HTMLElement[] {
   if (c === false) return [];
   const out: HTMLElement[] = [];
@@ -116,7 +116,7 @@ function clickables(el: HTMLElement, c: AnyDropUIOptions['clickable']): HTMLElem
  * ```
  */
 export class AnyDrop extends AnyDropCore {
-  /** Dropzone's `Dropzone.options`: options per element id (camelCased), used when an element is attached. */
+  /** Options per element id (camelCased), used when an element is attached: `AnyDrop.options.myId = { ... }`. */
   static options: Record<string, AnyDropConfig | false> = {};
   /** Every live instance (removed again by `destroy()`). */
   static instances: AnyDrop[] = [];
@@ -124,33 +124,33 @@ export class AnyDrop extends AnyDropCore {
   static autoDiscover = true;
 
   /**
-   * Dropzone's `Dropzone.discover()`: attaches an instance to every `.dropzone` or `.anydrop` element
+   * Attaches an instance to every `.anydrop` element
    * that has none and whose `AnyDrop.options[id]` is not `false`. Returns the new instances. It only
    * runs when called; the npm builds never call it by themselves.
    */
   static discover(root: ParentNode = document): AnyDrop[] {
     const made: AnyDrop[] = [];
-    root.querySelectorAll<HTMLElement>('.dropzone, .anydrop').forEach((el) => {
+    root.querySelectorAll<HTMLElement>('.anydrop').forEach((el) => {
       if ((el as { anydrop?: unknown }).anydrop || presetFor(el) === false) return;
       made.push(new AnyDrop(el));
     });
     return made;
   }
 
-  /** Dropzone's `Dropzone.confirm`: `window.confirm`, overridable (for example with a dialog). */
+  /** Asks a question: `window.confirm`, overridable (for example with a dialog). */
   static confirm(question: string, accepted: () => void, rejected?: () => void): void {
     if (window.confirm(question)) accepted();
     else if (rejected) rejected();
   }
 
-  /** The instance attached to an element (Dropzone's `Dropzone.forElement`). */
+  /** The instance attached to an element. */
   static forElement(element: string | HTMLElement): AnyDrop {
     const e = resolve(element) as (HTMLElement & { anydrop?: AnyDrop }) | null;
     if (!e || !e.anydrop) throw new Error('No AnyDrop found for given element.');
     return e.anydrop;
   }
 
-  /** Dropzone's `isBrowserSupported`: the APIs the UI needs exist. */
+  /** Whether the APIs the UI needs exist. */
   static isBrowserSupported(): boolean {
     const w = globalThis as unknown as Record<string, unknown>;
     return !!(
@@ -236,19 +236,18 @@ export class AnyDrop extends AnyDropCore {
     if (o.init) o.init.call(this);
   }
 
-  /** The hidden `<input type=file>` the file picker opens (Dropzone's `hiddenFileInput`). */
+  /** The hidden `<input type=file>` the file picker opens. */
   get hiddenFileInput(): HTMLInputElement | null {
     return this._uiFileInput;
   }
 
   private _uiAttach2(el: HTMLElement): void {
-    const e = el as { anydrop?: AnyDrop; dropzone?: AnyDrop };
-    e.anydrop = e.dropzone = this;
+    (el as { anydrop?: AnyDrop }).anydrop = this;
     AnyDrop.instances.push(this);
     if (el !== document.body) el.classList.add('ad-root');
   }
 
-  /** Dropzone's `_addFormElementData`: the fields of a `<form>` element go with every request, once. */
+  /** The fields of a `<form>` element go with every request, once. */
   protected override _addFormElementData(formData: FormData): void {
     const el = this.element;
     if (!el || el.tagName !== 'FORM') return;
@@ -269,14 +268,14 @@ export class AnyDrop extends AnyDropCore {
     });
   }
 
-  /** Previews are off with `disablePreviews` or `previewsContainer: false` (Dropzone). */
+  /** Previews are off with `disablePreviews` or `previewsContainer: false`. */
   private _uiNoPreviews(): boolean {
     return this.options.disablePreviews || this.options.previewsContainer === false;
   }
 
   // ------------------------------------------------------------ public methods
 
-  /** Dispatches `anydrop:<event>` on the element too (Dropzone's `dropzone:<event>`, `detail: { args }`). */
+  /** Dispatches `anydrop:<event>` on the element too (`detail: { args }`). */
   override emit<K extends AnyDropEventName>(event: K, ...args: AnyDropEvents[K]): this {
     // Option handlers run before ours: `file.previewElement` has to exist for them.
     if (event === 'addedfile' && this._uiPreviews) this._uiDefine(args[0] as Item);
@@ -298,7 +297,7 @@ export class AnyDrop extends AnyDropCore {
   }
 
   /**
-   * Shows a file that is already on the server (Dropzone's `displayExistingFile`). The mock file is
+   * Shows a file that is already on the server . The mock file is
    * not added to `files`, the tree, the queue or a manifest.
    */
   displayExistingFile(
@@ -401,15 +400,13 @@ export class AnyDrop extends AnyDropCore {
     this._uiRemoved = [];
     const el = this.element;
     el.classList.forEach((c) => {
-      if (/^(ad|dz)-/.test(c)) el.classList.remove(c);
+      if (/^ad-/.test(c)) el.classList.remove(c);
     });
     el.classList.remove('ad-root');
     if (!el.getAttribute('class')) el.removeAttribute('class');
-    for (const c of this._uiClicked) c.classList.remove('dz-clickable', 'ad-clickable');
+    for (const c of this._uiClicked) c.classList.remove('ad-clickable');
     for (const k of this._uiAttrs) el.removeAttribute(k);
-    const e = el as { anydrop?: AnyDrop; dropzone?: AnyDrop };
-    delete e.anydrop;
-    delete e.dropzone;
+    delete (el as { anydrop?: AnyDrop }).anydrop;
     const i = AnyDrop.instances.indexOf(this);
     if (i >= 0) AnyDrop.instances.splice(i, 1);
   }
@@ -427,15 +424,15 @@ export class AnyDrop extends AnyDropCore {
     if (o.theme !== 'auto' && !body) attr('data-ad-theme', o.theme);
     if (!body && !el.hasAttribute('role')) attr('role', 'group');
     if (!body && !el.hasAttribute('aria-label')) attr('aria-label', o.dictRegionLabel);
-    // Dropzone drops its fallback form when the browser is supported.
-    el.querySelectorAll('.fallback').forEach((n) => {
+    // A fallback form is not needed when the browser is supported.
+    el.querySelectorAll('.ad-fallback').forEach((n) => {
       if (n.parentNode) this._uiRemoved.push([n.parentNode, n.nextSibling, n]);
       n.remove();
     });
-    let msg = el.querySelector<HTMLElement>('.dz-message, .ad-message');
+    let msg = el.querySelector<HTMLElement>('.ad-message');
     // Our default message and buttons only go into an element that is itself the zone.
-    if (!msg && !body && (el.classList.contains('dropzone') || o.clickable === true)) {
-      msg = h('div', 'dz-default dz-message ad-message');
+    if (!msg && !body && o.clickable === true) {
+      msg = h('div', 'ad-message');
       msg.appendChild(h('span', 'ad-message-text', undefined, o.dictDefaultMessage));
       el.appendChild(msg);
       this._uiOwn.push(msg);
@@ -564,24 +561,18 @@ export class AnyDrop extends AnyDropCore {
         pv.use(f, e);
       },
     });
-    // Dropzone's backwards-compatible alias.
-    Object.defineProperty(f, 'previewTemplate', {
-      configurable: true,
-      enumerable: false,
-      get: read,
-    });
   }
 
   private _uiFallback(this: AnyDrop): void {
     const el = this.element;
     const o = this.options;
-    el.classList.add('ad-browser-not-supported', 'dz-browser-not-supported');
-    let msg = el.querySelector('.dz-message');
-    if (!msg) el.appendChild((msg = h('div', 'dz-message')));
+    el.classList.add('ad-browser-not-supported');
+    let msg = el.querySelector('.ad-message');
+    if (!msg) el.appendChild((msg = h('div', 'ad-message')));
     msg.textContent = o.dictFallbackMessage;
-    if (el.querySelector('.fallback')) return;
+    if (el.querySelector('.ad-fallback')) return;
     const url = this.resolveOption(o.url as string, []);
-    const f = h('div', 'fallback');
+    const f = h('div', 'ad-fallback');
     const name = typeof o.paramName === 'function' ? o.paramName(0) : o.paramName;
     const multiple = o.uploadMultiple || o.maxFiles == null || o.maxFiles > 1;
     const fields = [
@@ -940,7 +931,7 @@ export class AnyDrop extends AnyDropCore {
       return;
     }
     if (wanted && !ours) {
-      const fn = (file: Blob, done: (b: Blob) => void) => resizeFile(file, this.options, done);
+      const fn = (file: Blob, done: (b: Blob) => void) => scaleBlob(file, this.options, done);
       this._uiTransform = fn as AnyDropFullOptions['transformFile'];
       this.options.transformFile = this._uiTransform as AnyDropOptions['transformFile'];
     } else if (!wanted && ours) {
@@ -1032,7 +1023,7 @@ export class AnyDrop extends AnyDropCore {
     else m.retryFailedOnly?.(f.folder.path || undefined);
   }
 
-  /** @internal Dropzone's `data-dz-remove` link: ask before dropping an upload in progress. */
+  /** @internal The `data-ad-remove` link: ask before dropping an upload in progress. */
   _uiRemoveLink(item: Item): void {
     const o = this.options;
     const remove = () => this.removeFile(item as AnyDropFile);

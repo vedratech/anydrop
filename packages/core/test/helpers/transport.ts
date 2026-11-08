@@ -34,7 +34,7 @@ export interface FakeTransport extends Transport {
   open(): Call[];
   inFlight: number;
   maxInFlight: number;
-  /** Peak in-flight upload requests per `dzuuid` (or per relative path for whole files). */
+  /** Peak in-flight upload requests per `adUploadId` (or per relative path for whole files). */
   maxPerUpload: Map<string, number>;
 }
 
@@ -97,7 +97,7 @@ export function fakeTransport(auto?: (call: Call, t: FakeTransport) => void): Fa
       }
       if (req.beforeSend) req.beforeSend(xhr);
       if (kind === 'upload') {
-        key = call.field('dzuuid') || call.field('adRelativePath') || 'whole';
+        key = call.field('adUploadId') || call.field('adRelativePath') || 'whole';
         t.inFlight++;
         t.maxInFlight = Math.max(t.maxInFlight, t.inFlight);
         per.set(key, (per.get(key) || 0) + 1);

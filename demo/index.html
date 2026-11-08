@@ -78,7 +78,7 @@
     <p>Version: <span id="version" data-testid="version"></span></p>
     <p>Mock server: <code id="mock-url"></code></p>
     <nav aria-label="Examples">
-      <a href="#ex-basic">Basic (Dropzone config)</a>
+      <a href="#ex-basic">Basic (options preset)</a>
       <a href="#ex-tree">Folder tree</a>
       <a href="#ex-headless">Headless</a>
       <a href="#ex-mobile">Mobile</a>
@@ -87,13 +87,13 @@
     </nav>
 
     <section id="ex-basic" data-testid="example-basic">
-      <h2>Basic: a Dropzone configuration, unchanged</h2>
+      <h2>Basic: an options preset on a form</h2>
       <p>
-        The markup and options below are the ones from the Dropzone documentation
-        (<code>Dropzone.options.myAwesomeDropzone</code>, a <code>form</code> with an
-        <code>action</code>, a custom <code>accept</code>).
+        The options come from <code>AnyDrop.options.basicZone</code> (the element id, camelCased).
+        The <code>form</code> has an <code>action</code>, which is the upload URL, and a custom
+        <code>accept</code> function.
       </p>
-      <form id="my-awesome-dropzone" class="dropzone" data-testid="basic-zone"></form>
+      <form id="basic-zone" data-testid="basic-zone"></form>
     </section>
 
     <section id="ex-tree" data-testid="example-tree">

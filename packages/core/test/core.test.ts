@@ -406,7 +406,7 @@ describe('input events', () => {
     expect(log).toEqual(['drop', 'addedfile']);
   });
 
-  it('a drop with no files still emits addedfiles([]) like Dropzone', async () => {
+  it('a drop with no files still emits addedfiles([])', async () => {
     const core = new AnyDropCore();
     const added = vi.fn();
     core.on('addedfiles', added);
@@ -491,7 +491,7 @@ describe('options, events and lifecycle', () => {
     expect(new AnyDropCore({ maxFiles: undefined }).options.maxFiles).toBeNull();
   });
 
-  it('on() returns an unsubscribe function; once() and off() work like Dropzone', () => {
+  it('on() returns an unsubscribe function; once() and off() work', () => {
     const core = new AnyDropCore();
     const a = vi.fn();
     const b = vi.fn();

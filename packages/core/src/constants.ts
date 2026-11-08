@@ -1,15 +1,15 @@
-// File status constants, matching Dropzone's static constants.
+// File status constants.
 import type { FileStatus } from './types';
 
 /** Status `'added'`: accepted but not queued yet. */
 export const ADDED = 'added' as const satisfies FileStatus;
 /** Status `'queued'`: waiting for an upload slot. */
 export const QUEUED = 'queued' as const satisfies FileStatus;
-/** Dropzone alias: an accepted file is queued or uploading. */
+/** Alias of `QUEUED`. */
 export const ACCEPTED = QUEUED;
 /** Status `'uploading'`. */
 export const UPLOADING = 'uploading' as const satisfies FileStatus;
-/** Dropzone alias of `UPLOADING`. */
+/** Alias of `UPLOADING`. */
 export const PROCESSING = UPLOADING;
 /** Status `'paused'`. */
 export const PAUSED = 'paused' as const satisfies FileStatus;

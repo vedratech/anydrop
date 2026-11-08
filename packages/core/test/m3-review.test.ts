@@ -138,7 +138,7 @@ describe('B2: the chunk layout is fixed when the first chunk is sent', () => {
     const f = core.addFile(bytesFile('a.bin', 40));
     await settle();
     const first = openUploads(t)[0]!;
-    expect(first.field('dzchunksize')).toBe('10');
+    expect(first.field('adChunkSize')).toBe('10');
     core.pause(); // 'abort': chunk 0 is aborted before any 2xx
     expect(first.aborted).toBe(true);
     core.setOption('chunkSize', 15);
@@ -150,10 +150,10 @@ describe('B2: the chunk layout is fixed when the first chunk is sent', () => {
     expect(f.upload.chunkSize).toBe(10);
     expect(f.upload.totalChunkCount).toBe(4);
     const next = openUploads(t)[0]!;
-    expect(next.field('dzchunkindex')).toBe('1');
-    expect(next.field('dzchunksize')).toBe('10');
-    expect(next.field('dzchunkbyteoffset')).toBe('10');
-    expect(next.field('dztotalchunkcount')).toBe('4');
+    expect(next.field('adChunkIndex')).toBe('1');
+    expect(next.field('adChunkSize')).toBe('10');
+    expect(next.field('adChunkOffset')).toBe('10');
+    expect(next.field('adChunkCount')).toBe('4');
     core.destroy();
   });
 
@@ -164,7 +164,7 @@ describe('B2: the chunk layout is fixed when the first chunk is sent', () => {
     core.setOption('chunkSize', 20);
     core.processQueue();
     await settle();
-    expect(openUploads(t)[0]!.field('dzchunksize')).toBe('20');
+    expect(openUploads(t)[0]!.field('adChunkSize')).toBe('20');
     expect(f.upload.totalChunkCount).toBe(2);
     core.destroy();
   });

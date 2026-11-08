@@ -19,8 +19,6 @@
     "folder-upload",
     "directory-upload",
     "drag-and-drop",
-    "dropzone",
-    "dropzone-alternative",
     "chunked-upload",
     "resumable-upload",
     "resumable",
@@ -62,7 +60,6 @@
   "files": [
     "dist",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md",
     "README.md"
   ],
   "sideEffects": false,
@@ -79,8 +76,5 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
-  },
-  "devDependencies": {
-    "dropzone": "6.3.5"
   }
 }

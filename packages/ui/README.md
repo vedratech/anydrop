@@ -1,6 +1,6 @@
 # @vedratech/anydrop-ui
 
-**Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry, Dropzone-compatible. Part of [AnyDrop](https://github.com/vedratech/anydrop).**
+**Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause and resume, retry. Part of [AnyDrop](https://github.com/vedratech/anydrop).**
 
 [![npm version](https://img.shields.io/npm/v/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
 [![npm downloads](https://img.shields.io/npm/dm/@vedratech/anydrop-ui.svg)](https://www.npmjs.com/package/@vedratech/anydrop-ui)
@@ -9,7 +9,7 @@
 [![license: MIT](https://img.shields.io/npm/l/@vedratech/anydrop-ui.svg)](https://github.com/vedratech/anydrop/blob/main/LICENSE)
 [![docs](https://img.shields.io/badge/docs-vedratech.github.io%2Fanydrop-1d4ed8.svg)](https://vedratech.github.io/anydrop/)
 
-Plain-JavaScript UI for AnyDrop: a drop zone with file and folder pickers, a virtualized folder tree (or flat list), a toolbar, a persistent error panel, thumbnails and a mobile layout. It extends `AnyDropCore` from [`@vedratech/anydrop-core`](https://www.npmjs.com/package/@vedratech/anydrop-core) and is configured like Dropzone.js, so `new Dropzone(el, opts)` becomes `new AnyDrop(el, opts)`.
+Plain-JavaScript UI for AnyDrop: a drop zone with file and folder pickers, a virtualized folder tree (or flat list), a toolbar, a persistent error panel, thumbnails and a mobile layout. It extends `AnyDropCore` from [`@vedratech/anydrop-core`](https://www.npmjs.com/package/@vedratech/anydrop-core) and is configured with plain options: `new AnyDrop(el, opts)`.
 
 **Documentation: https://vedratech.github.io/anydrop/** ([quick start](https://vedratech.github.io/anydrop/guide/quick-start), [API reference](https://vedratech.github.io/anydrop/api/), [backend contract](https://vedratech.github.io/anydrop/protocol), [live demo](https://vedratech.github.io/anydrop/demo))
 
@@ -39,7 +39,7 @@ ad.setOption('folderView', 'flat');
 ad.destroy(); // removes all DOM, listeners and timers
 ```
 
-From a CDN (pin the minor version, add the stylesheet). The script makes `window.AnyDrop` **the class itself** (core included), as `window.Dropzone` is:
+From a CDN (pin the minor version, add the stylesheet). The script makes `window.AnyDrop` **the class itself** (core included):
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vedratech/anydrop-ui@0.1/dist/style.css" />
@@ -49,7 +49,7 @@ From a CDN (pin the minor version, add the stylesheet). The script makes `window
 </script>
 ```
 
-The other exports are statics on it: `AnyDrop.AnyDrop`, `AnyDrop.AnyDropCore`, `AnyDrop.VERSION`, `AnyDrop.uiDefaults`, `AnyDrop.DEFAULT_TEMPLATE`. The CDN build also attaches to `.dropzone` and `.anydrop` elements (set `AnyDrop.autoDiscover = false` to stop it). The npm builds never do anything on import (safe for server-side rendering); call `AnyDrop.discover()` yourself.
+The other exports are statics on it: `AnyDrop.AnyDrop`, `AnyDrop.AnyDropCore`, `AnyDrop.VERSION`, `AnyDrop.uiDefaults`, `AnyDrop.DEFAULT_TEMPLATE`. The CDN build also attaches to `.anydrop` elements (set `AnyDrop.autoDiscover = false` to stop it). The npm builds never do anything on import (safe for server-side rendering); call `AnyDrop.discover()` yourself.
 
 ## What you get
 
@@ -63,7 +63,7 @@ Types and defaults. Descriptions: [Options reference](https://vedratech.github.i
 |---|---|---|
 | `clickable` | `boolean \| string \| HTMLElement \| (string \| HTMLElement)[]` | `true` |
 | `previewsContainer` | `string \| HTMLElement \| null \| false` | `null` |
-| `previewTemplate` | `string` | Dropzone's template |
+| `previewTemplate` | `string` | Markup of one file preview; the `data-ad-*` hooks are filled in |
 | `hiddenInputContainer` | `string \| HTMLElement` | `'body'` |
 | `addRemoveLinks` | `boolean` | `false` |
 | `capture` | `string \| null` | `null` |
@@ -98,17 +98,17 @@ Every text is a `dict*` option, rendered as plain text; `{{name}}` placeholders 
 | Method | Description |
 |---|---|
 | `element` | The element the instance is attached to |
-| `hiddenFileInput` | The hidden file input that the file picker opens (Dropzone's `hiddenFileInput`) |
+| `hiddenFileInput` | The hidden file input that the file picker opens |
 | `displayExistingFile(mockFile, imageUrl, callback?, crossOrigin?, resizeThumbnail = true)` | Shows a file that is already on the server as a row at the root |
 | `downloadErrors(format?)` | Downloads the error list as a file |
 | `copyErrors()` | Copies the error list to the clipboard |
 
 | Static | Description |
 |---|---|
-| `AnyDrop.options` | Dropzone's `Dropzone.options`: presets for the element with id `my-id` as `AnyDrop.options.myId = { ... }`. `false` stops `discover()` from attaching to that element |
+| `AnyDrop.options` | Presets for the element with id `my-id` as `AnyDrop.options.myId = { ... }`. `false` stops `discover()` from attaching to that element |
 | `AnyDrop.instances` | Every live instance. `destroy()` removes an instance again |
-| `AnyDrop.autoDiscover` | Read by the CDN build only: set it to `false` right after the script tag to stop auto-discovery of `.dropzone` and `.anydrop` elements |
-| `AnyDrop.discover(root = document)` | Attaches an instance to every `.dropzone` or `.anydrop` element under `root` that has none |
+| `AnyDrop.autoDiscover` | Read by the CDN build only: set it to `false` right after the script tag to stop auto-discovery of `.anydrop` elements |
+| `AnyDrop.discover(root = document)` | Attaches an instance to every `.anydrop` element under `root` that has none |
 | `AnyDrop.forElement(element)` | The instance attached to an element |
 | `AnyDrop.isBrowserSupported()` | Whether the browser has the APIs the UI needs |
 | `AnyDrop.supportsFolderPicker()` | Feature detection of the folder picker (`'webkitdirectory' in input`) |
@@ -116,12 +116,14 @@ Every text is a `dict*` option, rendered as plain text; `{{name}}` placeholders 
 
 - `setOption(name, value)` works at runtime for every UI option. `disable()` and `enable()` also remove and restore the drag, drop, paste and click listeners.
 - Events emitted by the UI: `dragstart`, `dragenter`, `dragover`, `dragleave`, `dragend`, `thumbnail`. A DOM `CustomEvent` named `anydrop:<event>` (arguments in `detail`) is dispatched on the element for every event.
-- Event handlers passed as options **add** to the built-in rendering; they do not replace it as in Dropzone. Set `disablePreviews: true` to render everything yourself.
+- Event handlers passed as options **add** to the built-in rendering; they do not replace it. Set `disablePreviews: true` to render everything yourself.
 - Exports: `AnyDrop`, `uiDefaults()`, `DEFAULT_TEMPLATE`, `VERSION` and the types `AnyDropConfig`, `AnyDropUIOptions`, `AnyDropDict`, `AnyDropFullOptions`, `ElementRef`, `MockFile`.
 
 ## Theming
 
-Set CSS variables on the element, for example `#uploader { --ad-color-accent: #7c3aed; }`. Dark mode follows `prefers-color-scheme`; force it with the `theme` option. The variables and classes are listed in [Customising the UI](https://vedratech.github.io/anydrop/guide/customising-ui).
+Set CSS variables on the element, for example `#uploader { --ad-color-accent: #7c3aed; }`. Dark mode follows `prefers-color-scheme`; force it with the `theme` option.
+
+The preview template and the per-file classes use these names. Hooks (`data-ad-*`, filled in by the UI): `data-ad-thumbnail`, `data-ad-size`, `data-ad-name`, `data-ad-uploadprogress`, `data-ad-errormessage`, `data-ad-remove`. Classes: `ad-file-preview`, `ad-file-thumb`, `ad-file-details`, `ad-file-size`, `ad-file-name`, `ad-file-progress`, `ad-file-bar`, `ad-file-error-message`, `ad-file-success-mark`, `ad-file-error-mark`, `ad-file-remove`. State classes on the zone and on a preview: `ad-clickable`, `ad-drag-hover`, `ad-started`, `ad-disabled`, `ad-max-files-reached`, `ad-browser-not-supported`, `ad-processing`, `ad-complete`, `ad-success`, `ad-error`, `ad-canceled`, `ad-paused`, `ad-image-preview`, `ad-thumb-error`. A `.ad-fallback` element in the markup is removed while the UI runs. The variables and classes are listed in [Customising the UI](https://vedratech.github.io/anydrop/guide/customising-ui).
 
 ## Mobile and iOS
 
@@ -134,10 +136,9 @@ Everything is on the website: **https://vedratech.github.io/anydrop/**
 - [Guide](https://vedratech.github.io/anydrop/guide/introduction) and [quick start](https://vedratech.github.io/anydrop/guide/quick-start)
 - [API reference](https://vedratech.github.io/anydrop/api/): [options](https://vedratech.github.io/anydrop/api/options), [methods](https://vedratech.github.io/anydrop/api/methods), [events](https://vedratech.github.io/anydrop/api/events), [error codes](https://vedratech.github.io/anydrop/api/error-codes), [types](https://vedratech.github.io/anydrop/api/types)
 - [Backend contract](https://vedratech.github.io/anydrop/protocol), with [Express](https://vedratech.github.io/anydrop/backend/express) and [Laravel](https://vedratech.github.io/anydrop/backend/laravel) examples
-- [Migrating from Dropzone](https://vedratech.github.io/anydrop/migrating-from-dropzone)
 - [Live demo](https://vedratech.github.io/anydrop/demo)
 - [Size comparison](https://vedratech.github.io/anydrop/size-comparison)
 
 ## License
 
-MIT © 2026 Jayesh Gupta. Parts adapted from Dropzone (MIT) are listed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+MIT © 2026 Jayesh Gupta.

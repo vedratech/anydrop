@@ -12,7 +12,7 @@ export interface AugmentInit {
   chunking: boolean;
   forceChunking: boolean;
   chunkSize: number;
-  /** Dropzone's `renameFile`; called last, so it can read `relativePath` and `upload`. */
+  /** The `renameFile` option; called last, so it can read `relativePath` and `upload`. */
   rename: (file: AnyDropFile) => string;
 }
 

@@ -93,4 +93,4 @@ ad.retryFailedOnly('Photos/2024'); // only the failed files of that folder
 
 ## Ignoring hidden files
 
-Files whose name starts with `.` are skipped inside dropped or picked folders (`ignoreHiddenFiles`, default `true`). Loose files and hidden folders are not skipped, as in Dropzone.
+Files whose name starts with `.` are skipped inside dropped or picked folders (`ignoreHiddenFiles`, default `true`). Loose files and hidden folders are not skipped.

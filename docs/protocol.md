@@ -1,16 +1,16 @@
 ---
-title: "Upload protocol v1.4: the backend contract"
+title: "Upload protocol v2.0: the backend contract"
 description: "The full AnyDrop HTTP contract: chunk fields, manifest, chunk status, finalize, status codes, error format and edge cases for backend authors."
 ---
 
-# AnyDrop backend contract (protocol v1.4)
+# AnyDrop backend contract (protocol v2.0)
 
 > This page is generated from the project's protocol specification. AnyDrop ships no server: you implement this contract in your own backend ([Express](/backend/express) and [Laravel](/backend/laravel) examples, and a [backend overview](/backend/)). Client packages: `@vedratech/anydrop-core` ([guide](/guide/headless-core)) and `@vedratech/anydrop-ui` ([guide](/guide/quick-start)).
 
-Default field names are **the same as Dropzone's chunking fields**, so an existing Dropzone chunk backend keeps working. Our additions use the `ad` prefix. All field names can be renamed with the `params()` option: what it returns is merged over the built-in fields, and a `null` value drops a built-in field (so `{ dzuuid: null, uuid: file.upload.uuid }` renames `dzuuid`).
+Every field the client adds to an upload request has the `ad` prefix. All field names can be renamed with the `params()` option: what it returns is merged over the built-in fields, and a `null` value drops a built-in field (so `{ adUploadId: null, uuid: file.upload.uuid }` renames `adUploadId`).
 
 ## 1. Upload session
-A **batch** is everything added by one user action (a drop, a picker selection, a paste), or by programmatic adds in the same tick. Each batch gets its own `sessionId` (UUID v4) and at most one manifest; every chunk carries its batch's `adSessionId`. Each file gets one `uploadId` (UUID v4, equal to Dropzone's `dzuuid`). If chunk status answers `404` (section 4), the file gets a **new** `uploadId` and, when manifests are used, the batch manifest is resent with it (section 2). Each file also gets a `fingerprint = relativePath|size|lastModified`, used to resume from IndexedDB. A resumed file reuses the `uploadId` from its earlier session, so a backend can see a known `uploadId` under a new `sessionId`. It must treat that as the same upload. Backends must check that an `uploadId` belongs to the current user.
+A **batch** is everything added by one user action (a drop, a picker selection, a paste), or by programmatic adds in the same tick. Each batch gets its own `sessionId` (UUID v4) and at most one manifest; every chunk carries its batch's `adSessionId`. Each file gets one `uploadId` (UUID v4, sent as `adUploadId`). If chunk status answers `404` (section 4), the file gets a **new** `uploadId` and, when manifests are used, the batch manifest is resent with it (section 2). Each file also gets a `fingerprint = relativePath|size|lastModified`, used to resume from IndexedDB. A resumed file reuses the `uploadId` from its earlier session, so a backend can see a known `uploadId` under a new `sessionId`. It must treat that as the same upload. Backends must check that an `uploadId` belongs to the current user.
 
 ## 2. Manifest (optional, `sendManifest: true`), sent before any file
 `POST {manifestUrl}` with JSON:
@@ -29,39 +29,39 @@ A user can drop several folders and loose files at once, so there can be several
 - **Idempotent:** the client resends the same manifest (same `sessionId`) after a failure or on `retryFailedOnly`. A repeated manifest for the same `sessionId` **replaces** the earlier one entry by entry, keyed by `relativePath` (the latest manifest wins). It is also resent when a file gets a new `uploadId` after the manifest was sent (a `404` from chunk status, section 4); that file sends no chunk with the new id until the resend returns 2xx. The server may drop partial data held under the old id. When manifests are used, a backend **may** reject chunks or finalize for an `uploadId` that is not in the session's latest manifest.
 - Listed files may never arrive (removed or canceled on the client). The server must not wait for them forever.
 - Empty folders reach the server only through the manifest.
-- `size` is the size of the original file. When the app sets `transformFile` (for example image resizing), the uploaded size can differ; `dztotalfilesize` on each chunk is authoritative.
+- `size` is the size of the original file. When the app sets `transformFile` (for example image resizing), the uploaded size can differ; `adTotalSize` on each chunk is authoritative.
 
 ## 3. Chunk / file upload
 `POST {url}` as `multipart/form-data`:
 | Field | Meaning |
 |---|---|
 | `{paramName}` (default `file`) | chunk blob (or the whole file when not chunking) |
-| `dzuuid` | uploadId |
-| `dzchunkindex` | 0-based chunk index |
-| `dztotalchunkcount` | total chunks |
-| `dzchunksize` | configured chunk size in bytes |
-| `dzchunkbyteoffset` | byte offset of this chunk |
-| `dztotalfilesize` | total file size |
+| `adUploadId` | uploadId |
+| `adChunkIndex` | 0-based chunk index |
+| `adChunkCount` | total chunks |
+| `adChunkSize` | configured chunk size in bytes |
+| `adChunkOffset` | byte offset of this chunk |
+| `adTotalSize` | total file size |
 | `adRelativePath` | path relative to the dropped root, `/` separators, no leading `/` |
 | `adSessionId` | session id (in `uploadMultiple` requests: `adSessionId[i]` per file instead, v1.2) |
 | `adChecksum` (optional) | SHA-256 hex of the chunk |
 
-The server **should** check that each chunk body is exactly `min(dzchunksize, dztotalfilesize - dzchunkbyteoffset)` bytes (with `binaryBody`, the request body; a zero-byte file is one empty chunk) and answer `400 INVALID_CHUNK` otherwise. This turns a browser that sends an empty or short body into a visible, retryable error (the user's Retry resends only missing chunks) instead of a silently truncated file (v1.4 addendum).
+The server **should** check that each chunk body is exactly `min(adChunkSize, adTotalSize - adChunkOffset)` bytes (with `binaryBody`, the request body; a zero-byte file is one empty chunk) and answer `400 INVALID_CHUNK` otherwise. This turns a browser that sends an empty or short body into a visible, retryable error (the user's Retry resends only missing chunks) instead of a silently truncated file (v1.4 addendum).
 
 The server must accept chunks **in any order** and **more than once** (writes are idempotent). A chunk can arrive more than once even without retries: a request the client aborted may still be committed (seen in WebKit after a pause with `pauseMode: 'abort'`). Response: `200` with any JSON body.
-Non-chunked uploads (one request per file, no `dz*` chunk fields) are never retried automatically. With `uploadMultiple` (non-chunked only), one request carries several files, and the per-file fields are indexed like Dropzone's param names: `file[0]`, `adRelativePath[0]`, `adSessionId[0]`, `file[1]`, `adRelativePath[1]`, `adSessionId[1]`, … One request can carry files from **different batches** (sessions), as Dropzone's `processQueue()` groups whatever is queued, so a multi-file request sends **no** plain `adSessionId`; read `adSessionId[i]` for each file.
+Non-chunked uploads (one request per file, no chunk fields) are never retried automatically. With `uploadMultiple` (non-chunked only), one request carries several files, and the per-file fields are indexed: `file[0]`, `adRelativePath[0]`, `adSessionId[0]`, `file[1]`, `adRelativePath[1]`, `adSessionId[1]`, … One request can carry files from **different batches** (sessions), because the queue groups whatever is waiting, so a multi-file request sends **no** plain `adSessionId`; read `adSessionId[i]` for each file.
 
 ## 4. Chunk status (resume)
 `GET {chunkStatusUrl}?uploadId={uuid}` returns `200 { "received": [0,1,2,5] }`, or `200 { "received": [...], "complete": true }` once the file is assembled or finalized, or `404` if unknown (the client restarts the file from chunk 0 with a **new uploadId** and, when `sendManifest` is on, resends the batch manifest so the server learns the new id; see section 2).
 The client uploads only the missing indexes. If the server status and the client's IndexedDB record disagree, the server wins. When the client's record says a file is finished, it skips the file only if the server answers `"complete": true`.
 The client calls this only for files it is resuming (a stored record, a resume or retry after chunks were sent, or a `409`), never for fresh files.
 
-Notes (v1.2 addendum, no wire change): non-chunked uploads carry no `dzuuid`, so a server cannot answer chunk status for them; a non-chunked file finished in an earlier session is uploaded again after a reload when `chunkStatusUrl` is set (apps that need the skip use `forceChunking`). `dzchunksize` is fixed per file once its first chunk is sent and stays the same across pause, resume, retry and reload. With `binaryBody` the chunk is the raw request body and no `dz*`/`ad*` fields are sent, as in Dropzone.
+Notes (v1.2 addendum, no wire change): non-chunked uploads carry no `adUploadId`, so a server cannot answer chunk status for them; a non-chunked file finished in an earlier session is uploaded again after a reload when `chunkStatusUrl` is set (apps that need the skip use `forceChunking`). `adChunkSize` is fixed per file once its first chunk is sent and stays the same across pause, resume, retry and reload. With `binaryBody` the chunk is the raw request body and no `ad*` fields are sent.
 
 ## 5. Finalize
-After all chunks succeed: `POST {finalizeUrl}` with JSON `{ "uploadId", "relativePath", "totalSize", "totalChunks", "checksum?" }`. This is the equivalent of Dropzone's `chunksUploaded` hook, which users can override.
+After all chunks succeed: `POST {finalizeUrl}` with JSON `{ "uploadId", "relativePath", "totalSize", "totalChunks", "checksum?" }`. The `chunksUploaded` option can replace this request.
 The server assembles to a temp file, verifies the size (and checksum if given), and renames atomically. Response: `200 { "ok": true, "path": "..." }`.
-If `finalizeUrl` is not set, no finalize request is sent. The backend must then assemble the file itself once it has received every chunk, which is how most existing Dropzone backends already work.
+If `finalizeUrl` is not set, no finalize request is sent. The backend must then assemble the file itself once it has received every chunk.
 Finalize is sent only for chunked uploads. It must be idempotent: a repeated finalize for an assembled file returns `200` again. A user-supplied `chunksUploaded(file, done)` replaces the built-in finalize request.
 
 ## 6. Errors
@@ -85,10 +85,11 @@ Codes created on the client: `ABORTED`, `PAUSED`, `OFFLINE`, `TIMEOUT`, `STALLED
 Probes carry the default `Accept`, `Cache-Control` and `X-Requested-With` headers (unless `defaultHeaders` is `false`) plus any `headers` option. A cross-origin backend therefore needs a CORS preflight response that allows `HEAD` (and `GET` for the fallback) and those headers. With `autoResumeOnReconnect: false`, probes run only when the app calls `reconnect()`. Backends that serve uploads through a proxy which can reset large bodies should provide this endpoint, so a failing request is not mistaken for a dead network.
 
 ## Changelog
-- **v1.4 addendum:** section 3: backends should reject a chunk whose byte length does not match `dzchunksize` / `dztotalfilesize` / `dzchunkbyteoffset` with `400 INVALID_CHUNK`. No wire change; the client still does not retry a 400 automatically.
+- **v2.0:** the six chunk fields get AnyDrop names: `adUploadId`, `adChunkIndex`, `adTotalSize`, `adChunkSize`, `adChunkCount` and `adChunkOffset`, matching the existing `adRelativePath` and `adSessionId` (**wire change, breaking**). Nothing else changes: the manifest, chunk status, finalize, connectivity probe and error format are as in v1.4. Backends, the mock server and the docs examples must read the new names; a backend that reads the old names no longer finds an upload id or chunk index. A backend can accept both during a move by reading either name.
+- **v1.4 addendum:** section 3: backends should reject a chunk whose byte length does not match `adChunkSize` / `adTotalSize` / `adChunkOffset` with `400 INVALID_CHUNK`. No wire change; the client still does not retry a 400 automatically.
 - **v1.4:** optional connectivity probe endpoint (section 7); client code `STALLED`; no-response failures feed `unreachable` detection and do not use up retries during an outage. Additive; existing backends need nothing.
 - **v1.3:** a repeated manifest replaces the earlier one per `relativePath` (latest wins; ignoring the repeat is no longer allowed); the client resends the whole manifest when a file's uploadId changes after a status `404`; backends may reject uploadIds that are not in the latest manifest. Same wire format, changed backend contract.
-- **v1.2 addendum:** clarifications only, no wire change: a `409` without `chunkStatusUrl` fails the file; non-chunked files cannot be confirmed by chunk status; `dzchunksize` is fixed per file; `binaryBody` sends no fields. The mock server and backends need nothing.
+- **v1.2 addendum:** clarifications only, no wire change: a `409` without `chunkStatusUrl` fails the file; non-chunked files cannot be confirmed by chunk status; `adChunkSize` is fixed per file; `binaryBody` sends no fields. The mock server and backends need nothing.
 - **v1.2 addendum:** clarified that an aborted chunk may still be committed, so duplicates can occur without retries. No wire change.
 - **v1.2:** `uploadMultiple` requests may carry files from several batches and send `adSessionId[i]` per file instead of one plain `adSessionId` (**wire change**). Client-only code `REQUEST_SETUP_FAILED`. The mock server reads `adSessionId[i]`, falling back to the plain field.
 - **v1.1 addendum:** client-only codes `UNREADABLE`, `TRANSFORM_FAILED`, and `INVALID_PATH` at validation (paths with `..`); the `params()` merge rule (a `null` value drops a built-in field). No wire change, no version bump; the mock server and backends need nothing.

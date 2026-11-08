@@ -96,11 +96,7 @@ importers:
 
   e2e: {}
 
-  packages/core:
-    devDependencies:
-      dropzone:
-        specifier: 6.3.5
-        version: 6.3.5
+  packages/core: {}
 
   packages/ui:
     dependencies:
@@ -1544,10 +1540,6 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
-
-  dropzone@6.3.5:
-    resolution: {integrity: sha512-voAoyVj3ZyFwoUVkKMmtfCrp7gbjqKJv3gNCsz0lW1lApcmKILBCbCgBU64hJF4LC4+cs6+peXhsn122fPQqsw==}
-    engines: {node: '>=20.19.0'}
 
   emoji-regex-xs@1.0.0:
     resolution: {integrity: sha512-LRlerrMYoIDrT6jgpeZ2YYl/L8EulRTt5hQcYjy5AInh7HWXKimpqx68aknBFpGL2+/IcogTcaydJEgaTmOpDg==}
@@ -3841,8 +3833,6 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
-
-  dropzone@6.3.5: {}
 
   emoji-regex-xs@1.0.0: {}
 

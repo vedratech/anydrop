@@ -1,15 +1,11 @@
 ---
 title: "FAQ and troubleshooting"
-description: "Answers about AnyDrop: server needs, Dropzone compatibility, CORS, large files, resume after reload, iOS limits and fixes for common upload problems."
+description: "Answers about AnyDrop: server needs, CORS, large files, resume after reload, iOS limits and fixes for common upload problems."
 ---
 
 # FAQ and troubleshooting
 
 ## General
-
-### Is AnyDrop a replacement for Dropzone?
-
-For most pages, yes: `new Dropzone(el, opts)` becomes `new AnyDrop(el, opts)`, and your options, events and markup keep working. See [Migrating from Dropzone](/migrating-from-dropzone) for what is the same and every intentional difference.
 
 ### Does it include a server?
 
@@ -17,7 +13,7 @@ No. AnyDrop is frontend only. Your backend implements the [upload contract](/bac
 
 ### How big is it?
 
-The ready-made CDN file with the UI is 33.1 kB gzip (31.8 kB for the ui and core bundle plus 3.1 kB of CSS), and the headless core is 18.1 kB. Compared with Dropzone, Uppy and FilePond, measured the same way, see [Size comparison](/size-comparison).
+The ready-made CDN file with the UI is 32.1 kB gzip (31.7 kB for the ui and core bundle plus 3.2 kB of CSS), and the headless core is 18.0 kB. Compared with Uppy and FilePond, measured the same way, see [Size comparison](/size-comparison).
 
 ### Which browsers are supported?
 
@@ -49,7 +45,7 @@ If assembling the file takes longer than the stall watchdog allows (`stallTimeou
 
 ### My server returns 400 INVALID_CHUNK.
 
-The chunk length did not match what the server expected: `dzchunksize`, or the rest of the file for the last chunk. Check the field values your server reads, and that no proxy changes the body.
+The chunk length did not match what the server expected: `adChunkSize`, or the rest of the file for the last chunk. Check the field values your server reads, and that no proxy changes the body.
 
 ### Uploads work locally but fail on the live site (cross-origin).
 
@@ -57,7 +53,7 @@ When the page and the API are on different origins, answer the CORS preflight (`
 
 ### Nothing is uploaded and no error is shown.
 
-In the headless core, without a `url`, files stay `queued` (the UI constructor throws `No URL provided.` like Dropzone). Set `url`, or call `setOption('url', ...)`. Also check `autoProcessQueue`: with `false`, call `processQueue()`.
+In the headless core, without a `url`, files stay `queued` (the UI constructor throws `No URL provided.`). Set `url`, or call `setOption('url', ...)`. Also check `autoProcessQueue`: with `false`, call `processQueue()`.
 
 ### `parallelUploads` and chunk parallelism confuse me.
 
@@ -83,17 +79,17 @@ Pauses made by the user stay until you resume them. Only system pauses (offline,
 
 Load the stylesheet: `import '@vedratech/anydrop-ui/style.css'`, or the `<link>` tag from the CDN. It is a separate file.
 
-### My Dropzone `success` handler renders the preview twice.
+### My `success` handler renders the preview twice.
 
 In the UI, handlers passed as options add to the built-in rendering instead of replacing it. Set `disablePreviews: true` to render everything yourself, or drop your handler.
 
 ### Paste does not add files.
 
-Set `enablePaste: true`. It is off by default, as in Dropzone 6.3.5.
+Set `enablePaste: true`. It is off by default.
 
 ### It attaches to elements I did not ask for.
 
-The CDN build attaches to every `.dropzone` and `.anydrop` element. Set `AnyDrop.autoDiscover = false` right after the script tag, or use other class names. The npm builds never do this.
+The CDN build attaches to every `.anydrop` element. Set `AnyDrop.autoDiscover = false` right after the script tag, or use other class names. The npm builds never do this.
 
 ### How do I translate it?
 

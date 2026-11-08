@@ -48,8 +48,8 @@ export async function until(pred: () => unknown, ms = 2000): Promise<void> {
 export function sentChunks(t: FakeTransport, uploadId: string): number[] {
   return t
     .uploads()
-    .filter((c) => c.field('dzuuid') === uploadId)
-    .map((c) => Number(c.field('dzchunkindex')));
+    .filter((c) => c.field('adUploadId') === uploadId)
+    .map((c) => Number(c.field('adChunkIndex')));
 }
 
 /** Upload calls not answered yet. */

@@ -82,7 +82,7 @@ Adds several files as one batch.
 
 `AnyDropFile[]`
 
-Every file, in add order (Dropzone's `files`). Read it, do not modify it.
+Every file, in add order. Read it, do not modify it.
 
 ### `getTree()`
 
@@ -142,7 +142,7 @@ Files that are `queued`, `uploading` or `paused`.
 
 `(size: number) => string`
 
-Dropzone's size text, using `filesizeBase` and `dictFileSizeUnits`.
+The size as text, using `filesizeBase` and `dictFileSizeUnits`.
 
 ```ts
 ad.filesize(1500000); // '<strong>1.5</strong> MB'
@@ -154,7 +154,7 @@ ad.filesize(1500000); // '<strong>1.5</strong> MB'
 
 `(file: AnyDropFile) => void` and `(files: AnyDropFile[]) => void`
 
-Queue added, accepted files (needed with `autoQueue: false`). Throws for other files, like Dropzone.
+Queue added, accepted files (needed with `autoQueue: false`). Throws for other files.
 
 ### `processQueue()`
 
@@ -172,7 +172,7 @@ document.querySelector('#upload-btn').onclick = () => ad.processQueue();
 
 `(file: AnyDropFile) => void` and `(files: AnyDropFile[]) => void`
 
-Start these `queued` files now, even beyond `parallelUploads` (as Dropzone does). With `uploadMultiple`, the files of one batch share a request.
+Start these `queued` files now, even beyond `parallelUploads`. With `uploadMultiple`, the files of one batch share a request.
 
 ### `uploadFile(file)` and `uploadFiles(files)`
 
@@ -335,7 +335,7 @@ The resolved options object. Read it; change options with `setOption`.
 
 `(name, value) => void`
 
-Changes an option at runtime. Throws for combinations Dropzone rejects (`chunking` with `uploadMultiple`, `binaryBody` with `uploadMultiple`). In the UI it works for every UI option too.
+Changes an option at runtime. Throws for combinations that cannot work together (`chunking` with `uploadMultiple`, `binaryBody` with `uploadMultiple`). In the UI it works for every UI option too.
 
 ```ts
 ad.setOption('maxFiles', 5);
@@ -352,7 +352,7 @@ Reads an option.
 
 `(option, ...args) => value`
 
-Calls a function option with `this` set to the instance, otherwise returns the value (Dropzone's `resolveOption`).
+Calls a function option with `this` set to the instance, otherwise returns the value.
 
 ```ts
 ad.resolveOption(ad.options.url, files);
@@ -362,7 +362,7 @@ ad.resolveOption(ad.options.url, files);
 
 `(event, fn) => Unsubscribe`
 
-Adds a listener and returns a function that removes it. The returned function also has `on` and `once`, so `ad.on('a', f).on('b', g)` chains as in Dropzone (`off` is not chainable). Does nothing after `destroy()`. See [Events](/api/events).
+Adds a listener and returns a function that removes it. The returned function also has `on` and `once`, so `ad.on('a', f).on('b', g)` chains (`off` is not chainable). Does nothing after `destroy()`. See [Events](/api/events).
 
 ```ts
 const off = ad.on('success', (file) => console.log(file.relativePath));
@@ -385,7 +385,7 @@ A listener that runs once.
 
 `(event, ...args) => this`
 
-Emits an event, as in Dropzone.
+Emits an event.
 
 ### `hasListeners(event)`
 
@@ -411,13 +411,13 @@ Whether `destroy()` was called.
 
 `HTMLElement` (**UI**)
 
-The element the instance is attached to. The instance is also reachable as `element.anydrop` and, as Dropzone has it, `element.dropzone`.
+The element the instance is attached to. The instance is also reachable as `element.anydrop`.
 
 ### `hiddenFileInput`
 
 `HTMLInputElement | null` (**UI**)
 
-The hidden file input that the file picker opens (Dropzone's `hiddenFileInput`).
+The hidden file input that the file picker opens.
 
 ### `displayExistingFile(mockFile, imageUrl, callback?, crossOrigin?, resizeThumbnail = true)`
 
@@ -449,7 +449,7 @@ These exist on the `AnyDrop` class (**UI**).
 
 `Record<string, AnyDropConfig | false>`
 
-Dropzone's `Dropzone.options`: presets for the element with id `my-id` as `AnyDrop.options.myId = { ... }`. `false` stops `discover()` from attaching to that element.
+Presets for the element with id `my-id` as `AnyDrop.options.myId = { ... }`. `false` stops `discover()` from attaching to that element.
 
 ### `AnyDrop.instances`
 
@@ -461,13 +461,13 @@ Every live instance. `destroy()` removes an instance again.
 
 `boolean`
 
-Read by the CDN build only: set it to `false` right after the script tag to stop auto-discovery of `.dropzone` and `.anydrop` elements.
+Read by the CDN build only: set it to `false` right after the script tag to stop auto-discovery of `.anydrop` elements.
 
 ### `AnyDrop.discover(root = document)`
 
 `(root?: ParentNode) => AnyDrop[]`
 
-Attaches an instance to every `.dropzone` or `.anydrop` element under `root` that has none. Returns the new instances. The npm builds never call it by themselves.
+Attaches an instance to every `.anydrop` element under `root` that has none. Returns the new instances. The npm builds never call it by themselves.
 
 ### `AnyDrop.forElement(element)`
 
@@ -510,7 +510,7 @@ These exist on both classes, and as named exports.
 
 ### `ADDED`, `QUEUED`, `ACCEPTED`, `UPLOADING`, `PROCESSING`, `PAUSED`, `SUCCESS`, `ERROR` and `CANCELED`
 
-File status constants (`'added'`, `'queued'`, `'queued'`, `'uploading'`, `'uploading'`, `'paused'`, `'success'`, `'error'`, `'canceled'`). `ACCEPTED` is Dropzone's alias of `QUEUED` and `PROCESSING` its alias of `UPLOADING`.
+File status constants (`'added'`, `'queued'`, `'queued'`, `'uploading'`, `'uploading'`, `'paused'`, `'success'`, `'error'`, `'canceled'`). `ACCEPTED` is an alias of `QUEUED` and `PROCESSING` an alias of `UPLOADING`.
 
 ```ts
 if (file.status === AnyDropCore.SUCCESS) { /* ... */ }
@@ -518,7 +518,7 @@ if (file.status === AnyDropCore.SUCCESS) { /* ... */ }
 
 ### `isValidFile(file, acceptedFiles)`
 
-Dropzone's `acceptedFiles` matcher: whether a file matches a list such as `'image/*,.pdf'`.
+Whether a file matches a list such as `'image/*,.pdf'`.
 
 ### `uuidv4()`
 
@@ -566,4 +566,4 @@ A fresh object with the default UI options.
 
 `string`
 
-The default preview markup (Dropzone's template with the same `data-dz-*` hooks and `dz-*` classes).
+The default preview markup with the `data-ad-*` hooks and `ad-file-*` classes.

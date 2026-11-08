@@ -18,7 +18,7 @@ export {
   CANCELED,
 } from './constants';
 export { defaultOptions, type AnyDropCoreOptions, type AnyDropCoreConfig } from './options';
-export { isValidFile } from './validate/dropzone-port';
+export { isValidFile } from './validate/accept';
 export { uuidv4 } from './util/uuid';
 export { xhrTransport } from './transport/xhr';
 export type {

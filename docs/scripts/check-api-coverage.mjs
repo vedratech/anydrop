@@ -1,6 +1,6 @@
 // Fails when the public API in the built .d.ts files has no entry in the hand-written overview pages.
 //
-//   options   every property of AnyDropCoreOptions and AnyDropUIOptions (and the deprecated aliases)
+//   options   every property of AnyDropCoreOptions and AnyDropUIOptions
 //             needs a table row in api/options.md (first cell, in backticks)
 //   methods   every public instance member and static of AnyDropCore and AnyDrop needs a heading in
 //             api/methods.md; every runtime export of the two packages needs one there too
@@ -107,12 +107,12 @@ function need(kind, where, names, have) {
 // Events: the keys of AnyDropEvents, which is also what the typed handlers use.
 const eventNames = props(checker.getDeclaredTypeOfSymbol(find(coreExports, 'AnyDropEvents')));
 
-// Options: core options, UI options (including the dict* texts), and the deprecated aliases that
+// Options: core options and UI options (including the dict* texts) that
 // AnyDropCoreConfig accepts. Event handler props are documented on the events page.
 const coreOpts = props(checker.getDeclaredTypeOfSymbol(find(coreExports, 'AnyDropCoreOptions')));
 const uiOpts = props(checker.getDeclaredTypeOfSymbol(find(uiExports, 'AnyDropUIOptions')));
 const configProps = props(checker.getDeclaredTypeOfSymbol(find(uiExports, 'AnyDropFullOptions')));
-const deprecated = ['acceptedMimeTypes', 'renameFilename'];
+const deprecated = [];
 const known = new Set([...coreOpts, ...uiOpts, ...eventNames, ...deprecated]);
 const unexpected = configProps.filter((p) => !known.has(p));
 if (unexpected.length)

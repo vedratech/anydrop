@@ -21,12 +21,12 @@ function chunkForm(opts: {
 }) {
   return {
     file: { name: 'blob', mimeType: 'application/octet-stream', buffer: opts.data },
-    dzuuid: opts.uploadId,
-    dzchunkindex: String(opts.index),
-    dztotalchunkcount: String(opts.total),
-    dzchunksize: String(opts.chunkSize),
-    dzchunkbyteoffset: String(opts.index * opts.chunkSize),
-    dztotalfilesize: String(opts.totalSize),
+    adUploadId: opts.uploadId,
+    adChunkIndex: String(opts.index),
+    adChunkCount: String(opts.total),
+    adChunkSize: String(opts.chunkSize),
+    adChunkOffset: String(opts.index * opts.chunkSize),
+    adTotalSize: String(opts.totalSize),
     adRelativePath: opts.relativePath,
     adSessionId: opts.sessionId,
   };
@@ -180,7 +180,7 @@ test('CORS preflight and headers', async ({ request, mock }) => {
   expect(res.headers()['access-control-allow-headers']).toContain('x-custom');
 });
 
-test('without finalizeUrl, the file is assembled when the last chunk arrives (Dropzone backend style)', async ({
+test('without finalizeUrl, the file is assembled when the last chunk arrives (simple backend style)', async ({
   request,
   mock,
 }) => {
@@ -192,7 +192,7 @@ test('without finalizeUrl, the file is assembled when the last chunk arrives (Dr
       adSessionId: sessionId,
       adRelativePath: 'hello.txt',
     },
-  }); // not chunked: no dz* fields
+  }); // not chunked: no chunk fields
   expect(r.status()).toBe(200);
   const rep = await mock.report(sessionId);
   expect(rep.sessions[sessionId]!.files).toEqual([

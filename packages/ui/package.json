@@ -1,7 +1,7 @@
 {
   "name": "@vedratech/anydrop-ui",
   "version": "0.0.0",
-  "description": "Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause/resume, progress, retry. Dropzone-compatible.",
+  "description": "Folder upload UI for the browser: drag and drop folders, chunked and resumable uploads, pause/resume, progress, retry.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -19,8 +19,6 @@
     "folder-upload",
     "directory-upload",
     "drag-and-drop",
-    "dropzone",
-    "dropzone-alternative",
     "chunked-upload",
     "resumable-upload",
     "resumable",
@@ -64,7 +62,6 @@
   "files": [
     "dist",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md",
     "README.md"
   ],
   "sideEffects": [

@@ -1,6 +1,6 @@
 ---
 title: "API reference: options, methods, events"
-description: "The AnyDrop API reference: every option, method, event, error code and type, with Dropzone parity notes and generated TypeScript definitions."
+description: "The AnyDrop API reference: every option, method, event, error code and type, with generated TypeScript definitions."
 ---
 
 # API reference
@@ -31,5 +31,4 @@ The pages below are generated from the TypeScript source and its TSDoc comments 
 - Options are given to the constructor, and changed later with `setOption(name, value)`.
 - Methods that return a list (`getErrors()`, `getQueuedFiles()`) return a copy. `getTree()` and the `FolderNode` objects are live: read them, do not change them.
 - `on(event, handler)` returns a function that removes the handler. `destroy()` removes everything the instance added.
-- Dropzone options and events keep Dropzone 6.3.5's names, argument order and defaults, except where [Migrating from Dropzone](/migrating-from-dropzone) lists a difference.
 - Nothing touches `window` or `document` when you import a package, so both are safe to import during server-side rendering.

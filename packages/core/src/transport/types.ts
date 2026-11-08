@@ -19,7 +19,7 @@ export interface TransportRequest {
   /**
    * Must be called once, right before the body is sent, with the native request object (the
    * `XMLHttpRequest` for the built-in transport) or `undefined`. Core uses it to run `params()`,
-   * emit `sending` and append the file blob last, exactly as Dropzone does.
+   * emit `sending` and append the file blob last (S3 wants it last).
    */
   beforeSend?: (native?: unknown) => void;
 }
@@ -28,7 +28,7 @@ export interface TransportRequest {
 export interface TransportResponse {
   /** HTTP status; `0` when no response arrived (`error` is then set). */
   status: number;
-  /** Parsed JSON when the response is JSON (Dropzone rule: `content-type` contains `application/json`), else the text. */
+  /** Parsed JSON when the response is JSON (when `content-type` contains `application/json`), else the text. */
   body: unknown;
   /** Response header lookup (`Retry-After`). */
   header: (name: string) => string | null;

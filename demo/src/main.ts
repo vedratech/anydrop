@@ -23,23 +23,22 @@ const post = (path: string, body: unknown) =>
     body: JSON.stringify(body),
   });
 
-// 1. Basic: Dropzone.options.myAwesomeDropzone, as in the Dropzone docs. The form's action is the url.
-const form = document.querySelector<HTMLFormElement>('#my-awesome-dropzone');
+// 1. Basic: options preset by element id (AnyDrop.options.basicZone). The form's action is the url.
+const form = document.querySelector<HTMLFormElement>('#basic-zone');
 if (form) form.action = `${MOCK_URL}/upload`;
-AnyDrop.options.myAwesomeDropzone = {
+AnyDrop.options.basicZone = {
   paramName: 'file', // The name that will be used to transfer the file
   maxFilesize: 2, // MB
   addRemoveLinks: true,
   accept: function (file, done) {
-    // eslint-disable-next-line eqeqeq -- copied unchanged from the Dropzone docs
-    if (file.name == 'justinbieber.jpg') {
+    if (file.name === 'justinbieber.jpg') {
       done("Naha, you don't.");
     } else {
       done();
     }
   },
 };
-const basic = new AnyDrop('#my-awesome-dropzone');
+const basic = new AnyDrop('#basic-zone');
 
 // 2. Folder tree: chunked, manifest, finalize.
 const tree = new AnyDrop('#tree-zone', {

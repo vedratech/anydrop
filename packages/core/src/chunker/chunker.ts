@@ -7,7 +7,7 @@ import type { AnyDropFile, ChunkInfo } from '../types';
 /**
  * Decides `upload.total`, `upload.chunked` and `upload.totalChunkCount` when the file starts
  * processing (not when it is added), from the blob to send and the current options, like
- * Dropzone's `uploadFiles`. A file whose layout is `fixed` (a chunk was sent, or chunks are
+ * the upload request. A file whose layout is `fixed` (a chunk was sent, or chunks are
  * restored or acknowledged) keeps it, including `upload.chunkSize`: a later `setOption('chunkSize')`
  * must not move its offsets, because the server may already hold an aborted chunk of the old layout.
  * Returns the file's chunk size in bytes.
@@ -18,14 +18,14 @@ export function planChunks(
   o: Pick<AnyDropCoreOptions, 'chunking' | 'forceChunking' | 'chunkSize'>,
   fixed: boolean,
 ): number {
-  // `chunkSize` may arrive as a string from markup (Dropzone #1988).
+  // `chunkSize` may arrive as a string from markup.
   const size = Number(o.chunkSize);
   const u = file.upload;
   if (!fixed && !u.chunksDone.size) {
     u.chunkSize = size;
     u.total = bytes;
     u.chunked = !!o.chunking && (o.forceChunking || bytes > size);
-    // A zero-byte file is still one (empty) chunk, otherwise it would never finish (Dropzone #1982).
+    // A zero-byte file is still one (empty) chunk, otherwise it would never finish.
     u.totalChunkCount = u.chunked ? Math.max(1, Math.ceil(bytes / size)) : 1;
   }
   return u.chunkSize;

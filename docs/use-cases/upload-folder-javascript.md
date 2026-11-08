@@ -74,5 +74,4 @@ Plain uploads need one endpoint, `POST /upload`. Each file arrives as `multipart
 ## Related
 
 - [Chunked and resumable uploads](/use-cases/chunked-resumable-uploads) for big files inside those folders.
-- [Dropzone.js alternative with folder support](/use-cases/dropzone-alternative) if you already use Dropzone.
 - [Folder upload with React, Angular or Vue](/use-cases/folder-upload-react-angular-vue).

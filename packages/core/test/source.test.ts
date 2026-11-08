@@ -1,3 +1,34 @@
+// Behaviour spec for src/source/walk.ts (the cases below are the fixed examples of it).
+//
+// walkRoots(roots, { ignoreHiddenFiles, folders, onError }): AsyncGenerator<SourceItem[]>
+//   roots: { file } (a dropped File) or { entry } (a FileSystemEntry from webkitGetAsEntry()).
+//   - Dropped files come first, in one array, in drop order: a { file } root has the path of its
+//     name; a file entry is read with entry.file() and has the path of its name. They are
+//     never "from a folder" and never hidden-filtered.
+//   - Then each dropped directory is walked depth first, in drop order. Directory entries are
+//     skipped (and not read at all) when `folders` is false.
+//   - A directory is read with createReader() and readEntries() is called until it returns an
+//     empty array (a browser returns at most about 100 entries per call). One array is yielded per
+//     call that held files; a call that held only directories or ignored files yields nothing.
+//   - Inside a directory, files starting with '.' are ignored when ignoreHiddenFiles is set;
+//     hidden directories are always walked. The subdirectories of a directory are walked after
+//     the directory's own entries are all read, in listing order.
+//   - The path of an entry below a directory is its `fullPath` without the leading slash when
+//     the last segment of that path is the entry's name; otherwise it is "parent path/name".
+//     A dropped directory is named the same way (parent path is empty). Backslashes become '/'.
+//   - A directory with nothing found in it or below it is yielded as a folder item, after its
+//     subdirectories: raw: true when readEntries() listed nothing at all, raw: false when it
+//     listed entries but every one was ignored (hidden files) or unreadable. A directory whose
+//     listing failed is not claimed to be empty.
+//   - A file entry whose file() fails, or a directory whose reader fails (also by throwing),
+//     is reported to onError(error, path) with its path; the walk goes on with the rest.
+//
+// snapshotDataTransfer(data): RootInput[]  (called synchronously inside the drop event)
+//   - When `items` has entries, every item is looked at (and `files` is not): items of kind
+//     'string' are skipped; an item whose webkitGetAsEntry() is a directory gives { entry };
+//     otherwise getAsFile() gives { file }; if that is null but the item has an entry, it gives
+//     { entry }; otherwise the item is skipped.
+//   - When `items` is missing or empty, `files` gives { file } for each file. Nothing: [].
 import { describe, expect, it, vi } from 'vitest';
 import { readFileList, snapshotFiles } from '../src/source/fileList';
 import type { EntryLike, SourceItem } from '../src/source/types';
@@ -71,7 +102,7 @@ describe('walkRoots (webkitGetAsEntry)', () => {
     expect(paths(items, 'file')).toEqual(['root/a.txt']);
   });
 
-  it('ignores hidden files only inside folders, like Dropzone, and still walks hidden folders', async () => {
+  it('ignores hidden files only inside folders and still walks hidden folders', async () => {
     const t = buildEntries({ '.top': 1, p: { '.DS_Store': 1, '.git': { config: 1 }, 'k.txt': 1 } });
     const roots = t.roots.map((e) =>
       e.isFile ? { file: (e as { _file: File })._file } : { entry: e },
@@ -162,6 +193,113 @@ describe('walkRoots (webkitGetAsEntry)', () => {
   });
 });
 
+describe('walkRoots: paths and failures', () => {
+  const dirOf = (name: string, fullPath: string | undefined, children: EntryLike[]) => {
+    let done = false;
+    return {
+      isFile: false,
+      isDirectory: true,
+      name,
+      fullPath,
+      createReader: () => ({
+        readEntries: (ok: (e: EntryLike[]) => void) => {
+          const batch = done ? [] : children;
+          done = true;
+          queueMicrotask(() => ok(batch));
+        },
+      }),
+    };
+  };
+  const fileOf = (name: string, fullPath: string | undefined, f = makeFile(name)) => ({
+    isFile: true,
+    isDirectory: false,
+    name,
+    fullPath,
+    file: (ok: (f: File) => void) => ok(f),
+  });
+
+  it('takes a fullPath that ends with the entry name, normalised, else parent/name', async () => {
+    const d = dirOf('D', '/Top\\D', [
+      fileOf('a.txt', '/elsewhere/a.txt'),
+      fileOf('b.txt', undefined),
+      fileOf('c.txt', '/D/other.txt'),
+    ]);
+    const { items } = await collect(walkRoots([{ entry: d }], opts));
+    expect(paths(items, 'file')).toEqual(['elsewhere/a.txt', 'Top/D/b.txt', 'Top/D/c.txt']);
+  });
+
+  it('names a dropped file entry and a dropped File by their name', async () => {
+    const f = makeFile('x.txt');
+    const { items } = await collect(
+      walkRoots([{ entry: fileOf('e.txt', '/other/e.txt') }, { file: f }], opts),
+    );
+    expect(items.map((i) => [i.kind, i.path, (i as { fromFolder: boolean }).fromFolder])).toEqual([
+      ['file', 'e.txt', false],
+      ['file', 'x.txt', false],
+    ]);
+  });
+
+  it('keeps hidden dropped files, even when ignoreHiddenFiles is set', async () => {
+    const { items } = await collect(walkRoots([{ file: makeFile('.env') }], opts));
+    expect(paths(items, 'file')).toEqual(['.env']);
+  });
+
+  it('yields a directory whose only files are unreadable as an empty, non-raw folder', async () => {
+    const bad = {
+      ...fileOf('bad.txt', '/R/bad.txt'),
+      file: (_ok: unknown, err?: (e: unknown) => void) => err?.(new Error('x')),
+    };
+    const onError = vi.fn();
+    const { items } = await collect(
+      walkRoots([{ entry: dirOf('R', '/R', [bad]) }], { ...opts, onError }),
+    );
+    expect(items).toEqual([{ kind: 'folder', path: 'R', raw: false }]);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0]![1]).toBe('R/bad.txt');
+  });
+
+  it('treats a directory whose subdirectories all failed as empty, and one whose reader throws as failed', async () => {
+    const throwing = {
+      isFile: false,
+      isDirectory: true,
+      name: 'bad',
+      fullPath: '/R/bad',
+      createReader: () => ({
+        readEntries: () => {
+          throw new Error('boom');
+        },
+      }),
+    };
+    const onError = vi.fn();
+    const { items } = await collect(
+      walkRoots([{ entry: dirOf('R', '/R', [throwing]) }], { ...opts, onError }),
+    );
+    expect(items).toEqual([{ kind: 'folder', path: 'R', raw: false }]);
+    expect(onError.mock.calls.map((c) => c[1])).toEqual(['R/bad']);
+  });
+
+  it('ignores entries that are neither files nor directories', async () => {
+    const odd = { isFile: false, isDirectory: false, name: 'odd' };
+    const { items } = await collect(
+      walkRoots([{ entry: odd as never }, { entry: dirOf('R', '/R', [odd as never]) }], opts),
+    );
+    expect(items).toEqual([{ kind: 'folder', path: 'R', raw: false }]);
+  });
+
+  it('reports a file entry whose file() throws', async () => {
+    const throwing = {
+      ...fileOf('t.txt', '/t.txt'),
+      file: () => {
+        throw new Error('x');
+      },
+    };
+    const onError = vi.fn();
+    const { items } = await collect(walkRoots([{ entry: throwing }], { ...opts, onError }));
+    expect(items).toEqual([]);
+    expect(onError.mock.calls.map((c) => c[1])).toEqual(['t.txt']);
+  });
+});
+
 describe('snapshotDataTransfer', () => {
   it('takes entries for folders and getAsFile() for top-level files, synchronously', () => {
     const t = buildEntries({ A: { 'a.txt': 1 }, 'b.txt': 1 });
@@ -182,6 +320,26 @@ describe('snapshotDataTransfer', () => {
     expect(snapshotDataTransfer({ items })).toEqual([{ file: f }, { file: f }]);
     expect(snapshotDataTransfer({ items: [], files: [f] })).toEqual([{ file: f }]);
     expect(snapshotDataTransfer({})).toEqual([]);
+  });
+
+  it('does not fall back to files when items has entries but none is usable', () => {
+    const f = makeFile('p.png');
+    expect(snapshotDataTransfer({ items: [{ kind: 'string' }], files: [f] })).toEqual([]);
+    expect(snapshotDataTransfer({ items: [{ kind: 'file' }], files: [f] })).toEqual([]);
+  });
+
+  it('uses the entry of an item whose getAsFile() is null, and a directory entry before the file', () => {
+    const dir = { isFile: false, isDirectory: true, name: 'D' };
+    const file = { isFile: true, isDirectory: false, name: 'f' };
+    const g = makeFile('g.png');
+    const roots = snapshotDataTransfer({
+      items: [
+        { kind: 'file', webkitGetAsEntry: () => dir, getAsFile: () => g },
+        { kind: 'file', webkitGetAsEntry: () => file, getAsFile: () => null },
+        { kind: 'file', webkitGetAsEntry: () => file, getAsFile: () => g },
+      ],
+    });
+    expect(roots).toEqual([{ entry: dir }, { entry: file }, { file: g }]);
   });
 });
 

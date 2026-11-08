@@ -23,7 +23,7 @@ Both packages ship ESM, CommonJS and TypeScript types, and have no side effects 
 
 ## CDN
 
-Pin the minor version. The UI build includes the core and sets `window.AnyDrop` to the class, as Dropzone does:
+Pin the minor version. The UI build includes the core and sets `window.AnyDrop` to the class:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vedratech/anydrop-ui@0.1/dist/style.css" />
@@ -35,7 +35,7 @@ Pin the minor version. The UI build includes the core and sets `window.AnyDrop` 
 </script>
 ```
 
-The CDN build also attaches to every element with the class `dropzone` or `anydrop` after the page loads. Set `AnyDrop.autoDiscover = false` right after the script tag to stop that. The npm builds never do this on import; call `AnyDrop.discover()` yourself.
+The CDN build also attaches to every element with the class `anydrop` after the page loads. Set `AnyDrop.autoDiscover = false` right after the script tag to stop that. The npm builds never do this on import; call `AnyDrop.discover()` yourself.
 
 The headless core alone: `https://cdn.jsdelivr.net/npm/@vedratech/anydrop-core@0.1`, global `AnyDropCore`:
 

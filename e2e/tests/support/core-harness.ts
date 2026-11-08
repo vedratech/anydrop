@@ -72,10 +72,10 @@ function install(): void {
         const before = req.beforeSend;
         req.beforeSend = (x: unknown) => {
           if (before) before(x);
-          if (!fd || fd.get('dzchunkindex') == null) return;
+          if (!fd || fd.get('adChunkIndex') == null) return;
           rec = {
-            uploadId: String(fd.get('dzuuid')),
-            index: Number(fd.get('dzchunkindex')),
+            uploadId: String(fd.get('adUploadId')),
+            index: Number(fd.get('adChunkIndex')),
             path: String(fd.get('adRelativePath')),
             status: null,
           };

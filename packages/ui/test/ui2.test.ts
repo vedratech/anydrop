@@ -48,17 +48,17 @@ describe('forms (B1, B3)', () => {
     ad.destroy();
   });
 
-  it('removes the .fallback element of the Dropzone docs markup, and destroy() puts it back', () => {
+  it('removes an .ad-fallback element from the markup, and destroy() puts it back', () => {
     document.body.innerHTML =
-      '<form action="/file-upload" class="dropzone" id="dz"><div class="fallback"><input name="file" type="file" multiple /></div></form>';
-    const form = document.getElementById('dz')!;
-    const ad = new AnyDrop('#dz');
-    expect(form.querySelector('.fallback')).toBeNull();
+      '<form action="/file-upload" class="anydrop" id="zone"><div class="ad-fallback"><input name="file" type="file" multiple /></div></form>';
+    const form = document.getElementById('zone')!;
+    const ad = new AnyDrop('#zone');
+    expect(form.querySelector('.ad-fallback')).toBeNull();
     const fd = new FormData();
     (ad as unknown as { _addFormElementData(f: FormData): void })._addFormElementData(fd);
     expect(fd.has('file')).toBe(false);
     ad.destroy();
-    expect(form.querySelector('.fallback input[name=file]')).not.toBeNull();
+    expect(form.querySelector('.ad-fallback input[name=file]')).not.toBeNull();
   });
 });
 
@@ -72,7 +72,7 @@ describe('thumbnails (B4, H3)', () => {
     ad.addFile(file('p.png', 100, 'image/png'));
     await settle(ad);
     await wait();
-    expect(el.querySelector<HTMLImageElement>('.dz-image img')!.getAttribute('src')).toMatch(
+    expect(el.querySelector<HTMLImageElement>('.ad-file-thumb img')!.getAttribute('src')).toMatch(
       /^data:image/,
     );
     expect(seen).toHaveBeenCalledTimes(1);
@@ -95,13 +95,13 @@ describe('thumbnails (B4, H3)', () => {
     t.ad.addFile(file('p.png', 10, 'image/png'));
     await settle(t.ad);
     await wait();
-    expect(t.el.querySelector('.dz-image img')!.getAttribute('src')).toBeNull();
+    expect(t.el.querySelector('.ad-file-thumb img')!.getAttribute('src')).toBeNull();
     t.ad.destroy();
     const u = mount({ maxThumbnailFilesize: 0.00001 });
     u.ad.addFile(file('big.png', 100, 'image/png'));
     await settle(u.ad);
     await wait();
-    expect(u.el.querySelector('.dz-image img')!.getAttribute('src')).toBeNull();
+    expect(u.el.querySelector('.ad-file-thumb img')!.getAttribute('src')).toBeNull();
     u.ad.destroy();
   });
 
@@ -117,8 +117,8 @@ describe('thumbnails (B4, H3)', () => {
     ad.addFile(file('x.heic', 10, ''));
     await settle(ad);
     await wait();
-    expect(el.querySelector('.dz-image')!.textContent).toBe('No preview!');
-    expect(el.querySelector('.dz-preview')!.classList.contains('dz-thumb-error')).toBe(true);
+    expect(el.querySelector('.ad-file-thumb')!.textContent).toBe('No preview!');
+    expect(el.querySelector('.ad-file-preview')!.classList.contains('ad-thumb-error')).toBe(true);
     ad.destroy();
   });
 });
@@ -161,9 +161,9 @@ describe('zones (H4, H5)', () => {
     });
     expect(document.body.classList.contains('ad-root')).toBe(false);
     expect(document.body.hasAttribute('role')).toBe(false);
-    expect(document.querySelector('.dz-message')).toBeNull();
+    expect(document.querySelector('.ad-message')).toBeNull();
     expect(document.querySelector('.ad-actions')).toBeNull();
-    expect(document.querySelector('.fileinput-button')!.classList.contains('dz-clickable')).toBe(
+    expect(document.querySelector('.fileinput-button')!.classList.contains('ad-clickable')).toBe(
       true,
     );
     expect(document.querySelector('#p .ad-panel')).not.toBeNull();
@@ -175,7 +175,7 @@ describe('zones (H4, H5)', () => {
     document.body.innerHTML = '<div id="z"></div><button id="b"></button>';
     const ad = new AnyDrop('#z', { url: '/u', clickable: '#b' });
     expect(document.querySelector('.ad-actions')).toBeNull();
-    expect(document.querySelector('.dz-message')).toBeNull();
+    expect(document.querySelector('.ad-message')).toBeNull();
     ad.destroy();
   });
 
@@ -199,10 +199,10 @@ describe('zones (H4, H5)', () => {
     document.body.innerHTML =
       '<div id="z"></div><i class="b"></i><i class="b"></i><i class="c"></i>';
     const ad = new AnyDrop('#z', { url: '/u', clickable: '.b' });
-    expect(document.querySelectorAll('.b.dz-clickable').length).toBe(2);
+    expect(document.querySelectorAll('.b.ad-clickable').length).toBe(2);
     ad.setOption('clickable', '.c');
-    expect(document.querySelectorAll('.b.dz-clickable').length).toBe(0);
-    expect(document.querySelectorAll('.c.dz-clickable').length).toBe(1);
+    expect(document.querySelectorAll('.b.ad-clickable').length).toBe(0);
+    expect(document.querySelectorAll('.c.ad-clickable').length).toBe(1);
     ad.destroy();
   });
 });
@@ -238,7 +238,7 @@ describe('options and methods', () => {
     await settle(ad);
     expect(el.querySelector<HTMLElement>('.ad-row')!.style.height).toBe('80px');
     expect(el.querySelector('.ad-errors')).toBeNull();
-    ad.setOption('previewTemplate', '<div class="mine"><b data-dz-name></b></div>');
+    ad.setOption('previewTemplate', '<div class="mine"><b data-ad-name></b></div>');
     await settle(ad);
     expect(el.querySelector('.ad-file-row .mine b')!.textContent).toBe('a.txt');
     ad.setOption('theme', 'light');
@@ -284,7 +284,7 @@ describe('options and methods', () => {
     expect(revoke).toHaveBeenCalledWith('blob:1');
   });
 
-  it('the Dropzone maxfilesexceeded pattern works (removeAllFiles + addFile)', async () => {
+  it('the maxfilesexceeded pattern works (removeAllFiles + addFile)', async () => {
     const { ad } = mount({
       maxFiles: 1,
       init() {
@@ -308,7 +308,8 @@ describe('options and methods', () => {
     const { el, ad } = mount();
     expect(AnyDrop.instances).toContain(ad);
     expect(ad.hiddenFileInput).toBe(document.querySelector('input[data-ad-input=files]'));
-    expect((el as unknown as { dropzone: unknown }).dropzone).toBe(ad);
+    expect((el as unknown as { anydrop: unknown }).anydrop).toBe(ad);
+    expect(Object.keys(el).filter((k) => k !== 'anydrop')).toEqual([]);
     const ok = vi.fn();
     const no = vi.fn();
     vi.stubGlobal('confirm', () => false);
@@ -320,7 +321,7 @@ describe('options and methods', () => {
   });
 
   it('merges options deeply and uses a camelized id without lowercasing the first letter', () => {
-    document.body.innerHTML = '<div id="My-zone" class="dropzone"></div>';
+    document.body.innerHTML = '<div id="My-zone"></div>';
     AnyDrop.options.MyZone = { dictFileSizeUnits: { kb: 'Ko' } as never, url: '/u' };
     const ad = new AnyDrop('#My-zone');
     expect(ad.options.dictFileSizeUnits.kb).toBe('Ko');
@@ -333,20 +334,20 @@ describe('options and methods', () => {
     ad.addFile(file('a.txt'));
     await settle(ad);
     const ask = vi.spyOn(AnyDrop, 'confirm').mockImplementation(() => {});
-    el.querySelector<HTMLElement>('[data-dz-remove]')!.click();
+    el.querySelector<HTMLElement>('[data-ad-remove]')!.click();
     expect(ask).toHaveBeenCalledWith('Sure?', expect.any(Function));
     expect(ad.files.length).toBe(1);
     ask.mockImplementation((_q, yes) => yes());
-    el.querySelector<HTMLElement>('[data-dz-remove]')!.click();
+    el.querySelector<HTMLElement>('[data-ad-remove]')!.click();
     expect(ad.files.length).toBe(0);
     ad.destroy();
   });
 });
 
-describe('discover (0014)', () => {
-  it('attaches to .dropzone and .anydrop elements, skips attached and false ones', () => {
+describe('discover', () => {
+  it('attaches to .anydrop elements, skips attached and false ones', () => {
     document.body.innerHTML =
-      '<form id="a" class="dropzone" action="/a"></form><div id="b" class="anydrop" data-x></div><form id="c" class="dropzone" action="/c"></form><form id="d" class="dropzone" action="/d"></form><p class="dropzone-not"></p>';
+      '<form id="a" class="anydrop" action="/a"></form><div id="b" class="anydrop" data-x></div><form id="c" class="anydrop" action="/c"></form><form id="d" class="anydrop" action="/d"></form><p id="e" class="other"></p>';
     AnyDrop.options.b = { url: '/b' };
     AnyDrop.options.c = false;
     const manual = new AnyDrop('#d');

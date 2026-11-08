@@ -61,7 +61,7 @@ import type {
 import { reportError, warn, yieldToMain } from './util/env';
 import { dirname, joinPath, normalizePath, sentRelativePath } from './util/path';
 import { uuidv4 } from './util/uuid';
-import { checkFile, filesize, isValidFile } from './validate/dropzone-port';
+import { checkFile, filesize, isValidFile } from './validate/accept';
 import { VERSION } from './version';
 
 /** Files processed per slice when reading a large file input (the page stays responsive). */
@@ -127,7 +127,7 @@ interface FailInfo {
 
 /**
  * The headless upload engine: reads dropped and picked files and folders, validates them, builds the
- * folder tree and uploads in chunks, with pause, resume and retry. Configure it like Dropzone.
+ * folder tree and uploads in chunks, with pause, resume and retry. Configure it with options, methods and events.
  *
  * @example
  * ```ts
@@ -145,11 +145,11 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   static readonly ADDED = ADDED;
   /** Status constant `'queued'`. */
   static readonly QUEUED = QUEUED;
-  /** Dropzone alias of `QUEUED`. */
+  /** Alias of `QUEUED`. */
   static readonly ACCEPTED = ACCEPTED;
   /** Status constant `'uploading'`. */
   static readonly UPLOADING = UPLOADING;
-  /** Dropzone alias of `UPLOADING`. */
+  /** Alias of `UPLOADING`. */
   static readonly PROCESSING = PROCESSING;
   /** Status constant `'paused'`. */
   static readonly PAUSED = PAUSED;
@@ -159,16 +159,16 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   static readonly ERROR = ERROR;
   /** Status constant `'canceled'`. */
   static readonly CANCELED = CANCELED;
-  /** Dropzone's `Dropzone.isValidFile(file, acceptedFiles)`, with the empty-MIME fallback. */
+  /** Whether a file passes a type list such as `'image/*,.pdf'`; an empty MIME type is judged by its extension. */
   static readonly isValidFile = isValidFile;
   /** Creates a UUID version 4. */
   static readonly uuidv4 = uuidv4;
 
   /** Resolved options (defaults merged with yours). Change them with `setOption()`. */
   readonly options: AnyDropOptions;
-  /** Every file added and not removed, in add order (Dropzone's `files`). Do not modify. */
+  /** Every file added and not removed, in add order. Do not modify. */
   readonly files: AnyDropFile[] = [];
-  /** Set by `disable()`, cleared by `enable()` (Dropzone). */
+  /** Set by `disable()`, cleared by `enable()`. */
   disabled = false;
 
   /** Pause flags. */
@@ -197,7 +197,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   private tickBatch: Batch | null = null;
   private acceptedCount = 0;
   private seq = 0;
-  /** Bytes of the files in `queued`, `uploading` or `paused` (Dropzone's `totaluploadprogress`). */
+  /** Bytes of the files in `queued`, `uploading` or `paused` (the `totaluploadprogress` value). */
   private activeTotal = 0;
   private activeSent = 0;
   private manifestsInFlight = 0;
@@ -261,7 +261,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /** Creates an instance. Nothing touches `window` or `document` until files are added. */
   constructor(config: AnyDropCoreConfig = {}) {
     super();
-    const { _uuid, _random, acceptedMimeTypes, renameFilename, ...rest } = config;
+    const { _uuid, _random, ...rest } = config;
     this.uuid = _uuid || uuidv4;
     this.random = _random || Math.random;
     const options = defaultOptions() as AnyDropOptions;
@@ -271,20 +271,8 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       if (value !== undefined) (options as unknown as Record<string, unknown>)[key] = value;
     }
     options.dictFileSizeUnits = { ...units, ...options.dictFileSizeUnits };
-    // Deprecated Dropzone options, mapped as Dropzone 6.3.5 does.
-    if (acceptedMimeTypes) {
-      if (options.acceptedFiles) {
-        throw new Error(
-          "You can't provide both 'acceptedFiles' and 'acceptedMimeTypes'. 'acceptedMimeTypes' is deprecated.",
-        );
-      }
-      options.acceptedFiles = acceptedMimeTypes;
-    }
-    if (renameFilename != null) {
-      options.renameFile = (file) => renameFilename.call(this, file.name, file);
-    }
     assertValidOptions(options);
-    // Dropzone upper-cases a string method at construction.
+    // A string method is upper-cased at construction.
     if (typeof options.method === 'string') options.method = options.method.toUpperCase();
     this.options = options;
     this.errors = new ErrorRegistry(
@@ -292,7 +280,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
         if (!this.destroyed) this.emit('errorlistchanged', this.errors.list());
       }),
     );
-    // Event handlers given as options are listeners, as in Dropzone.
+    // Event handlers given as options are listeners.
     for (const name of EVENT_NAMES) this.setHandler(name, options[name]);
   }
 
@@ -333,7 +321,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.destroyed ? this.unsubscribe(event, fn) : super.once(event, fn);
   }
 
-  /** Dropzone's `resolveOption`: calls a function option with `this` = the instance, else returns it. */
+  /** Calls a function option with `this` = the instance, else returns it. */
   resolveOption<T>(option: T | ((...args: never[]) => T), ...args: unknown[]): T {
     return typeof option === 'function'
       ? (option as (...a: unknown[]) => T).apply(this, args)
@@ -341,7 +329,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Hook for subclasses (Dropzone's `_addFormElementData`): adds fields to an upload's form data,
+   * Hook for subclasses (`_addFormElementData`): adds fields to an upload's form data,
    * after `sending` and before the file blobs. `@vedratech/anydrop-ui` adds the inputs of a `<form>` element.
    */
   protected _addFormElementData(formData: FormData): void {
@@ -358,7 +346,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     if (this.run) this.checkQueueComplete();
   }
 
-  /** Dropzone's `disable()`: sets `disabled` and cancels every file. Adding files still works. */
+  /** Sets `disabled` and cancels every file. Adding files still works. */
   disable(): void {
     this.disabled = true;
     // Files not uploading first, so canceling an uploading file never starts a queued one.
@@ -391,7 +379,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   // ---------------------------------------------------------------- input
 
   /**
-   * Handles a `drop` event (Dropzone's `drop(e)`): emits `drop`, reads files and folders
+   * Handles a `drop` event: emits `drop`, reads files and folders
    * (folders through `webkitGetAsEntry`), and resolves with the batch's files after `addedfiles`.
    * Call it synchronously from the event listener: the browser clears the items afterwards.
    */
@@ -401,7 +389,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.ingestRoots(snapshotDataTransfer(event.dataTransfer));
   }
 
-  /** Handles a `paste` event (Dropzone's `paste(e)`). Text-only pastes add nothing. */
+  /** Handles a `paste` event. Text-only pastes add nothing. */
   paste(event: { clipboardData?: DataTransferLike | null }): Promise<AnyDropFile[]> {
     const data = event && event.clipboardData;
     if (this.destroyed || !data || data.items == null) return Promise.resolve([]);
@@ -429,7 +417,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Adds one file (Dropzone's `addFile`). `folderPath` places it in a folder (`'Photos/2024'`);
+   * Adds one file. `folderPath` places it in a folder (`'Photos/2024'`);
    * without it, a non-empty `webkitRelativePath` is used, else the file is loose.
    * Calls in the same tick form one batch. Returns the file with its properties added.
    */
@@ -513,7 +501,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     );
   }
 
-  /** Dropzone's `filesize(bytes)`: `'<strong>1.5</strong> MB'`. */
+  /** Size text for a byte count: `'<strong>1.5</strong> MB'`. */
   filesize(size: number): string {
     return filesize(size, this.options.filesizeBase, this.options.dictFileSizeUnits);
   }
@@ -949,7 +937,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   // ---------------------------------------------------------------- queue
 
-  /** Queues an added, accepted file (Dropzone's `enqueueFile`). */
+  /** Queues an added, accepted file. */
   enqueueFile(file: AnyDropFile): void {
     const b = this.batchOf.get(file);
     // In an open batch the file is not validated yet: apply the call when the batch closes.
@@ -971,7 +959,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Starts queued files until `parallelUploads` files are uploading (Dropzone's `processQueue`).
+   * Starts queued files until `parallelUploads` files are uploading.
    * Files start in add order; a batch's manifest is sent before its first file. Without a
    * `url`, nothing starts. Called while a batch is still being read, it also runs when that
    * batch closes, so its files are included.
@@ -988,7 +976,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Starts these `queued` files now, even beyond `parallelUploads` (Dropzone's `processFiles`).
+   * Starts these `queued` files now, even beyond `parallelUploads`.
    * Files of a batch that is still open start when it closes. With `uploadMultiple`, the files
    * of one batch share one request.
    */
@@ -1018,18 +1006,18 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.processFiles([file]);
   }
 
-  /** Alias of `processFile` (Dropzone). Overriding it changes nothing: use `transport` instead. */
+  /** Alias of `processFile`. Overriding it changes nothing: use `transport` instead. */
   uploadFile(file: AnyDropFile): void {
     this.processFiles([file]);
   }
 
-  /** Alias of `processFiles` (Dropzone). */
+  /** Alias of `processFiles`. */
   uploadFiles(files: AnyDropFile[]): void {
     this.processFiles(files);
   }
 
   /**
-   * Cancels a file (Dropzone's `cancelUpload`): aborts its requests, status `canceled`, then
+   * Cancels a file: aborts its requests, status `canceled`, then
    * `canceled` and `complete`. With `uploadMultiple`, every file sharing its request is canceled.
    */
   cancelUpload(file: AnyDropFile): void {
@@ -1065,7 +1053,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.jobs.find((j) => j.files.indexOf(file) >= 0);
   }
 
-  /** Removes a file (Dropzone's `removeFile`); cancels it first when it is uploading. */
+  /** Removes a file; cancels it first when it is uploading. */
   removeFile(file: AnyDropFile): void {
     if (!this.tree.has(file)) return;
     if (file.status === UPLOADING || this.jobOf(file)) this.cancelUpload(file);
@@ -1092,8 +1080,8 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Removes every file that is not uploading, or every file when `cancelIfNecessary` is true
-   * (Dropzone's `removeAllFiles`). Emits `removedfile` per file, `removedfolder` for every folder
+   * Removes every file that is not uploading, or every file when `cancelIfNecessary` is true.
+   * Emits `removedfile` per file, `removedfolder` for every folder
    * left without files (also folders dropped empty), then `reset`.
    */
   removeAllFiles(cancelIfNecessary = false): void {
@@ -1122,7 +1110,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * Aborts every request, removes every listener and timer. The instance cannot be used again.
-   * Unlike Dropzone, no `removedfile` events are emitted.
+   * No `removedfile` events are emitted.
    */
   destroy(): void {
     if (this.destroyed) return;
@@ -1270,7 +1258,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     }
   }
 
-  /** Dropzone's accept chain: size, type, maxFiles, then the user `accept()` (may be async). */
+  /** The accept chain: size, type, maxFiles, then the user `accept()` (may be async). */
   private validate(batch: Batch, file: AnyDropFile): void {
     batch.pending++;
     let settled = false;
@@ -1337,7 +1325,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.checkMaxFilesReached();
   }
 
-  /** Dropzone emits `maxfilesreached` whenever a check finds exactly `maxFiles` accepted files. */
+  /** `maxfilesreached` is emitted whenever a check finds exactly `maxFiles` accepted files. */
   private checkMaxFilesReached(): void {
     const max = this.options.maxFiles;
     if (max != null && this.acceptedCount === max) this.emit('maxfilesreached', this.files);
@@ -1521,7 +1509,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Dropzone's rule: `queuecomplete` is deferred (setTimeout 0) after a `complete`, and fires when
+   * `queuecomplete` is deferred (setTimeout 0) after a `complete`, and fires when
    * no file is added, queued, uploading (or paused). Open batches hold it back; they check again
    * when they close, so an all-rejected drop fires it too.
    */
@@ -1804,7 +1792,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     const req: Req = { loaded: 0 };
     job.busy.set(index, req);
     const h = this.send(() => {
-      // Dropzone's data blocks. Never a whole file read: one Blob.slice() per chunk.
+      // The data blocks of the request. Never a whole file read: one Blob.slice() per chunk.
       const blocks: DataBlock[] = chunk
         ? [
             {
@@ -1828,7 +1816,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
         timeout: this.resolveOption(o.timeout, files),
         withCredentials: !!o.withCredentials,
         beforeSend: (native) => {
-          // Dropzone's order: params(), `sending`, form element data, then the blobs last (S3).
+          // Order: params(), `sending`, form element data, then the blobs last (S3).
           const xhr = native as XMLHttpRequest;
           if (xhr) for (const x of files) x.xhr = xhr;
           const p = o.params;
@@ -2320,7 +2308,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   ): FailInfo {
     const o = this.options;
     const b = res.body;
-    // Dropzone: the response body, else a timeout or status message.
+    // The response body, else a timeout or status message.
     const message =
       b != null && b !== ''
         ? b
@@ -2346,7 +2334,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     };
   }
 
-  /** Files go to `error`: one error entry each, then `error` and `complete` (Dropzone's `_errorProcessing`). */
+  /** Files go to `error`: one error entry each, then `error` and `complete` . */
   private failFiles(files: AnyDropFile[], info: FailInfo): void {
     const xhr = info.res && info.res.xhr;
     for (const x of files) {

@@ -377,8 +377,8 @@
   margin-top: 4px;
 }
 
-/* File preview inside a row (also fits Dropzone's default previewTemplate) */
-.ad-panel.ad-root .ad-row .dz-preview {
+/* File preview inside a row */
+.ad-panel.ad-root .ad-row .ad-file-preview {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -392,7 +392,7 @@
   height: 100%;
   background: none;
 }
-.ad-panel.ad-root .ad-row .dz-image {
+.ad-panel.ad-root .ad-row .ad-file-thumb {
   flex: 0 0 40px;
   width: 40px;
   height: 40px;
@@ -401,19 +401,19 @@
   overflow: hidden;
   position: relative;
 }
-.ad-panel.ad-root .ad-row .dz-image img {
+.ad-panel.ad-root .ad-row .ad-file-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.ad-panel.ad-root .ad-row .dz-image img:not([src]) {
+.ad-panel.ad-root .ad-row .ad-file-thumb img:not([src]) {
   visibility: hidden;
 }
-.ad-panel.ad-root .ad-row .ad-thumb-error .dz-image {
+.ad-panel.ad-root .ad-row .ad-thumb-error .ad-file-thumb {
   border: 1px dashed var(--ad-color-border);
 }
-.ad-panel.ad-root .ad-row .dz-details {
+.ad-panel.ad-root .ad-row .ad-file-details {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -425,26 +425,26 @@
   text-align: left;
   color: inherit;
 }
-.ad-panel.ad-root .ad-row .dz-filename {
+.ad-panel.ad-root .ad-row .ad-file-name {
   order: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.95rem;
 }
-.ad-panel.ad-root .ad-row .dz-filename span {
+.ad-panel.ad-root .ad-row .ad-file-name span {
   background: none;
 }
-.ad-panel.ad-root .ad-row .dz-size {
+.ad-panel.ad-root .ad-row .ad-file-size {
   order: 2;
   font-size: 0.8rem;
   color: var(--ad-color-muted);
   margin: 0;
 }
-.ad-panel.ad-root .ad-row .dz-size strong {
+.ad-panel.ad-root .ad-row .ad-file-size strong {
   font-weight: 400;
 }
-.ad-panel.ad-root .ad-row .dz-error-message {
+.ad-panel.ad-root .ad-row .ad-file-error-message {
   display: none;
   order: 3;
   position: static;
@@ -459,18 +459,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ad-panel.ad-root .ad-row .dz-error-message::after {
+.ad-panel.ad-root .ad-row .ad-file-error-message::after {
   display: none;
 }
-.ad-panel.ad-root .ad-row .ad-error .dz-error-message,
-.ad-panel.ad-root .ad-row .ad-canceled .dz-error-message {
+.ad-panel.ad-root .ad-row .ad-error .ad-file-error-message,
+.ad-panel.ad-root .ad-row .ad-canceled .ad-file-error-message {
   display: block;
 }
-.ad-panel.ad-root .ad-row .dz-success-mark,
-.ad-panel.ad-root .ad-row .dz-error-mark {
+.ad-panel.ad-root .ad-row .ad-file-success-mark,
+.ad-panel.ad-root .ad-row .ad-file-error-mark {
   display: none;
 }
-.ad-panel.ad-root .ad-row .dz-preview .dz-progress {
+.ad-panel.ad-root .ad-row .ad-file-preview .ad-file-progress {
   position: absolute;
   left: 0;
   right: 0;
@@ -486,24 +486,24 @@
   transform: none;
   pointer-events: none;
 }
-.ad-panel.ad-root .ad-row .dz-upload,
-.ad-panel.ad-root .ad-row .dz-progress progress {
+.ad-panel.ad-root .ad-row .ad-file-bar,
+.ad-panel.ad-root .ad-row .ad-file-progress progress {
   display: block;
   height: 100%;
   width: 0;
   background: var(--ad-color-accent);
   transition: width 0.15s linear;
 }
-.ad-panel.ad-root .ad-row .dz-progress progress {
+.ad-panel.ad-root .ad-row .ad-file-progress progress {
   width: 100%;
 }
-.ad-panel.ad-root .ad-row .ad-success .dz-upload {
+.ad-panel.ad-root .ad-row .ad-success .ad-file-bar {
   background: var(--ad-color-success);
 }
-.ad-panel.ad-root .ad-row .ad-error .dz-upload {
+.ad-panel.ad-root .ad-row .ad-error .ad-file-bar {
   background: var(--ad-color-error);
 }
-.ad-panel.ad-root .ad-row .ad-paused .dz-upload {
+.ad-panel.ad-root .ad-row .ad-paused .ad-file-bar {
   background: var(--ad-color-warning);
 }
 .ad-badge {
@@ -589,7 +589,7 @@
 }
 
 /* Fallback form (no drag and drop support) */
-.ad-browser-not-supported .fallback {
+.ad-browser-not-supported .ad-fallback {
   margin-top: var(--ad-gap);
 }
 

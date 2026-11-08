@@ -1,6 +1,6 @@
 // M4 done-when: the plain-JavaScript UI in a real browser, driven through the demo page and an
 // isolated mock server. Covers drop, file pick and folder pick through the UI, the tree and flat
-// views, virtualization, the toolbar, the error panel, the Dropzone docs configuration, and the
+// views, virtualization, the toolbar, the error panel, the documented options preset, and the
 // mobile layout (iphone and pixel projects).
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -147,7 +147,10 @@ test.describe('desktop UI', () => {
     }
   });
 
-  test('file pick: the Dropzone docs configuration works unchanged', async ({ page, mock }) => {
+  test('file pick: the documented options preset (AnyDrop.options.basicZone) works', async ({
+    page,
+    mock,
+  }) => {
     await open(page, mock);
     const input = page.locator('body > input[data-ad-input=files]');
     await input.setInputFiles([
@@ -155,14 +158,14 @@ test.describe('desktop UI', () => {
       { name: 'justinbieber.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('x') },
     ]);
     const zone = page.getByTestId('basic-zone');
-    await expect(zone).toHaveClass(/dz-started/);
-    await expect(zone.locator('.dz-preview')).toHaveCount(2);
-    await expect(zone.locator('.dz-preview.dz-error [data-dz-errormessage]')).toHaveText(
+    await expect(zone).toHaveClass(/ad-started/);
+    await expect(zone.locator('.ad-file-preview')).toHaveCount(2);
+    await expect(zone.locator('.ad-file-preview.ad-error [data-ad-errormessage]')).toHaveText(
       "Naha, you don't.",
     );
-    await expect(zone.locator('.dz-preview.dz-success [data-dz-name]')).toHaveText('ok.txt');
+    await expect(zone.locator('.ad-file-preview.ad-success [data-ad-name]')).toHaveText('ok.txt');
     expect((await mock.report()).merged.files.map((f) => f.path)).toEqual(['ok.txt']);
-    await expect(zone.locator('.dz-remove').first()).toBeVisible();
+    await expect(zone.locator('.ad-file-remove').first()).toBeVisible();
   });
 
   test('tree: collapse, flat view, and per-folder status', async ({ page, mock }) => {
@@ -214,7 +217,7 @@ test.describe('desktop UI', () => {
     }
     await zone.locator('.ad-toolbar [data-ad-action=clear]').click();
     await expect(zone.locator('.ad-row')).toHaveCount(0);
-    await expect(zone).not.toHaveClass(/dz-started/);
+    await expect(zone).not.toHaveClass(/ad-started/);
     expect(errors).toEqual([]);
   });
 
@@ -255,8 +258,8 @@ test.describe('desktop UI', () => {
     await zone
       .locator('input[data-ad-input=files]')
       .setInputFiles([{ name: 'dot.png', mimeType: 'image/png', buffer: png }]);
-    await expect(zone.locator('.dz-image img')).toHaveAttribute('src', /^data:image\//);
-    await expect(zone.locator('.dz-preview')).toHaveClass(/dz-image-preview/);
+    await expect(zone.locator('.ad-file-thumb img')).toHaveAttribute('src', /^data:image\//);
+    await expect(zone.locator('.ad-file-preview')).toHaveClass(/ad-image-preview/);
   });
 
   test('a form with uploadMultiple sends each field once per request, not once per file', async ({
@@ -276,15 +279,15 @@ test.describe('desktop UI', () => {
       f.id = 'multi';
       f.innerHTML = '<input name="note" value="hi"><input name="tag" value="x">';
       document.body.appendChild(f);
-      const dz = new w.anydrop.AnyDrop('#multi', {
+      const multi = new w.anydrop.AnyDrop('#multi', {
         url: url + '/upload',
         uploadMultiple: true,
         parallelUploads: 3,
       });
-      const done = new Promise<void>((r) => dz.on('queuecomplete', () => r()));
-      dz.addFiles([1, 2, 3].map((i) => new File(['x' + i], `m${i}.txt`)));
+      const done = new Promise<void>((r) => multi.on('queuecomplete', () => r()));
+      multi.addFiles([1, 2, 3].map((i) => new File(['x' + i], `m${i}.txt`)));
       await done;
-      dz.destroy();
+      multi.destroy();
       XMLHttpRequest.prototype.send = real;
       return sent.map((keys) => ({
         note: keys.filter((k) => k === 'note').length,
@@ -327,48 +330,6 @@ test.describe('desktop UI', () => {
       document.querySelector('#tree-zone .ad-list')!.contains(document.activeElement),
     );
     expect(inside).toBe(true);
-  });
-
-  test("with Dropzone's own stylesheet loaded, our rows keep their layout", async ({
-    page,
-    mock,
-  }) => {
-    await open(page, mock);
-    await page.addStyleTag({
-      path: join(
-        HERE,
-        '..',
-        '..',
-        'packages',
-        'core',
-        'node_modules',
-        'dropzone',
-        'dist',
-        'dropzone.css',
-      ),
-    });
-    await page.evaluate(() => document.querySelector('#tree-zone')!.classList.add('dropzone'));
-    await mock.configure({ latencyMs: 0 });
-    await dropTree(page, '#tree-zone');
-    const row = page.locator('#tree-zone .ad-file-row').first();
-    await expect(row).toBeVisible();
-    const style = await row.evaluate((el) => {
-      const q = (s: string) => getComputedStyle(el.querySelector(s) as Element);
-      return {
-        image: q('.dz-image').width,
-        details: q('.dz-details').position,
-        opacity: q('.dz-details').opacity,
-        progress: q('.dz-progress').position,
-        mark: q('.dz-success-mark').display,
-      };
-    });
-    expect(style).toEqual({
-      image: '40px',
-      details: 'static',
-      opacity: '1',
-      progress: 'absolute',
-      mark: 'none',
-    });
   });
 
   test('virtualization: 5,000 files keep the DOM small and stay scrollable', async ({

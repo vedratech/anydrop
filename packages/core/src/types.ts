@@ -4,9 +4,9 @@
 export type FileStatus =
   'added' | 'queued' | 'uploading' | 'paused' | 'success' | 'error' | 'canceled';
 
-/** Upload bookkeeping on every file, Dropzone's `file.upload` plus our fields. */
+/** Upload bookkeeping on every file (`file.upload`). */
 export interface AnyDropUploadState {
-  /** The protocol's uploadId (= `dzuuid`). Final by the time `addedfiles` fires. */
+  /** The protocol's uploadId (sent as `adUploadId`). Final by the time `addedfiles` fires. */
   uuid: string;
   /** Name sent to the server, after `renameFile()`. */
   filename: string;
@@ -39,7 +39,7 @@ export interface AnyDropFile extends File {
   readonly id: string;
   /** Normalised path: `'Photos/2024/a.jpg'`, or `'a.jpg'` for a loose file. */
   readonly relativePath: string;
-  /** Same as `relativePath`, but only defined when the file came from a folder (as in Dropzone). */
+  /** Same as `relativePath`, but only defined when the file came from a folder. */
   readonly fullPath?: string;
   /** `relativePath|size|lastModified`. */
   readonly fingerprint: string;
@@ -47,7 +47,7 @@ export interface AnyDropFile extends File {
   readonly folder: FolderNode;
   /** Current status; changes as the upload progresses. */
   status: FileStatus;
-  /** Set after validation, as in Dropzone. `undefined` while validation is pending. */
+  /** Set after validation. `undefined` while validation is pending. */
   accepted?: boolean;
   /** Upload bookkeeping: uploadId, progress, bytes and chunk state. */
   upload: AnyDropUploadState;
@@ -55,8 +55,6 @@ export interface AnyDropFile extends File {
   xhr?: XMLHttpRequest;
   /** Set by `@vedratech/anydrop-ui` only; core never touches it. */
   previewElement?: HTMLElement;
-  /** Set by `@vedratech/anydrop-ui` only. */
-  previewTemplate?: HTMLElement;
 }
 
 /** Per-status counters of every descendant file of a folder. */
@@ -178,13 +176,13 @@ export type PauseTarget =
   | { scope: 'folder'; folder: FolderNode; reason: 'user' }
   | { scope: 'file'; file: AnyDropFile; reason: 'user' };
 
-/** A chunk of a file, passed to `params(files, xhr, chunk)` (like Dropzone's, with `file` and `index`). */
+/** A chunk of a file, passed to `params(files, xhr, chunk)` (with `file` and `index`). */
 export interface ChunkInfo {
   /** The file this chunk belongs to. */
   file: AnyDropFile;
   /** 0-based chunk index. */
   index: number;
-  /** Byte offset of the chunk (`dzchunkbyteoffset`). */
+  /** Byte offset of the chunk (`adChunkOffset`). */
   start: number;
   /** End offset, exclusive. */
   end: number;
@@ -192,7 +190,7 @@ export interface ChunkInfo {
   retries: number;
 }
 
-/** One blob of a request, passed to `url(files, dataBlocks)` and `method(files, dataBlocks)` (Dropzone 6.3.5). */
+/** One blob of a request, passed to `url(files, dataBlocks)` and `method(files, dataBlocks)`. */
 export interface DataBlock {
   /** Form field name (`paramName`). */
   name: string;

@@ -15,7 +15,7 @@ class TestEmitter extends Emitter<Map1> {
 afterEach(() => vi.useRealTimers());
 
 describe('Emitter', () => {
-  it('binds this to the emitter and snapshots listeners during emit (Dropzone 6.3.2 fix)', () => {
+  it('binds this to the emitter and snapshots listeners during emit', () => {
     const e = new TestEmitter();
     const order: string[] = [];
     const contexts: unknown[] = [];
@@ -63,8 +63,8 @@ describe('Emitter', () => {
 });
 
 describe('event names', () => {
-  it('lists every Dropzone 6.3.5 event plus the new ones', () => {
-    const dropzone = [
+  it('lists every event', () => {
+    const base = [
       'drop',
       'dragstart',
       'dragend',
@@ -108,7 +108,7 @@ describe('event names', () => {
       'reconnecting',
       'errorlistchanged',
     ];
-    expect([...EVENT_NAMES].sort()).toEqual([...dropzone, ...added].sort());
+    expect([...EVENT_NAMES].sort()).toEqual([...base, ...added].sort());
     expect(isEventName('addedfile')).toBe(true);
     expect(isEventName('toString')).toBe(false);
     expect(isEventName('url')).toBe(false);

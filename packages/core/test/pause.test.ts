@@ -34,7 +34,7 @@ describe('pause() / resume() (instance)', () => {
     await settle();
     openUploads(t)[0]!.reply(); // chunk 0 of a
     await settle();
-    expect(openUploads(t).map((c) => c.field('dzchunkindex'))).toEqual(['1']);
+    expect(openUploads(t).map((c) => c.field('adChunkIndex'))).toEqual(['1']);
     const inFlight = openUploads(t)[0]!;
     inFlight.progress(5, 10);
     expect(a.upload.bytesSent).toBe(15);
@@ -87,7 +87,7 @@ describe('pause() / resume() (instance)', () => {
     expect([...a.upload.chunksDone]).toEqual([0]);
     expect(a.upload.bytesSent).toBe(10);
     // a gave up its slot once nothing of it was in flight; b took it.
-    expect(openUploads(t).map((c) => c.field('dzuuid'))).toEqual([b.upload.uuid]);
+    expect(openUploads(t).map((c) => c.field('adUploadId'))).toEqual([b.upload.uuid]);
     expect(sentChunks(t, a.upload.uuid)).toEqual([0]);
   });
 
@@ -135,14 +135,14 @@ describe('pauseFolder() / resumeFolder()', () => {
     const x = core.addFile(bytesFile('x.bin', 20), 'P/Q');
     const y = core.addFile(bytesFile('y.bin', 20), 'R');
     await settle();
-    expect(openUploads(t)[0]!.field('dzuuid')).toBe(x.upload.uuid);
+    expect(openUploads(t)[0]!.field('adUploadId')).toBe(x.upload.uuid);
     core.pauseFolder('P');
     expect(core.getFolder('P')!.userPaused).toBe(true);
     expect(core.getFolder('P/Q')!.status).toBe('paused');
     expect(core.getFolder('P/Q')!.userPaused).toBe(false);
     expect(x.status).toBe('paused');
     await settle();
-    expect(openUploads(t).map((c) => c.field('dzuuid'))).toEqual([y.upload.uuid]);
+    expect(openUploads(t).map((c) => c.field('adUploadId'))).toEqual([y.upload.uuid]);
 
     // resumeFile does not override the paused folder above it.
     core.resumeFile(x);

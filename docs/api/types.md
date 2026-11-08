@@ -21,7 +21,7 @@ The status of a file, and the rolled-up status of a folder.
 
 ### `AnyDropFile`
 
-The native `File` with properties added, exactly like Dropzone's file. You can pass it to `FormData`, `FileReader` or `URL.createObjectURL`.
+The native `File` with properties added. You can pass it to `FormData`, `FileReader` or `URL.createObjectURL`.
 
 ```ts
 interface AnyDropFile extends File {
@@ -35,17 +35,16 @@ interface AnyDropFile extends File {
   upload: AnyDropUploadState;
   xhr?: XMLHttpRequest; // last request, set by the built-in transport
   previewElement?: HTMLElement; // UI only
-  previewTemplate?: HTMLElement; // UI only
 }
 ```
 
 ### `AnyDropUploadState`
 
-The `file.upload` object: Dropzone's fields plus ours.
+The `file.upload` object: the upload progress and chunk state of one file.
 
 ```ts
 interface AnyDropUploadState {
-  uuid: string; // the uploadId (dzuuid on the wire)
+  uuid: string; // the uploadId (`adUploadId` on the wire)
   filename: string; // name sent to the server, after renameFile
   progress: number; // 0-100
   total: number; // bytes
@@ -172,7 +171,7 @@ The core options, with their types. See [Options](/api/options). `Self` is the t
 
 ### `AnyDropCoreConfig`
 
-What the core constructor and `setOption` accept: `Partial<AnyDropCoreOptions>` plus event handlers, and the deprecated `acceptedMimeTypes` and `renameFilename`.
+What the core constructor and `setOption` accept: `Partial<AnyDropCoreOptions>` plus event handlers.
 
 ### `AnyDropUIOptions`
 
@@ -207,7 +206,7 @@ Passed to `params(files, xhr, chunk)`.
 interface ChunkInfo {
   file: AnyDropFile;
   index: number; // 0-based chunk index
-  start: number; // byte offset of the chunk (dzchunkbyteoffset)
+  start: number; // byte offset of the chunk (`adChunkOffset`)
   end: number; // end offset, exclusive
   retries: number; // failed attempts of this chunk so far
 }

@@ -38,7 +38,7 @@ Install browsers once with `pnpm exec playwright install chromium firefox webkit
 | `ui-scenarios.spec.ts` | verify-upload 1 to 5 through the demo UI: 1,100 file folder drop and folder picker by SHA-256, offline mid-upload, pause at file, folder and global level, reload and pick again, server errors and "Retry failed" |
 | `large-file.spec.ts` | verify-upload 7: 1 GiB (Chromium), 256 MiB (Firefox), 64 MiB (mobile, WebKit) through the UI, `Blob.slice` only, JS heap sampled in Chromium, SHA-256 matches |
 | `wrapper-ready.spec.ts` | verify-upload 8: no leaked listeners, timers, observers, object URLs or requests after `destroy()`, independent instances, Node import without a DOM |
-| `dropzone-docs.spec.ts` | verify-upload 9: snippets copied from the Dropzone docs run unchanged |
+| `docs-snippets.spec.ts` | verify-upload 9: AnyDrop's own documented snippets run as written (programmatic config, events, `processQueue`, `maxFiles`, rejection messages, headers, `sending` formData, `AnyDrop.options.<id>` presets, `.anydrop` auto-discovery) |
 | `connectivity.spec.ts` | decision 0017: offline, lie-fi, stalls, server restart, offline at start, manifest and finalize, reload during an outage, long outage (fake clock), Retry now, 5xx and 429 storms, the loop guard (chromium and webkit; `AD_SLOW=1` adds a real 2 minute outage) |
 | `connectivity-engines.spec.ts` | records how each engine fails a request (refused, DNS, aborted, held) and whether upload progress events fire |
 
@@ -66,7 +66,7 @@ in the page) and `large-file.spec.ts` builds its file in the page. See `docs/dev
 
 | Method and path             | Behaviour                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| `POST /upload`              | multipart chunk or whole file (`dz*` + `ad*` fields). Idempotent; any order; validates path, index, offset and length. Auto-assembles when all chunks are in (`AD_AUTO_ASSEMBLE=0` turns that off). |
+| `POST /upload`              | multipart chunk or whole file (`ad*` fields). Idempotent; any order; validates path, index, offset and length. Auto-assembles when all chunks are in (`AD_AUTO_ASSEMBLE=0` turns that off). |
 | `GET /upload/status?uploadId=` | `200 { received: [..], complete, totalChunks }` or `404 NOT_FOUND`                               |
 | `POST /upload/manifest`     | JSON manifest; creates every folder (including empty ones) under `<uploadDir>/<sessionId>/`        |
 | `POST /upload/finalize`     | verifies chunks, size and optional checksum, assembles to a temp file, renames atomically; `409 CHUNK_MISMATCH` with `missing: []` if incomplete |

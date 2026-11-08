@@ -37,7 +37,7 @@ type Limits = Pick<
   'parallelUploads' | 'maxChunksInFlight' | 'parallelChunkUploads'
 >;
 
-/** Upload POSTs one file may have in flight (Dropzone 6.3.5: false = 1, true = `parallelUploads`, n = max(1, n)). */
+/** Upload POSTs one file may have in flight (`false` = 1, `true` = `parallelUploads`, a number n = max(1, n)). */
 export function perFileLimit(o: Limits): number {
   const p = o.parallelChunkUploads;
   return Math.max(1, p === true ? o.parallelUploads : Number(p) || 1);

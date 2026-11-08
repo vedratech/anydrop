@@ -6,7 +6,7 @@
 //   2. A minimal Vite app (also outside the repo) installs the two tarballs with npm, imports
 //      `@vedratech/anydrop-ui` + `@vedratech/anydrop-ui/style.css`, is built with `vite build` and served with `vite preview`.
 //   3. A plain HTML page loads the IIFE (`dist/index.global.js`, what unpkg/jsDelivr would serve) from the
-//      installed tarball with a <script> tag and the CSS with a <link>, using Dropzone's own markup.
+//      installed tarball with a <script> tag and the CSS with a <link>, using the documented `.anydrop` markup.
 //   4. Both pages run in Chromium (Playwright from this repo) against the test mock server: a file is
 //      picked, uploaded, and the mock server must hold it with the right SHA-256.
 //
@@ -93,9 +93,9 @@ try {
 import '@vedratech/anydrop-ui/style.css';
 const mock = new URLSearchParams(location.search).get('mock');
 window.__version = VERSION;
-const dz = new AnyDrop('#zone', { url: mock + '/upload', chunking: true, chunkSize: 4096, forceChunking: true, hiddenInputContainer: '#zone' });
+const zone = new AnyDrop('#zone', { url: mock + '/upload', chunking: true, chunkSize: 4096, forceChunking: true, hiddenInputContainer: '#zone' });
 window.__uploaded = [];
-dz.on('success', (f) => window.__uploaded.push(f.name));
+zone.on('success', (f) => window.__uploaded.push(f.name));
 `,
   );
   run(
@@ -114,13 +114,13 @@ dz.on('success', (f) => window.__uploaded.push(f.name));
   await writeFile(
     join(plain, 'index.html'),
     `<!doctype html><html><head><link rel="stylesheet" href="anydrop.css"></head><body>
-<form id="my-awesome-dropzone" class="dropzone"></form>
+<form id="smoke-zone" class="anydrop"></form>
 <script src="anydrop.js"></script>
 <script>
-  // Dropzone's documentation markup and options object, nothing else.
+  // The documented markup and an options preset by element id, nothing else.
   var mock = new URLSearchParams(location.search).get('mock');
-  document.getElementById('my-awesome-dropzone').action = mock + '/upload';
-  AnyDrop.options.myAwesomeDropzone = { paramName: 'file', maxFilesize: 2 };
+  document.getElementById('smoke-zone').action = mock + '/upload';
+  AnyDrop.options.smokeZone = { paramName: 'file', maxFilesize: 2 };
   window.__uploaded = [];
   AnyDrop.discover()[0].on('success', function (f) { window.__uploaded.push(f.name); });
 </script></body></html>`,

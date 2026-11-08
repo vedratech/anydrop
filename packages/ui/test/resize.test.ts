@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resizeFile } from '../src/image';
+import { scaleBlob } from '../src/image';
 import { file, mount } from './helpers';
 
 let canvas: { width: number; height: number; type?: string; quality?: number };
@@ -81,10 +81,10 @@ describe('resize options', () => {
       resizeMimeType: null,
       resizeQuality: 0.8,
     };
-    await new Promise<Blob>((r) => resizeFile(file('p.jpg', 10, 'image/jpeg'), o, r));
+    await new Promise<Blob>((r) => scaleBlob(file('p.jpg', 10, 'image/jpeg'), o, r));
     expect(canvas).toMatchObject({ width: 400, height: 200, type: 'image/jpeg' });
     const txt = file('a.txt');
-    const same = await new Promise<Blob>((r) => resizeFile(txt, o, r));
+    const same = await new Promise<Blob>((r) => scaleBlob(txt, o, r));
     expect(same).toBe(txt);
   });
 });

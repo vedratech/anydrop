@@ -38,7 +38,7 @@ new AnyDrop('#uploader', {
 
 | Setting | Why |
 |---|---|
-| `maxFilesize` | Defaults to 256 MiB, as in Dropzone. A larger file is rejected with `REJECTED_SIZE` before anything is sent. Set it to your real limit, or `null` to turn the check off. |
+| `maxFilesize` | Defaults to 256 MiB. A larger file is rejected with `REJECTED_SIZE` before anything is sent. Set it to your real limit, or `null` to turn the check off. |
 | `chunkSize` | A bigger chunk means fewer requests but more to resend on a failure. The chunk layout of a file is fixed when its first chunk is sent. Keep it below the smallest body limit on the path (see below). |
 | `finalizeUrl` | Assembling a very large file on the last chunk can take longer than the stall watchdog allows. A separate finalize request avoids that. You can also raise `stallTimeout`. |
 | `parallelChunkUploads` | More chunks in flight use more of the connection, but also more server work. Cap the total with `maxChunksInFlight`. |

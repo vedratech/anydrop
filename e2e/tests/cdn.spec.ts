@@ -1,6 +1,6 @@
-// The CDN build (`dist/index.global.js`) on a plain HTML page, with Dropzone's documentation markup
+// The CDN build (`dist/index.global.js`) on a plain HTML page, with AnyDrop's documentation markup
 // and no script of our own (decision 0014): `window.AnyDrop` is the class, `AnyDrop.options.x` is
-// honoured, `.dropzone` forms are discovered, and `autoDiscover = false` is respected.
+// honoured, `.anydrop` elements are discovered, and `autoDiscover = false` is respected.
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
@@ -47,7 +47,7 @@ test.beforeEach(({}, testInfo) => {
 const docsPage = (mock: IsolatedMock, extra = '') => `<!doctype html><html><body>
 <script src="/__cdn/index.global.js"></script>
 ${extra}
-<form action="${mock.url}/upload" class="dropzone" id="my-awesome-dropzone"></form>
+<form action="${mock.url}/upload" class="anydrop" id="cdn-zone"></form>
 </body></html>`;
 
 test('window.AnyDrop is the class, with the other exports as statics', async ({ page, mock }) => {
@@ -80,23 +80,23 @@ test('window.AnyDrop is the class, with the other exports as statics', async ({ 
   expect(errors).toEqual([]);
 });
 
-test('Dropzone docs markup works with no script of our own', async ({ page, mock }) => {
+test('The documented .anydrop markup works with no script of our own', async ({ page, mock }) => {
   const errors = await serve(
     page,
     mock,
     docsPage(
       mock,
-      '<script>AnyDrop.options.myAwesomeDropzone = { paramName: "file", maxFilesize: 2 };</script>',
+      '<script>AnyDrop.options.cdnZone = { paramName: "file", maxFilesize: 2 };</script>',
     ),
   );
-  const form = page.locator('#my-awesome-dropzone');
-  await expect(form).toHaveClass(/dz-clickable/);
-  await expect(form.locator('.dz-message')).toContainText('Drop files here to upload');
+  const form = page.locator('#cdn-zone');
+  await expect(form).toHaveClass(/ad-clickable/);
+  await expect(form.locator('.ad-message')).toContainText('Drop files here to upload');
   await page
     .locator('body > input[data-ad-input=files]')
     .setInputFiles([{ name: 'cdn.txt', mimeType: 'text/plain', buffer: Buffer.from('hello cdn') }]);
-  await expect(form.locator('.dz-preview')).toHaveCount(1);
-  await expect(form.locator('.dz-preview.dz-success')).toHaveCount(1);
+  await expect(form.locator('.ad-file-preview')).toHaveCount(1);
+  await expect(form.locator('.ad-file-preview.ad-success')).toHaveCount(1);
   expect((await mock.report()).merged.files.map((f) => f.path)).toEqual(['cdn.txt']);
   expect(
     await page.evaluate(
@@ -122,12 +122,12 @@ test('autoDiscover = false is respected, and a manual instance is not attached t
   expect(before).toBe(0);
   const after = await page.evaluate(() => {
     const A = (window as unknown as { AnyDrop: AnyStatic }).AnyDrop;
-    const dz = new A('#my-awesome-dropzone');
+    const zone = new A('#cdn-zone');
     const again = A.discover();
     return {
       instances: A.instances.length,
       again: again.length,
-      same: A.forElement('#my-awesome-dropzone') === dz,
+      same: A.forElement('#cdn-zone') === zone,
     };
   });
   expect(after).toEqual({ instances: 1, again: 0, same: true });

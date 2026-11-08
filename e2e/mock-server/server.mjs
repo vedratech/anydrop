@@ -3,7 +3,7 @@
  * AnyDrop mock upload server. TEST ONLY, never published.
  *
  * Implements the wire protocol in docs/protocol.md (v1):
- *   POST {url}            chunk / whole file upload (multipart/form-data, dz* + ad* fields)
+ *   POST {url}            chunk / whole file upload (multipart/form-data, ad* fields)
  *   GET  {statusUrl}      chunk status for resume
  *   POST {manifestUrl}    folder manifest (creates every folder, including empty ones)
  *   POST {finalizeUrl}    assemble + verify + atomic rename
@@ -20,11 +20,11 @@
  *   AD_LATENCY_MS         fixed delay added to every protocol request (default 0)
  *   AD_LATENCY_JITTER_MS  extra random 0..N ms delay (default 0)
  *   AD_SEED               integer seed for the fault/jitter PRNG (default 1)
- *   AD_AUTO_ASSEMBLE      1|0, assemble a file as soon as all chunks arrived (default 1; this is how
- *                         most existing Dropzone backends behave). Set 0 to require /finalize.
+ *   AD_AUTO_ASSEMBLE      1|0, assemble a file as soon as all chunks arrived (default 1; simple backends
+ *                         without a finalize step behave like this). Set 0 to require /finalize.
  *   AD_MAX_FILE_MB        reject files larger than this with 413 TOO_LARGE (default: unlimited)
  *   AD_STRICT_MANIFEST    1|0, reject chunks and finalize requests whose uploadId is not in the session's
- *                         latest manifest with 400 INVALID_CHUNK (protocol v1.3, decision 0016; default 0)
+ *                         latest manifest with 400 INVALID_CHUNK (protocol v1.3 and later, decision 0016; default 0)
  *   AD_MAX_BODY_MB        reject single requests larger than this with 413 (default 1024)
  *   AD_LOG                1|0, log one line per request to stdout (default 1 when run as a CLI)
  */
@@ -477,21 +477,21 @@ export function createMockServer(opts = {}) {
     const { fields, file, files } = parseMultipart(raw, req.headers['content-type']);
     if (!file) throw new HttpError(400, 'INVALID_CHUNK', 'No file part in the request');
     // uploadMultiple (non-chunked only): file[0], adRelativePath[0], file[1], adRelativePath[1], ...
-    if (fields.dzchunkindex === undefined && files.some((f) => /\[\d+\]$/.test(f.name || ''))) {
+    if (fields.adChunkIndex === undefined && files.some((f) => /\[\d+\]$/.test(f.name || ''))) {
       return handleUploadMultiple(fields, files, res, entry);
     }
 
-    const chunked = fields.dzchunkindex !== undefined;
+    const chunked = fields.adChunkIndex !== undefined;
     const sessionId = sessionOf(fields.adSessionId);
     const relativePath = cleanRelativePath(
       fields.adRelativePath || fields.fullPath || file.filename,
     );
-    const totalChunks = chunked ? Number(fields.dztotalchunkcount) : 1;
-    const chunkIndex = chunked ? Number(fields.dzchunkindex) : 0;
-    const totalSize = Number(fields.dztotalfilesize ?? file.data.length);
-    const chunkSize = Number(fields.dzchunksize ?? file.data.length);
+    const totalChunks = chunked ? Number(fields.adChunkCount) : 1;
+    const chunkIndex = chunked ? Number(fields.adChunkIndex) : 0;
+    const totalSize = Number(fields.adTotalSize ?? file.data.length);
+    const chunkSize = Number(fields.adChunkSize ?? file.data.length);
     const uploadId =
-      fields.dzuuid ||
+      fields.adUploadId ||
       'nz_' +
         createHash('sha256').update(`${sessionId}|${relativePath}`).digest('hex').slice(0, 32);
     entry.uploadId = uploadId;
@@ -499,10 +499,11 @@ export function createMockServer(opts = {}) {
     entry.relativePath = relativePath;
     entry.bytes = file.data.length;
 
-    if (fields.dzuuid && !ID_RE.test(fields.dzuuid)) {
-      throw new HttpError(400, 'INVALID_CHUNK', 'dzuuid has invalid characters');
+    if (fields.adUploadId && !ID_RE.test(fields.adUploadId)) {
+      throw new HttpError(400, 'INVALID_CHUNK', 'adUploadId has invalid characters');
     }
-    if (config.strictManifest && fields.dzuuid) checkAnnounced(sessionId, relativePath, uploadId);
+    if (config.strictManifest && fields.adUploadId)
+      checkAnnounced(sessionId, relativePath, uploadId);
     if (
       !Number.isInteger(chunkIndex) ||
       chunkIndex < 0 ||
@@ -519,9 +520,7 @@ export function createMockServer(opts = {}) {
     }
     if (chunked) {
       const offset =
-        fields.dzchunkbyteoffset === undefined
-          ? chunkIndex * chunkSize
-          : Number(fields.dzchunkbyteoffset);
+        fields.adChunkOffset === undefined ? chunkIndex * chunkSize : Number(fields.adChunkOffset);
       const expected = Math.max(0, Math.min(chunkSize, totalSize - offset));
       if (offset !== chunkIndex * chunkSize || file.data.length !== expected) {
         throw new HttpError(

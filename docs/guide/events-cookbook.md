@@ -122,7 +122,7 @@ document.querySelector('#uploader').addEventListener('anydrop:success', (e) => {
 });
 ```
 
-## Dropzone-style handlers as options
+## Handlers as options
 
 ```js
 new AnyDrop('#uploader', {

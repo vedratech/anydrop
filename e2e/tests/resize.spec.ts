@@ -37,7 +37,7 @@ test('an image is scaled to resizeWidth x resizeHeight and re-encoded as configu
     const el = document.createElement('div');
     el.id = 'resize-zone';
     document.body.appendChild(el);
-    const dz = new AnyDrop('#resize-zone', {
+    const zone = new AnyDrop('#resize-zone', {
       url: `${url}/upload`,
       resizeWidth: 200,
       resizeHeight: 150,
@@ -61,9 +61,9 @@ test('an image is scaled to resizeWidth x resizeHeight and re-encoded as configu
     }
     const png: Blob = await new Promise((r) => c.toBlob((b) => r(b!), 'image/png'));
     const done: string[] = [];
-    dz.on('success', (f) => done.push((f as { name: string }).name));
-    dz.addFile(new File([png], 'photo.png', { type: 'image/png' }));
-    dz.addFile(new File(['not an image, left alone'], 'notes.txt', { type: 'text/plain' }));
+    zone.on('success', (f) => done.push((f as { name: string }).name));
+    zone.addFile(new File([png], 'photo.png', { type: 'image/png' }));
+    zone.addFile(new File(['not an image, left alone'], 'notes.txt', { type: 'text/plain' }));
     const t0 = Date.now();
     while (done.length < 2 && Date.now() - t0 < 30_000) await new Promise((r) => setTimeout(r, 50));
     return { size: png.size, done: done.length };

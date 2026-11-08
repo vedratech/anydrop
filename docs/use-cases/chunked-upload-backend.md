@@ -5,7 +5,7 @@ description: "Build a chunked, resumable upload backend in Express or Laravel fo
 
 # Laravel and Express chunked upload backend
 
-AnyDrop is frontend only and ships no server. Your backend implements a small HTTP contract, and the contract uses the same chunk field names as Dropzone, so an existing Dropzone chunk backend already works for plain chunked uploads. This page shows the shape of a backend in Express or Laravel. The complete, tested-against-the-client Express server is in the [Express example](/backend/express), and the [Laravel example](/backend/laravel) is the same contract as a controller (its PHP is syntax-checked but not run against the client, so test it in your project).
+AnyDrop is frontend only and ships no server. Your backend implements a small HTTP contract. This page shows the shape of a backend in Express or Laravel. The complete, tested-against-the-client Express server is in the [Express example](/backend/express), and the [Laravel example](/backend/laravel) is the same contract as a controller (its PHP is syntax-checked but not run against the client, so test it in your project).
 
 ## The client side
 
@@ -44,16 +44,16 @@ An excerpt of the [full example](/backend/express) (multer with memory storage, 
 ```js
 app.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return fail(res, 400, 'INVALID_CHUNK', 'Missing file');
-  const { dzuuid } = req.body;
+  const { adUploadId } = req.body;
   // ... a whole file (no dz* fields) is written to its adRelativePath ...
-  const index = Number(req.body.dzchunkindex);
-  const size = Number(req.body.dzchunksize);
-  const total = Number(req.body.dztotalfilesize);
-  const offset = Number(req.body.dzchunkbyteoffset);
+  const index = Number(req.body.adChunkIndex);
+  const size = Number(req.body.adChunkSize);
+  const total = Number(req.body.adTotalSize);
+  const offset = Number(req.body.adChunkOffset);
   if (req.file.size !== Math.min(size, total - offset)) {
     return fail(res, 400, 'INVALID_CHUNK', 'Chunk length does not match');
   }
-  await writeAtomic(path.join(TMP, dzuuid, String(index)), req.file.buffer);
+  await writeAtomic(path.join(TMP, adUploadId, String(index)), req.file.buffer);
   res.json({ ok: true });
 });
 ```

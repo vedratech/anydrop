@@ -1,4 +1,4 @@
-// UI options. Dropzone options keep Dropzone 6.3.5's names and defaults (src/options.ts) unless noted.
+// UI options and their defaults.
 import type { AnyDropCoreOptions, AnyDropEventHandlers } from '@vedratech/anydrop-core';
 import type { AnyDrop } from './AnyDrop';
 
@@ -115,13 +115,13 @@ export interface AnyDropUIOptions extends AnyDropDict {
   clickable: boolean | ElementRef | ElementRef[];
   /** Where the list, toolbar and error panel go. `null` = inside the element. */
   previewsContainer: ElementRef | null | false;
-  /** Markup of one file preview (Dropzone's `data-dz-*` hooks are filled in). */
+  /** Markup of one file preview (the `data-ad-*` hooks are filled in). */
   previewTemplate: string;
   /** Where the hidden file inputs are placed. Default `'body'`. */
   hiddenInputContainer: ElementRef;
   /** Add a "Remove file" / "Cancel upload" link to each preview. Default `false`. */
   addRemoveLinks: boolean;
-  /** Question asked before removing a finished file (`null` = no question), as in Dropzone. */
+  /** Question asked before removing a finished file (`null` = no question). */
   dictRemoveFileConfirmation: string | null;
   /** Passed to the file input (`'environment'`, `'user'`, ...). */
   capture: string | null;
@@ -151,7 +151,7 @@ export interface AnyDropUIOptions extends AnyDropDict {
   forceFallback: boolean;
   /** Runs when the browser lacks the needed APIs, or with `forceFallback`. `null` = the default form. */
   fallback: ((this: AnyDrop) => void) | null;
-  /** Called once at the end of the constructor, like Dropzone's `init`. */
+  /** Called once at the end of the constructor. */
   init: ((this: AnyDrop) => void) | null;
   // New in AnyDrop
   /** `'tree'` (collapsible folders) or `'flat'` (files with their full path). Default `'tree'`. */
@@ -164,7 +164,7 @@ export interface AnyDropUIOptions extends AnyDropDict {
   errorPanel: boolean;
   /** The "Select files" and "Select folder" buttons. */
   pickerButtons: boolean;
-  /** Add files pasted into the element. Off by default, as Dropzone 6.3.5 does not wire `paste` either. */
+  /** Add files pasted into the element. Off by default. */
   enablePaste: boolean;
   /** `'auto'` (follows `prefers-color-scheme`), `'light'` or `'dark'`. Default `'auto'`. */
   theme: 'auto' | 'light' | 'dark';
@@ -176,12 +176,7 @@ export type AnyDropFullOptions = AnyDropCoreOptions<AnyDrop> &
 
 /** What the constructor and `setOption` accept. */
 export type AnyDropConfig = Partial<AnyDropCoreOptions<AnyDrop> & AnyDropUIOptions> &
-  AnyDropEventHandlers<AnyDrop> & {
-    /** @deprecated Dropzone's old name of `acceptedFiles`. */
-    acceptedMimeTypes?: string | null;
-    /** @deprecated Dropzone's old `renameFile`: `(name, file) => newName`. */
-    renameFilename?: ((this: AnyDrop, name: string, file: File) => string) | null;
-  };
+  AnyDropEventHandlers<AnyDrop>;
 
 const MARK =
   '<svg width="54" height="54" viewBox="0 0 54 54" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M10 30l4-4a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 0 1.4 0L38.3 15.7a1 1 0 0 1 1.4 0l4 4a1 1 0 0 1 0 1.4L22.7 42.3a1 1 0 0 1-1.4 0L10.2 31.2a1 1 0 0 1-.2-1.2z"/></svg>';
@@ -189,20 +184,20 @@ const MARK =
 const XMARK =
   '<svg width="54" height="54" viewBox="0 0 54 54" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M19 17l-2 2 8 8-8 8 2 2 8-8 8 8 2-2-8-8 8-8-2-2-8 8z"/></svg>';
 
-/** Dropzone 6.3.5's default preview template (same hooks and classes), plus our `ad-*` classes. */
+/** The default preview template. `data-ad-*` attributes mark the parts that get filled in. */
 export const DEFAULT_TEMPLATE =
-  '<div class="dz-preview dz-file-preview ad-preview">' +
-  '<div class="dz-image ad-thumb"><img data-dz-thumbnail draggable="false" alt="" /></div>' +
-  '<div class="dz-details ad-details">' +
-  '<div class="dz-size ad-size"><span data-dz-size></span></div>' +
-  '<div class="dz-filename ad-name"><span data-dz-name></span></div>' +
+  '<div class="ad-file-preview">' +
+  '<div class="ad-file-thumb"><img data-ad-thumbnail draggable="false" alt="" /></div>' +
+  '<div class="ad-file-details">' +
+  '<div class="ad-file-size"><span data-ad-size></span></div>' +
+  '<div class="ad-file-name"><span data-ad-name></span></div>' +
   '</div>' +
-  '<div class="dz-progress ad-progress"><span class="dz-upload ad-bar" data-dz-uploadprogress></span></div>' +
-  '<div class="dz-error-message ad-error-message"><span data-dz-errormessage></span></div>' +
-  '<div class="dz-success-mark">' +
+  '<div class="ad-file-progress"><span class="ad-file-bar" data-ad-uploadprogress></span></div>' +
+  '<div class="ad-file-error-message"><span data-ad-errormessage></span></div>' +
+  '<div class="ad-file-success-mark">' +
   MARK +
   '</div>' +
-  '<div class="dz-error-mark">' +
+  '<div class="ad-file-error-mark">' +
   XMARK +
   '</div>' +
   '</div>';

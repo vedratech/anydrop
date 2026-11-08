@@ -49,10 +49,10 @@ const exists = (p) => fs.stat(p).then(() => true, () => false);
 // Chunk upload, or a whole file. The same chunk may arrive twice: writing it again is harmless.
 app.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return fail(res, 400, 'INVALID_CHUNK', 'Missing file');
-  const { dzuuid } = req.body;
+  const { adUploadId } = req.body;
 
-  // Not chunked (a file of at most chunkSize, or chunking is off): no dz* fields, write the file in place.
-  if (dzuuid === undefined) {
+  // Not chunked (a file of at most chunkSize, or chunking is off): no `ad*` chunk fields, write the file in place.
+  if (adUploadId === undefined) {
     const dest = target(req.body.adRelativePath);
     if (!dest) return fail(res, 400, 'INVALID_PATH', 'Invalid path');
     await fs.mkdir(path.dirname(dest), { recursive: true });
@@ -60,17 +60,17 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     return res.json({ ok: true });
   }
 
-  const index = Number(req.body.dzchunkindex);
-  const size = Number(req.body.dzchunksize);
-  const total = Number(req.body.dztotalfilesize);
-  const offset = Number(req.body.dzchunkbyteoffset);
-  if (!UUID.test(dzuuid) || !Number.isInteger(index) || index < 0) {
+  const index = Number(req.body.adChunkIndex);
+  const size = Number(req.body.adChunkSize);
+  const total = Number(req.body.adTotalSize);
+  const offset = Number(req.body.adChunkOffset);
+  if (!UUID.test(adUploadId) || !Number.isInteger(index) || index < 0) {
     return fail(res, 400, 'INVALID_CHUNK', 'Invalid chunk request');
   }
   if (req.file.size !== Math.min(size, total - offset)) {
     return fail(res, 400, 'INVALID_CHUNK', 'Chunk length does not match');
   }
-  const dir = path.join(TMP, dzuuid);
+  const dir = path.join(TMP, adUploadId);
   await fs.mkdir(dir, { recursive: true });
   await writeAtomic(path.join(dir, String(index)), req.file.buffer);
   res.json({ ok: true });

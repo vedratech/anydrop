@@ -19,7 +19,7 @@ new AnyDrop('#uploader', {
 The list is comma-separated: `.ext`, `type/*` or `type/subtype`. A non-matching file is rejected with code `REJECTED_TYPE` and the message `dictInvalidFileType`.
 
 ::: tip HEIC photos on iOS
-iOS gives HEIC photos an empty MIME type, so Dropzone rejects them under `image/*`. AnyDrop guesses the type from the extension when the MIME type is empty. Files with a MIME type behave exactly as in Dropzone.
+iOS gives HEIC photos an empty MIME type, so a check on the MIME type alone would reject them under `image/*`. AnyDrop guesses the type from the extension when the MIME type is empty.
 :::
 
 ## File size
@@ -43,7 +43,7 @@ ad.on('maxfilesexceeded', (file) => ad.removeFile(file));
 ad.on('maxfilesreached', () => console.log('limit reached'));
 ```
 
-Extra files are rejected with `MAX_FILES` and emit `maxfilesexceeded`. The UI element also gets the class `dz-max-files-reached`.
+Extra files are rejected with `MAX_FILES` and emit `maxfilesexceeded`. The UI element also gets the class `ad-max-files-reached`.
 
 ## Your own check
 

@@ -10,7 +10,7 @@ A chunked upload cuts a file into pieces and sends each piece in its own request
 ## How it works
 
 1. The file is read with `Blob.slice()`, one chunk per request, so the whole file never sits in memory.
-2. Each chunk is a `multipart/form-data` `POST` that carries the chunk in `file` and Dropzone's chunk fields (`dzuuid`, `dzchunkindex`, `dztotalchunkcount`, `dzchunksize`, `dzchunkbyteoffset`, `dztotalfilesize`).
+2. Each chunk is a `multipart/form-data` `POST` that carries the chunk in `file` and the chunk fields (`adUploadId`, `adChunkIndex`, `adChunkCount`, `adChunkSize`, `adChunkOffset`, `adTotalSize`).
 3. A failed chunk is retried with growing, randomised delays (up to 3 times by default, honouring `Retry-After`).
 4. After the last chunk, AnyDrop calls your finalize endpoint so the server can assemble the file.
 5. To resume, the client asks your status endpoint which chunks the server holds, and sends only the others.
@@ -44,7 +44,7 @@ Files up to `chunkSize` are sent whole unless you set `forceChunking: true`.
 
 ## What your backend must do
 
-Accept chunks in any order and more than once (writing the same chunk again is harmless), answer a status request with `{ "received": [0, 1, 4] }`, and assemble the file on finalize. Because the chunk fields are the same as Dropzone's, an existing Dropzone chunk backend keeps working. The full contract is in the [protocol](/protocol), with working [Express](/backend/express) and [Laravel](/backend/laravel) examples (see also [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend)).
+Accept chunks in any order and more than once (writing the same chunk again is harmless), answer a status request with `{ "received": [0, 1, 4] }`, and assemble the file on finalize. The full contract is in the [protocol](/protocol), with working [Express](/backend/express) and [Laravel](/backend/laravel) examples (see also [Laravel and Express chunked upload backend](/use-cases/chunked-upload-backend)).
 
 ## Not a tus or S3 client
 

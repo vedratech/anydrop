@@ -61,7 +61,7 @@ afterEach(() => {
 });
 
 describe('requests and fields (protocol section 3)', () => {
-  it('sends a chunked file with the dz* and ad* fields, one chunk at a time, then finalize', async () => {
+  it('sends a chunked file with the chunk and ad* fields, one chunk at a time, then finalize', async () => {
     const { core, t } = mk({ chunking: true, chunkSize: 10 });
     const f = core.addFile(bytesFile('a.bin', 25), 'Docs');
     const success = vi.fn();
@@ -72,20 +72,20 @@ describe('requests and fields (protocol section 3)', () => {
     expect(t.maxInFlight).toBe(1);
     const c = ups[1] as Call;
     expect({
-      dzuuid: c.field('dzuuid'),
-      dzchunkindex: c.field('dzchunkindex'),
-      dztotalfilesize: c.field('dztotalfilesize'),
-      dzchunksize: c.field('dzchunksize'),
-      dztotalchunkcount: c.field('dztotalchunkcount'),
-      dzchunkbyteoffset: c.field('dzchunkbyteoffset'),
+      adUploadId: c.field('adUploadId'),
+      adChunkIndex: c.field('adChunkIndex'),
+      adTotalSize: c.field('adTotalSize'),
+      adChunkSize: c.field('adChunkSize'),
+      adChunkCount: c.field('adChunkCount'),
+      adChunkOffset: c.field('adChunkOffset'),
       adRelativePath: c.field('adRelativePath'),
     }).toEqual({
-      dzuuid: f.upload.uuid,
-      dzchunkindex: '1',
-      dztotalfilesize: '25',
-      dzchunksize: '10',
-      dztotalchunkcount: '3',
-      dzchunkbyteoffset: '10',
+      adUploadId: f.upload.uuid,
+      adChunkIndex: '1',
+      adTotalSize: '25',
+      adChunkSize: '10',
+      adChunkCount: '3',
+      adChunkOffset: '10',
       adRelativePath: 'Docs/a.bin',
     });
     expect(c.field('adSessionId')).toMatch(/^0{8}-/);
@@ -93,7 +93,7 @@ describe('requests and fields (protocol section 3)', () => {
     expect(Array.from(new Uint8Array(await blob.arrayBuffer()))).toEqual(
       Array.from({ length: 10 }, (_, i) => (i + 10) % 251),
     );
-    // The file blob is the last field (S3 wants it last), as in Dropzone.
+    // The file blob is the last field (S3 wants it last).
     expect(Array.from(c.form!.keys()).pop()).toBe('file');
     const fin = t.calls.find((x) => x.kind === 'finalize')!;
     expect(fin.json).toEqual({
@@ -108,7 +108,7 @@ describe('requests and fields (protocol section 3)', () => {
     expect(success).toHaveBeenCalledWith(f, { ok: true, kind: 'finalize' }, null);
   });
 
-  it('sends a whole file in one request without dz* fields, never finalizes, upper-cases method', async () => {
+  it('sends a whole file in one request without chunk fields, never finalizes, upper-cases method', async () => {
     const { core, t } = mk({ method: 'put', headers: { Authorization: 'Bearer x' } });
     const f = core.addFile(bytesFile('a.txt', 5));
     const success = vi.fn();
@@ -128,11 +128,11 @@ describe('requests and fields (protocol section 3)', () => {
     expect(f.upload.progress).toBe(100);
   });
 
-  it('small chunked files are single requests unless forceChunking (Dropzone)', async () => {
+  it('small chunked files are single requests unless forceChunking', async () => {
     const { core, t } = mk({ chunking: true, chunkSize: 100 });
     core.addFile(bytesFile('small.bin', 5));
     await settle();
-    expect(t.uploads()[0]!.field('dzchunkindex')).toBeNull();
+    expect(t.uploads()[0]!.field('adChunkIndex')).toBeNull();
     expect(t.calls.some((x) => x.kind === 'finalize')).toBe(false);
   });
 
@@ -143,14 +143,19 @@ describe('requests and fields (protocol section 3)', () => {
       chunkSize: 4,
       params(files, _xhr, chunk) {
         seen.push(this);
-        return { dzuuid: null, uuid: files[0]!.upload.uuid, idx: chunk!.index, list: ['a', 'b'] };
+        return {
+          adUploadId: null,
+          uuid: files[0]!.upload.uuid,
+          idx: chunk!.index,
+          list: ['a', 'b'],
+        };
       },
     });
     core.addFile(bytesFile('a.bin', 6));
     await settle(10);
     const c = t.uploads()[0]!;
     expect(seen[0]).toBe(core);
-    expect(c.field('dzuuid')).toBeNull();
+    expect(c.field('adUploadId')).toBeNull();
     expect(c.field('uuid')).toMatch(/^0{8}/);
     expect(c.field('idx')).toBe('0');
     expect(c.form!.getAll('list')).toEqual(['a', 'b']);
@@ -204,7 +209,7 @@ describe('concurrency (0001, 0010)', () => {
     expect(maxUploading).toBe(2);
     expect(t.maxInFlight).toBe(2);
     expect(Math.max(...t.maxPerUpload.values())).toBe(1);
-    const firstChunks = t.uploads().filter((c) => c.field('dzchunkindex') === '0');
+    const firstChunks = t.uploads().filter((c) => c.field('adChunkIndex') === '0');
     expect(firstChunks.map((c) => c.field('adRelativePath'))).toEqual(['a', 'b', 'c', 'd']);
   });
 
@@ -248,7 +253,7 @@ describe('concurrency (0001, 0010)', () => {
     );
     ['a', 'b', 'c'].forEach((n) => free.core.addFile(bytesFile(n, 5)));
     await settle();
-    expect(free.t.open()).toHaveLength(9); // 3 files x parallelUploads chunks, as in Dropzone
+    expect(free.t.open()).toHaveLength(9); // 3 files x parallelUploads chunks
   });
 
   it('setOption on the limits affects only the requests that start next', async () => {
@@ -314,7 +319,7 @@ describe('retry and backoff (0007)', () => {
       expect(t.open()).toHaveLength(0);
       await vi.advanceTimersByTimeAsync(1);
       expect(t.open()).toHaveLength(1);
-      expect(t.open()[0]!.field('dzchunkindex')).toBe('1');
+      expect(t.open()[0]!.field('adChunkIndex')).toBe('1');
       t.open()[0]!.reply(500, { code: 'SERVER_ERROR', message: 'boom' });
     }
     await vi.advanceTimersByTimeAsync(60000);
@@ -367,7 +372,7 @@ describe('retry and backoff (0007)', () => {
     }
   });
 
-  it("does not retry 4xx; a timeout uses Dropzone's message", async () => {
+  it('does not retry 4xx; a timeout uses the timeout message', async () => {
     const { core } = mk({ chunking: true, chunkSize: 1 }, (c) =>
       c.reply(413, { code: 'TOO_LARGE', message: 'big' }),
     );
@@ -410,7 +415,7 @@ describe('retry and backoff (0007)', () => {
     let first = true;
     const { core, t } = mk({ chunking: true, chunkSize: 1 }, (c) => {
       if (c.kind === 'status') return c.reply(200, { received: [0, 2] });
-      if (c.kind === 'upload' && c.field('dzchunkindex') === '1' && first) {
+      if (c.kind === 'upload' && c.field('adChunkIndex') === '1' && first) {
         first = false;
         return c.reply(409, { code: 'CHUNK_MISMATCH' });
       }
@@ -418,7 +423,7 @@ describe('retry and backoff (0007)', () => {
     });
     const f = core.addFile(bytesFile('a', 3));
     await settle(20);
-    expect(t.calls.map((c) => c.kind + (c.field('dzchunkindex') ?? ''))).toEqual([
+    expect(t.calls.map((c) => c.kind + (c.field('adChunkIndex') ?? ''))).toEqual([
       'upload0',
       'upload1',
       'status',
@@ -610,7 +615,7 @@ describe('queue control', () => {
     expect(qc).toHaveBeenCalledTimes(2);
   });
 
-  it('emits Dropzone-ordered events for one file, plus folder events', async () => {
+  it('emits events in order for one file, plus folder events', async () => {
     vi.useFakeTimers();
     const { core, t } = mk({ chunking: true, chunkSize: 2 }, null);
     const log = record(core, [
@@ -683,7 +688,7 @@ describe('uploadMultiple (0003)', () => {
     expect(core.files.every((f) => f.status === 'success')).toBe(true);
   });
 
-  it('rejections emit errormultiple([file]) and completemultiple([file]) (Dropzone)', async () => {
+  it('rejections emit errormultiple([file]) and completemultiple([file])', async () => {
     const { core } = mk({ uploadMultiple: true, acceptedFiles: '.png' });
     const em = vi.fn();
     const cm = vi.fn();
@@ -714,7 +719,7 @@ describe('transformFile (0011)', () => {
     await settle(15);
     expect(order).toEqual(['processing', 'transform']);
     expect(f.upload).toMatchObject({ chunked: true, totalChunkCount: 3, total: 6, progress: 100 });
-    expect(t.uploads().map((c) => c.field('dztotalfilesize'))).toEqual(['6', '6', '6']);
+    expect(t.uploads().map((c) => c.field('adTotalSize'))).toEqual(['6', '6', '6']);
     expect(await (t.uploads()[2]!.form!.get('file') as Blob).text()).toBe('ef');
     expect(core.getTree().progress).toBe(100);
   });
@@ -811,13 +816,8 @@ describe('API surface (0012, M1 review)', () => {
     expect(log).toEqual(['removedfile:A/B/x.png', 'removedfolder:A/B']);
   });
 
-  it('maps the deprecated acceptedMimeTypes and renameFilename; resolveOption', () => {
-    const core = new AnyDropCore({ acceptedMimeTypes: 'image/*', renameFilename: (n) => 'x-' + n });
-    expect(core.options.acceptedFiles).toBe('image/*');
-    expect(core.addFile(makeFile('a.png')).upload.filename).toBe('x-a.png');
-    expect(() => new AnyDropCore({ acceptedMimeTypes: 'a', acceptedFiles: 'b' })).toThrow(
-      "You can't provide both 'acceptedFiles' and 'acceptedMimeTypes'.",
-    );
+  it('resolveOption returns plain values and calls functions with this = the instance', () => {
+    const core = new AnyDropCore();
     expect(core.resolveOption(5)).toBe(5);
     expect(
       core.resolveOption(function (this: unknown, n: number) {
