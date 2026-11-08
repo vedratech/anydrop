@@ -7,7 +7,7 @@ import type { AnyDropFile, ChunkInfo } from '../types';
 /**
  * Decides `upload.total`, `upload.chunked` and `upload.totalChunkCount` when the file starts
  * processing (not when it is added), from the blob to send and the current options, like
- * Dropzone's `uploadFiles` (0011). A file whose layout is `fixed` (a chunk was sent, or chunks are
+ * Dropzone's `uploadFiles`. A file whose layout is `fixed` (a chunk was sent, or chunks are
  * restored or acknowledged) keeps it, including `upload.chunkSize`: a later `setOption('chunkSize')`
  * must not move its offsets, because the server may already hold an aborted chunk of the old layout.
  * Returns the file's chunk size in bytes.

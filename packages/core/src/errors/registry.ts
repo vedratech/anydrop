@@ -1,4 +1,4 @@
-// Error registry (0007): one entry per file currently in `error` (or per empty folder whose
+// Error registry: one entry per file currently in `error` (or per empty folder whose
 // manifest failed), in insertion order. In memory only. `onChange` is called after every change;
 // the caller merges it per microtask into `errorlistchanged`.
 import type { ErrorEntry } from '../types';

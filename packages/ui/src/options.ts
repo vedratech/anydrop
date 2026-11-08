@@ -6,35 +6,61 @@ export type ElementRef = string | HTMLElement;
 
 /** The DOM strings of a UI instance. Every user-visible text is one of these (translatable). */
 export interface AnyDropDict {
+  /** Text of the drop zone. Default `Drop files here to upload`. */
   dictDefaultMessage: string;
+  /** Shown when the browser lacks drag and drop. Default `Your browser does not support drag'n'drop file uploads.` */
   dictFallbackMessage: string;
+  /** Shown above the fallback form. */
   dictFallbackText: string;
+  /** Button of the fallback form. Default `Upload!`. */
   dictFallbackUpload: string;
+  /** Link text while uploading (with `addRemoveLinks`). Default `Cancel upload`. */
   dictCancelUpload: string;
+  /** Question before canceling an upload. */
   dictCancelUploadConfirmation: string;
+  /** Link text of a finished file (with `addRemoveLinks`). Default `Remove file`. */
   dictRemoveFile: string;
+  /** Screen-reader text and tooltip when a thumbnail cannot be loaded. */
   dictThumbnailError: string;
   /** Shown where folders cannot be selected (for example iOS). */
   dictNoFolderSupport: string;
+  /** Label of the file picker button. Default `Select files`. */
   dictSelectFiles: string;
+  /** Label of the folder picker button. Default `Select folder`. */
   dictSelectFolder: string;
   /** Label of the file button on touch devices. */
   dictTapToUpload: string;
+  /** Toolbar button. Default `Pause all`. */
   dictPauseAll: string;
+  /** Toolbar button. Default `Resume all`. */
   dictResumeAll: string;
+  /** Toolbar and error panel button. Default `Retry failed`. */
   dictRetryFailed: string;
+  /** Toolbar button that removes the finished files. Default `Clear`. */
   dictClear: string;
+  /** Row button. Default `Pause`. */
   dictPause: string;
+  /** Row button. Default `Resume`. */
   dictResume: string;
+  /** Row button. Default `Retry`. */
   dictRetry: string;
+  /** Accessible name of the folder toggle when closed. Default `Expand folder`. */
   dictExpand: string;
+  /** Accessible name of the folder toggle when open. Default `Collapse folder`. */
   dictCollapse: string;
+  /** Row status. Default `Added`. */
   dictStatusAdded: string;
+  /** Row status. Default `Queued`. */
   dictStatusQueued: string;
+  /** Row status. Default `Uploading`. */
   dictStatusUploading: string;
+  /** Row status. Default `Paused`. */
   dictStatusPaused: string;
+  /** Row status. Default `Done`. */
   dictStatusSuccess: string;
+  /** Row status. Default `Failed`. */
   dictStatusError: string;
+  /** Row status. Default `Canceled`. */
   dictStatusCanceled: string;
   /** `{{done}}`, `{{total}}`, `{{failed}}`. */
   dictSummary: string;
@@ -42,17 +68,27 @@ export interface AnyDropDict {
   dictFolderCount: string;
   /** `{{count}}`. */
   dictErrorsTitle: string;
+  /** Error panel button. Default `Export JSON`. */
   dictExportJson: string;
+  /** Error panel button. Default `Export CSV`. */
   dictExportCsv: string;
+  /** Error panel button. Default `Copy list`. */
   dictCopyErrors: string;
+  /** Message after the error list was copied. */
   dictCopied: string;
+  /** Message when copying failed. */
   dictCopyFailed: string;
+  /** Error panel button. Default `Dismiss list`. */
   dictDismissErrors: string;
+  /** Accessible name of the drop zone. Default `File upload`. */
   dictRegionLabel: string;
+  /** Accessible name of the list. Default `Files to upload`. */
   dictListLabel: string;
+  /** Accessible name of the toolbar. Default `Upload actions`. */
   dictToolbarLabel: string;
   /** `{{count}}`. */
   dictAnnounceAdded: string;
+  /** Screen-reader message when all uploads finished. Default `Upload complete.` */
   dictAnnounceComplete: string;
   /** `{{count}}`. */
   dictAnnounceErrors: string;
@@ -62,11 +98,15 @@ export interface AnyDropDict {
   dictOffline: string;
   /** Banner while the server cannot be reached; `{{seconds}}` counts down to the next attempt. */
   dictReconnecting: string;
+  /** Connection banner button; calls `reconnect()`. Default `Retry now`. */
   dictRetryNow: string;
+  /** Announced when the connection banner hides. Default `Connection restored`. */
   dictConnectionRestored: string;
   /** Row status of a file that waits for the connection (paused by the system, not by the user). */
   dictWaitingForConnection: string;
+  /** Screen-reader message. Default `Upload paused.` */
   dictAnnouncePaused: string;
+  /** Screen-reader message. Default `Upload resumed.` */
   dictAnnounceResumed: string;
 }
 
@@ -77,39 +117,56 @@ export interface AnyDropUIOptions extends AnyDropDict {
   previewsContainer: ElementRef | null | false;
   /** Markup of one file preview (Dropzone's `data-dz-*` hooks are filled in). */
   previewTemplate: string;
+  /** Where the hidden file inputs are placed. Default `'body'`. */
   hiddenInputContainer: ElementRef;
+  /** Add a "Remove file" / "Cancel upload" link to each preview. Default `false`. */
   addRemoveLinks: boolean;
   /** Question asked before removing a finished file (`null` = no question), as in Dropzone. */
   dictRemoveFileConfirmation: string | null;
   /** Passed to the file input (`'environment'`, `'user'`, ...). */
   capture: string | null;
+  /** Create thumbnails for images. Default `true`. */
   createImageThumbnails: boolean;
   /** MiB; larger images get no thumbnail. */
   maxThumbnailFilesize: number;
+  /** Thumbnail width in px, capped at 512. Default `120`. */
   thumbnailWidth: number | null;
+  /** Thumbnail height in px, capped at 512. Default `120`. */
   thumbnailHeight: number | null;
+  /** `'crop'` or `'contain'`. Default `'crop'`. */
   thumbnailMethod: 'crop' | 'contain';
+  /** Scale images down to this width in px before upload. Default `null`. */
   resizeWidth: number | null;
+  /** Scale images down to this height in px before upload. Default `null`. */
   resizeHeight: number | null;
+  /** MIME type of the resized image (`null` = keep the type). Default `null`. */
   resizeMimeType: string | null;
+  /** Encoder quality from 0 to 1. Default `0.8`. */
   resizeQuality: number;
+  /** `'contain'` or `'crop'`. Default `'contain'`. */
   resizeMethod: 'crop' | 'contain';
+  /** Render no list, toolbar or error panel (render everything yourself). Default `false`. */
   disablePreviews: boolean;
+  /** Show the fallback form even when the browser supports everything. Default `false`. */
   forceFallback: boolean;
   /** Runs when the browser lacks the needed APIs, or with `forceFallback`. `null` = the default form. */
   fallback: ((this: AnyDrop) => void) | null;
   /** Called once at the end of the constructor, like Dropzone's `init`. */
   init: ((this: AnyDrop) => void) | null;
   // New in AnyDrop
+  /** `'tree'` (collapsible folders) or `'flat'` (files with their full path). Default `'tree'`. */
   folderView: 'tree' | 'flat';
   /** Row height in px of the virtualized list. */
   rowHeight: number;
+  /** Show the toolbar. Default `true`. */
   toolbar: boolean;
+  /** Show the error panel when files failed. Default `true`. */
   errorPanel: boolean;
   /** The "Select files" and "Select folder" buttons. */
   pickerButtons: boolean;
   /** Add files pasted into the element. Off by default, as Dropzone 6.3.5 does not wire `paste` either. */
   enablePaste: boolean;
+  /** `'auto'` (follows `prefers-color-scheme`), `'light'` or `'dark'`. Default `'auto'`. */
   theme: 'auto' | 'light' | 'dark';
 }
 
@@ -150,6 +207,7 @@ export const DEFAULT_TEMPLATE =
   '</div>' +
   '</div>';
 
+/** The default UI options (a fresh object each call). */
 export function uiDefaults(): AnyDropUIOptions {
   return {
     clickable: true,

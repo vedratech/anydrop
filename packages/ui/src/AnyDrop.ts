@@ -24,7 +24,7 @@ import {
 import { Banner, type Conn, ErrorPanel, Toolbar } from './panels';
 import { type Item, type MockFile, Previews } from './preview';
 
-/** Methods that arrive with core M3 (0008, 0007). Called only when present. */
+/** Methods that arrive with core M3. Called only when present. */
 interface Later {
   pause?(): void;
   resume?(): void;
@@ -105,6 +105,16 @@ function clickables(el: HTMLElement, c: AnyDropUIOptions['clickable']): HTMLElem
   return out;
 }
 
+/**
+ * The AnyDrop UI: a drop zone with file and folder pickers, a folder tree, a toolbar, an error panel,
+ * thumbnails and a mobile layout. It extends `AnyDropCore`, so every core option, method and event works.
+ *
+ * @example
+ * ```ts
+ * const ad = new AnyDrop('#uploader', { url: '/upload', chunking: true });
+ * ad.on('queuecomplete', () => console.log(ad.getErrors()));
+ * ```
+ */
 export class AnyDrop extends AnyDropCore {
   /** Dropzone's `Dropzone.options`: options per element id (camelCased), used when an element is attached. */
   static options: Record<string, AnyDropConfig | false> = {};
@@ -116,7 +126,7 @@ export class AnyDrop extends AnyDropCore {
   /**
    * Dropzone's `Dropzone.discover()`: attaches an instance to every `.dropzone` or `.anydrop` element
    * that has none and whose `AnyDrop.options[id]` is not `false`. Returns the new instances. It only
-   * runs when called; the npm builds never call it by themselves (decision 0014).
+   * runs when called; the npm builds never call it by themselves.
    */
   static discover(root: ParentNode = document): AnyDrop[] {
     const made: AnyDrop[] = [];
@@ -205,6 +215,7 @@ export class AnyDrop extends AnyDropCore {
   private _uiErrCount = 0;
   private _uiFlip = false;
 
+  /** Attaches to an element (or a selector). Throws when there is no URL or the selector matches nothing. */
   constructor(element: string | HTMLElement, config: AnyDropConfig = {}) {
     super(prepare(element, config) as unknown as AnyDropCoreConfig);
     const el = resolve(element) as HTMLElement;
@@ -794,7 +805,7 @@ export class AnyDrop extends AnyDropCore {
     };
     this.on('paused', paused(true));
     this.on('resumed', paused(false));
-    // Connection API of core (0017): guarded, so it does nothing until core has it.
+    // Connection API of core: guarded, so it does nothing until core has it.
     this.on('reconnecting' as AnyDropEventName, () => this._uiConnect());
     this.on('online', () => this._uiConnect());
     this.on('offline', () => this._uiConnect());
@@ -919,7 +930,7 @@ export class AnyDrop extends AnyDropCore {
     this._uiSchedule();
   }
 
-  /** The `resize*` options act as the default `transformFile` (0011), installed only when needed. */
+  /** The `resize*` options act as the default `transformFile`, installed only when needed. */
   private _uiResizeTransform(): void {
     const o = this.options;
     const wanted = !!(o.resizeWidth || o.resizeHeight);

@@ -1,3 +1,8 @@
+/**
+ * The headless AnyDrop engine.
+ *
+ * @module anydrop-core
+ */
 // Public API of @vedratech/anydrop-core. Nothing here may touch `window` or `document` at import time.
 export { VERSION } from './version';
 export { AnyDropCore, type AnyDropOptions } from './AnyDropCore';

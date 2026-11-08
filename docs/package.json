@@ -1,0 +1,24 @@
+{
+  "name": "@vedratech/anydrop-docs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The AnyDrop documentation website (VitePress). Never published.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "gen:api": "typedoc --options typedoc.json",
+    "check:api": "node scripts/check-api-coverage.mjs",
+    "copy:demo": "node scripts/copy-demo-assets.mjs",
+    "dev": "pnpm run gen:api && pnpm run copy:demo && vitepress dev",
+    "build": "pnpm run gen:api && pnpm run check:api && pnpm run copy:demo && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.14.1",
+    "typedoc-vitepress-theme": "1.1.4",
+    "vitepress": "1.6.4",
+    "typescript": "6.0.3",
+    "vue": "3.5.45"
+  }
+}

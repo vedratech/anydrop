@@ -1,4 +1,4 @@
-// TreeStore (0005): folder nodes unique by path, file records, and incremental roll-up.
+// TreeStore: folder nodes unique by path, file records, and incremental roll-up.
 // Every file change updates the counters and byte totals of its ancestors and recomputes their
 // status and progress: O(depth) per change, never O(files).
 import type { AnyDropFile, FileStatus, FolderNode } from '../types';
@@ -29,7 +29,7 @@ export class FolderNodeImpl implements FolderNode {
   bytesSent = 0;
   counts: MutableCounts = zeroCounts();
   userPaused = false;
-  /** @internal Status of this folder while it has no descendant files (0005 rule 3). */
+  /** @internal Status of this folder while it has no descendant files. */
   _empty: FileStatus;
   /** @internal Kept when it becomes empty through removals (it was dropped empty). */
   _keep = false;
@@ -115,7 +115,7 @@ export class TreeStore {
 
   /**
    * Applies the file's current `status`, `accepted` and `upload.bytesSent` to the tree.
-   * Bytes count only for accepted, non-canceled files (0005).
+   * Bytes count only for accepted, non-canceled files.
    */
   update(file: AnyDropFile, force = false): void {
     const rec = this.records.get(file.id);
@@ -241,7 +241,7 @@ export class TreeStore {
   }
 }
 
-/** Roll-up rules of decision 0005. `paused`: this folder, an ancestor or the instance is paused. */
+/** Roll-up rules of. `paused`: this folder, an ancestor or the instance is paused. */
 function rollUp(n: FolderNodeImpl, paused: boolean): FileStatus {
   const c = n.counts;
   if (c.total === 0) return n._empty;

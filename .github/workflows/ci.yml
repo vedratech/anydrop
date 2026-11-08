@@ -40,6 +40,8 @@ jobs:
       - run: pnpm test
       # Budgets from .size-limit.json (decisions 0009 and 0017): core, ui without core, ui CDN file.
       - run: pnpm size
+      # The docs site: TypeDoc reference, API coverage check, VitePress build (fails on dead links).
+      - run: pnpm --filter @vedratech/anydrop-docs build
       # publint, are-the-types-wrong and `npm pack --dry-run` for both packages.
       - run: pnpm check:packages
       - name: SSR import smoke test (no window, no document), ESM and CJS, Node 22

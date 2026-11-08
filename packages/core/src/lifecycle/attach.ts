@@ -1,5 +1,5 @@
-// Browser lifecycle (0008). Every browser listener of core is added here, through one attach()
-// that returns its detach(), which destroy() calls (0009). Globals are read only when called,
+// Browser lifecycle. Every browser listener of core is added here, through one attach()
+// that returns its detach(), which destroy() calls. Globals are read only when called,
 // never at import time (SSR-safe); without `window`/`document` nothing is attached.
 
 export interface LifecycleHandlers {

@@ -9,7 +9,7 @@ import { sentRelativePath } from '../util/path';
  * The built-in form fields of one upload request. Chunked: the six `dz*` fields plus
  * `adRelativePath` and `adSessionId`. Whole file: `adRelativePath`, `adSessionId`.
  * `uploadMultiple`: `adRelativePath[i]` and `adSessionId[i]` per file, no plain `adSessionId`: one
- * request can carry files of several batches (protocol v1.2, decision 0013).
+ * request can carry files of several batches (protocol v1.2).
  */
 export function uploadFields(
   files: AnyDropFile[],

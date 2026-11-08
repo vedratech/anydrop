@@ -1,4 +1,4 @@
-// Pause flags (0008). User flags exist on the instance, on each folder (`FolderNode.userPaused`)
+// Pause flags. User flags exist on the instance, on each folder (`FolderNode.userPaused`)
 // and on each file; system reasons (`offline`, `hidden`) exist for the instance only. A file may
 // run only if no user flag is set on it, an ancestor folder or the instance, and no system reason
 // is set. Lifecycle code never clears a user flag.

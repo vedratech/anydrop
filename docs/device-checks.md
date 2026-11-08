@@ -1,8 +1,8 @@
 # Real-device checks (iPhone and Android)
 
-Playwright's WebKit is **not** iOS Safari and its Pixel is a desktop Chromium with a phone viewport. This checklist is what only a real phone can prove. It covers every item of the `mobile-ios-checklist` skill that emulation cannot show, the unverified behaviour from decision 0008 (background suspension), the WebKit chunk finding from 0015, and the network-loss behaviour from 0017.
+Playwright's WebKit is **not** iOS Safari and its Pixel is a desktop Chromium with a phone viewport. This checklist is what only a real phone can prove. It covers every mobile and iOS item that emulation cannot show: background suspension, the WebKit behaviour of aborted chunks, and network loss.
 
-Run it on **a real iPhone in Safari** (latest two iOS versions if you have them, record the versions) and **an Android phone in Chrome**. Write the result next to each step (PASS, FAIL, N/A plus one line). Anything that fails: note the steps, the phone, the OS version and, if you can, the output of `http://<laptop-ip>:3001/__log` (see below), and give it to qa-compat-tester.
+Run it on **a real iPhone in Safari** (latest two iOS versions if you have them, record the versions) and **an Android phone in Chrome**. Write the result next to each step (PASS, FAIL, N/A plus one line). Anything that fails: note the steps, the phone, the OS version and, if you can, the output of `http://<laptop-ip>:3001/__log` (see below), and report it to the maintainers.
 
 ## 0. Setup: reach the dev server from the phone
 
@@ -55,7 +55,7 @@ Test data: put on the phone (AirDrop, USB or cloud) a few photos including **HEI
 
 Playwright's WebKit build posts an **empty body** for `Blob.slice()` of a file chosen through `<input type=file>` (reproduced without AnyDrop, see `e2e/tests/large-file.spec.ts`). We do not know whether real iOS Safari does the same, so this check matters a lot for iPhone.
 
-**Also look at the server log in sections 3 and 7.** Open `http://localhost:3001/__log` (or watch the terminal of `pnpm dev:mock`) and search for **`400` with `INVALID_CHUNK` and "length 0"** (a chunk that arrived with an empty body; the log line carries `bytes: 0`, the error message says `length 0 do not match`). An upload that shows such an error, on a real iPhone or Mac Safari, **reproduces WEBKIT-FLAKE-1 and becomes a 0.1.0 blocker** (decision 0019). Write down the step, the file and how many times it happened, even if the file ended up complete after "Retry failed".
+**Also look at the server log in sections 3 and 7.** Open `http://localhost:3001/__log` (or watch the terminal of `pnpm dev:mock`) and search for **`400` with `INVALID_CHUNK` and "length 0"** (a chunk that arrived with an empty body; the log line carries `bytes: 0`, the error message says `length 0 do not match`). An upload that shows such an error, on a real iPhone or Mac Safari, **reproduces WEBKIT-FLAKE-1 and becomes a 0.1.0 blocker**. Write down the step, the file and how many times it happened, even if the file ended up complete after "Retry failed".
 
 | # | Step | Expected | iPhone | Android |
 |---|---|---|---|---|
@@ -63,7 +63,7 @@ Playwright's WebKit build posts an **empty body** for `Blob.slice()` of a file c
 | 3.2 | Pick the **1 GB or larger video**. In the console run `anydrop.tree.setOption('chunkSize', 8*1024*1024)` first if you can (Android with remote debugging), otherwise use the default 64 KB chunks and expect a slow but steady upload. | Memory stays flat (the tab does not reload), progress moves, the upload finishes or can be paused and resumed. Write the time and whether the tab survived. | | |
 | 3.3 | While 3.2 runs, switch to another app for 10 seconds and come back. | See section 4. | | |
 
-## 4. Background suspension (decision 0008, unverified)
+## 4. Background suspension (unverified)
 
 This is the main unknown: **how does an in-flight XHR fail on iOS when the tab goes to the background or the screen locks?** Possible outcomes: an `error` event, a `timeout`, or nothing at all (a hang until the page returns). Record exactly what you see.
 
@@ -72,14 +72,14 @@ Preparation: start the slow server (`latencyMs: 400`) and upload a 20 MB or larg
 | # | Step | Expected | iPhone | Android |
 |---|---|---|---|---|
 | 4.1 | While uploading press the **side button** to lock the screen, wait **30 seconds**, unlock. | The upload **pauses cleanly** (no error entries) and **resumes by itself** when the page is visible again, or continues if the OS kept it running. No chunk is lost: at the end the tree on the laptop equals the source. | | |
-| 4.2 | **Write down** the laptop `__log` during the lock: did requests keep arriving while locked, did they stop, did they fail? | (A record, not a pass or fail.) Tell qa-compat-tester which of "error", "timeout", "hang" you saw. If it **hung** until unlock, decision 0008 adds a rule (abort and resend requests that made no progress while hidden). | | |
+| 4.2 | **Write down** the laptop `__log` during the lock: did requests keep arriving while locked, did they stop, did they fail? | (A record, not a pass or fail.) Tell the maintainers which of "error", "timeout", "hang" you saw. If it **hung** until unlock, a rule will be added (abort and resend requests that made no progress while hidden). | | |
 | 4.3 | Switch to **another app** for **2 minutes**, come back. | Same as 4.1. The banner or row state says "Waiting for connection" or "Paused" while away only if the library noticed; after return it resumes. | | |
 | 4.4 | Press **Home**, wait **10 minutes**, return (the OS may reload the tab). | If the tab reloaded: pick the same files again; **finished files and chunks are skipped** (laptop `__log` shows no repeated chunks, the status endpoint is asked). If it did not reload: the upload continues. | | |
 | 4.5 | Open another tab (Safari tab switcher), come back after 30 seconds. | Same as 4.1. | | |
 | 4.6 | Swipe the page away (close the tab), reopen the demo, pick the same files. | Resume skips finished work (IndexedDB survived). | | |
 | 4.7 | **Safari Private Browsing** (iPhone): repeat a small upload, then reload mid-upload. | The upload works. Persistence may be unavailable (IndexedDB can throw): that must **not** break the upload. After reload nothing is skipped, which is acceptable. | | N/A (use an Incognito tab) |
 
-## 5. A paused chunk committed twice (decision 0015)
+## 5. A paused chunk committed twice
 
 In Playwright's WebKit, aborting an XHR whose body was already sent does not stop the server from committing it, so a paused chunk can be written twice (harmless but wasteful). Check whether **real iPhone Safari** does it.
 
@@ -100,7 +100,7 @@ In Playwright's WebKit, aborting an XHR whose body was already sent does not sto
 | 6.6 | Dark mode on, then off. | The UI follows the system theme and stays readable. | | |
 | 6.7 | Android mid-range phone: drop or pick a folder with about **5,000 small files** if you have one (or run `anydrop.tree.addFiles` with 5,000 generated files from the console). | The tree scrolls smoothly (about 60 fps), no jank or crash. | N/A | |
 
-## 7. Network loss (decision 0017)
+## 7. Network loss
 
 **Search `__log` for `400` `INVALID_CHUNK` with "length 0" after every step of this section** (see section 3: an empty chunk body is a blocker).
 
@@ -131,4 +131,4 @@ Keep the laptop as the server. Start with the slow server (`latencyMs: 300`) and
 | Section 3: did `Blob.slice` of a picked file upload correct bytes? | | |
 | Sections 3 and 7: any `400 INVALID_CHUNK` with length 0 in `__log`? (how many, which step) | | |
 
-Send the filled table to the maintainers; the M5 done-when ("real-device checks on an iPhone and an Android phone are recorded") needs it.
+Send the filled table to the maintainers. It is the record that real-device checks on an iPhone and an Android phone were done.

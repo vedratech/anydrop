@@ -2,9 +2,11 @@
 // The built-in transport uses XMLHttpRequest because `fetch` has no upload progress. Adapters
 // (S3, tus, a fetch-based one) implement the same `send()`.
 
+/** One request core hands to a transport: an upload, a manifest, a finalize, a chunk-status or a probe request. */
 export interface TransportRequest {
   /** Upper-case HTTP method. */
   method: string;
+  /** Absolute or relative request URL. */
   url: string;
   /** Headers to set; empty values are skipped. */
   headers: Record<string, string>;
@@ -12,6 +14,7 @@ export interface TransportRequest {
   body: FormData | Blob | string | null;
   /** Milliseconds; `null` or `0` = none. */
   timeout: number | null;
+  /** Send cookies cross-origin. */
   withCredentials: boolean;
   /**
    * Must be called once, right before the body is sent, with the native request object (the
@@ -21,6 +24,7 @@ export interface TransportRequest {
   beforeSend?: (native?: unknown) => void;
 }
 
+/** What a transport resolves with. Any HTTP status, even 4xx or 5xx, is a response. */
 export interface TransportResponse {
   /** HTTP status; `0` when no response arrived (`error` is then set). */
   status: number;
@@ -28,12 +32,13 @@ export interface TransportResponse {
   body: unknown;
   /** Response header lookup (`Retry-After`). */
   header: (name: string) => string | null;
-  /** Set when no HTTP response arrived (`'stalled'` is set by core for a request it aborted, 0017). */
+  /** Set when no HTTP response arrived (`'stalled'` is set by core for a request it aborted). */
   error?: 'network' | 'timeout' | 'abort' | 'stalled';
   /** The built-in transport's request object (passed to the `error` event). */
   xhr?: XMLHttpRequest;
 }
 
+/** What `Transport.send()` returns: abort, progress and the response promise. */
 export interface TransportHandle {
   /** Aborts the request. The promise then resolves with `error: 'abort'`. */
   abort(): void;
@@ -43,6 +48,8 @@ export interface TransportHandle {
   promise: Promise<TransportResponse>;
 }
 
+/** Sends requests. Replace the built-in XMLHttpRequest transport with the `transport` option (S3, tus, fetch adapters or a fake for tests). */
 export interface Transport {
+  /** Starts a request and returns a handle at once. */
   send(request: TransportRequest): TransportHandle;
 }

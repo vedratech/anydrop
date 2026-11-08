@@ -1,4 +1,4 @@
-// Entry of the CDN build (`dist/index.global.js`), the only file with a top-level side effect (0014).
+// Entry of the CDN build (`dist/index.global.js`), the only file with a top-level side effect.
 // `window.AnyDrop` is the class itself, as `window.Dropzone` is; the other exports are statics on it.
 // The npm builds (`src/index.ts`) never run any of this.
 import { AnyDropCore } from '@vedratech/anydrop-core';

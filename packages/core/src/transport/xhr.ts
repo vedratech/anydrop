@@ -3,6 +3,7 @@
 // inside send(), so nothing touches browser globals at import time.
 import type { Transport, TransportHandle, TransportResponse } from './types';
 
+/** The built-in transport, based on `XMLHttpRequest` (which has upload progress). Use it as the fallback in your own transport. */
 export const xhrTransport: Transport = {
   send(req) {
     const xhr = new XMLHttpRequest();

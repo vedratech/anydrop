@@ -1,10 +1,10 @@
-// Scheduling helpers (decisions 0001, 0008, 0010): the file queue in add order, the per-file chunk
+// Scheduling helpers: the file queue in add order, the per-file chunk
 // limit, the instance-wide request cap, and the round-robin fill across uploading files.
 import type { AnyDropCoreOptions } from '../options';
 
 /**
  * Items kept sorted by a sequence number (add order). Appending in order is O(1). An item is held
- * once: a file paused and resumed before it was reached keeps its place (0008).
+ * once: a file paused and resumed before it was reached keeps its place.
  */
 export class OrderedQueue<T> {
   readonly items: T[] = [];
@@ -43,7 +43,7 @@ export function perFileLimit(o: Limits): number {
   return Math.max(1, p === true ? o.parallelUploads : Number(p) || 1);
 }
 
-/** Instance-wide cap on upload POSTs in flight: `maxChunksInFlight`, or none when null (0010). */
+/** Instance-wide cap on upload POSTs in flight: `maxChunksInFlight`, or none when null. */
 export function requestCap(o: Limits): number {
   return o.maxChunksInFlight != null ? Math.max(1, o.maxChunksInFlight) : Infinity;
 }

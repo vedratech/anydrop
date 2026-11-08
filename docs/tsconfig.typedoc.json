@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [],
+    "paths": {
+      "@vedratech/anydrop-core": ["../packages/core/src/index.ts"]
+    }
+  },
+  "include": ["../packages/core/src", "../packages/ui/src"]
+}

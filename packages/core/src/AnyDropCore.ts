@@ -1,7 +1,7 @@
 // AnyDropCore: the headless engine. Input reading, validation, the tree, the error list and the
 // events (M1); the upload engine: queue, two concurrency limits, chunks, retry, manifest and
 // finalize (M2); pause at three levels, resume records, lifecycle auto-pause and retrying failed
-// files (M3, decisions 0004, 0007, 0008).
+// files (M3).
 // Nothing here runs at import time; browser globals are only read inside methods.
 import { createBatch, type Batch } from './batch';
 import { chunkAt, doneBytes, nextChunk, planChunks } from './chunker/chunker';
@@ -36,7 +36,7 @@ import {
   type AnyDropCoreOptions,
 } from './options';
 import { PauseFlags } from './pause/flags';
-// The one import of the resume store (0009): a later opt-out entry only has to change this line.
+// The one import of the resume store: a later opt-out entry only has to change this line.
 import { createResumeStore, type ResumeStore } from './resume/store';
 import { backoff, classify, unreadable, type Failure } from './scheduler/retry';
 import { OrderedQueue, fillRoundRobin, perFileLimit, requestCap } from './scheduler/scheduler';
@@ -66,13 +66,13 @@ import { VERSION } from './version';
 
 /** Files processed per slice when reading a large file input (the page stays responsive). */
 const INPUT_SLICE = 500;
-/** Chrome fires an XHR network error before `offline`: wait this long (ms) before judging it (0008). Fixed at 1 s, not an option (0019). */
+/** Chrome fires an XHR network error before `offline`: wait this long (ms) before judging it. Fixed at 1 s, not an option. */
 const OFFLINE_GRACE = 1000;
-/** Consecutive no-response failures after which the connection counts as lost (`unreachable`, 0017). */
+/** Consecutive no-response failures after which the connection counts as lost (`unreachable`). */
 const STREAK = 3;
 /** How often the stall watchdog looks (ms); it compares timestamps, so a throttled timer only delays it. */
 const STALL_TICK = 5000;
-/** A connectivity probe that gets no answer for this long (ms) counts as failed. Fixed at 10 s, not an option; raise only if device checks show a probe timing out on a working link (0019). */
+/** A connectivity probe that gets no answer for this long (ms) counts as failed. Fixed at 10 s, not an option; raise only if device checks show a probe timing out on a working link. */
 const PROBE_TIMEOUT = 10000;
 
 export type AnyDropOptions = AnyDropCoreOptions<AnyDropCore> & AnyDropEventHandlers<AnyDropCore>;
@@ -85,7 +85,7 @@ interface Req {
   wait?: boolean;
 }
 
-/** A file being processed (several with `uploadMultiple`). Holds a file slot until it ends (0001). */
+/** A file being processed (several with `uploadMultiple`). Holds a file slot until it ends. */
 interface Job {
   files: AnyDropFile[];
   /** Chunk size in bytes (`upload.chunkSize`), fixed when processing starts. */
@@ -125,19 +125,43 @@ interface FailInfo {
   chunkIndex?: number;
 }
 
+/**
+ * The headless upload engine: reads dropped and picked files and folders, validates them, builds the
+ * folder tree and uploads in chunks, with pause, resume and retry. Configure it like Dropzone.
+ *
+ * @example
+ * ```ts
+ * const core = new AnyDropCore({ url: '/upload', chunking: true });
+ * core.on('queuecomplete', () => console.log(core.getErrors()));
+ * const area = document.querySelector('#upload-area')!;
+ * area.addEventListener('dragover', (e) => e.preventDefault());
+ * area.addEventListener('drop', (e) => { e.preventDefault(); core.drop(e); });
+ * ```
+ */
 export class AnyDropCore extends Emitter<AnyDropEvents> {
+  /** Library version. */
   static readonly version = VERSION;
+  /** Status constant `'added'`. */
   static readonly ADDED = ADDED;
+  /** Status constant `'queued'`. */
   static readonly QUEUED = QUEUED;
+  /** Dropzone alias of `QUEUED`. */
   static readonly ACCEPTED = ACCEPTED;
+  /** Status constant `'uploading'`. */
   static readonly UPLOADING = UPLOADING;
+  /** Dropzone alias of `UPLOADING`. */
   static readonly PROCESSING = PROCESSING;
+  /** Status constant `'paused'`. */
   static readonly PAUSED = PAUSED;
+  /** Status constant `'success'`. */
   static readonly SUCCESS = SUCCESS;
+  /** Status constant `'error'`. */
   static readonly ERROR = ERROR;
+  /** Status constant `'canceled'`. */
   static readonly CANCELED = CANCELED;
   /** Dropzone's `Dropzone.isValidFile(file, acceptedFiles)`, with the empty-MIME fallback. */
   static readonly isValidFile = isValidFile;
+  /** Creates a UUID version 4. */
   static readonly uuidv4 = uuidv4;
 
   /** Resolved options (defaults merged with yours). Change them with `setOption()`. */
@@ -147,11 +171,11 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /** Set by `disable()`, cleared by `enable()` (Dropzone). */
   disabled = false;
 
-  /** Pause flags (0008). */
+  /** Pause flags. */
   private readonly flags = new PauseFlags();
   /** The folder tree. Protected so subclasses (`@vedratech/anydrop-ui`) can read it; do not shadow it. */
   protected readonly tree = new TreeStore(() => this.flags.any());
-  /** The error list (0007). Protected so subclasses can read it; do not shadow it. */
+  /** The error list. Protected so subclasses can read it; do not shadow it. */
   protected readonly errors: ErrorRegistry;
   private readonly uuid: () => string;
   private readonly random: () => number;
@@ -160,7 +184,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   private readonly batchOf = new WeakMap<AnyDropFile, Batch>();
   private readonly seqOf = new WeakMap<AnyDropFile, number>();
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
-  /** Queued files in add order (0008); entries that are no longer `queued` are dropped lazily. */
+  /** Queued files in add order; entries that are no longer `queued` are dropped lazily. */
   private readonly queue = new OrderedQueue<AnyDropFile>((f) => this.seqOf.get(f) || 0);
   private readonly jobs: Job[] = [];
   /** Every request in flight (aborted by `destroy()`). */
@@ -177,46 +201,46 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   private activeTotal = 0;
   private activeSent = 0;
   private manifestsInFlight = 0;
-  /** Round-robin cursor over `jobs` (0001). */
+  /** Round-robin cursor over `jobs`. */
   private rr = 0;
-  /** Files given to `processFile(s)`: they start now, beyond `parallelUploads` (0012). */
+  /** Files given to `processFile(s)`: they start now, beyond `parallelUploads`. */
   private readonly forced = new Set<AnyDropFile>();
-  /** Blobs returned by `transformFile`, kept for the session (0011). */
+  /** Blobs returned by `transformFile`, kept for the session. */
   private readonly blobs = new WeakMap<AnyDropFile, Blob>();
   private queueCompleteDue = false;
-  /** A run: from a file entering `processing` to `queuecomplete` (0013). */
+  /** A run: from a file entering `processing` to `queuecomplete`. */
   private run = false;
   private destroyed = false;
-  /** Handles core aborts itself (`ABORTED`); any other abort counts as `NETWORK` (0013). */
+  /** Handles core aborts itself (`ABORTED`); any other abort counts as `NETWORK`. */
   private readonly own = new WeakSet<TransportHandle>();
-  /** Responses of requests that threw while being built (`REQUEST_SETUP_FAILED`, 0013). */
+  /** Responses of requests that threw while being built (`REQUEST_SETUP_FAILED`). */
   private readonly setupFailed = new WeakSet<TransportResponse>();
   private warned = false;
-  // M3 state: resume records (0004), lifecycle (0008), retries (0007).
+  // M3 state: resume records, lifecycle, retries.
   private rs: ResumeStore | null = null;
-  /** Record key -> the one active file that owns it (0004). */
+  /** Record key -> the one active file that owns it. */
   private readonly claims = new Map<string, AnyDropFile>();
   private readonly keys = new WeakMap<AnyDropFile, string>();
   /** Files with a `completed` record: skipped (after the server confirms, with `chunkStatusUrl`). */
   private readonly toSkip = new WeakSet<AnyDropFile>();
-  /** Files that sent a chunk: their layout is fixed, and a new start asks `chunkStatusUrl` (0004). */
+  /** Files that sent a chunk: their layout is fixed, and a new start asks `chunkStatusUrl`. */
   private readonly sent = new WeakSet<AnyDropFile>();
-  /** Files whose new uploadId is not in a manifest the server got yet (0016). */
+  /** Files whose new uploadId is not in a manifest the server got yet. */
   private readonly stale = new WeakSet<AnyDropFile>();
-  /** Manifest resends per batch: the one in flight and the next one collecting changes (0016). */
+  /** Manifest resends per batch: the one in flight and the next one collecting changes. */
   private readonly resends = new WeakMap<
     Batch,
     { cur?: Promise<unknown>; next?: Promise<FailInfo | null> }
   >();
-  /** Files whose chunk state came from a stored record (dropped if a transform changes the bytes, 0011). */
+  /** Files whose chunk state came from a stored record (dropped if a transform changes the bytes). */
   private readonly restored = new WeakSet<AnyDropFile>();
   private readonly failedBatches = new Set<Batch>();
   private detach: (() => void) | null = null;
-  /** The page is hidden (`visibilitychange`): a network failure becomes a pause (0008). */
+  /** The page is hidden (`visibilitychange`): a network failure becomes a pause. */
   private hidden = false;
   /** Requests waiting for the instance to run again (a manifest that failed offline). */
   private waiters: (() => void)[] = [];
-  // Connectivity (0017). `streak` counts no-response failures; only a response resets it.
+  // Connectivity. `streak` counts no-response failures; only a response resets it.
   private streak = 0;
   private attempt = 0;
   private retryAt: number | null = null;
@@ -230,10 +254,11 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /** Requests in flight, for the stall watchdog: last progress, and whether the body is sent. */
   private readonly live = new Map<TransportHandle, { at: number; body: boolean }>();
   private readonly stalled = new WeakSet<TransportHandle>();
-  /** Failed attempts per chunk index, kept across the file's jobs: a pause is not a new start (0017). */
+  /** Failed attempts per chunk index, kept across the file's jobs: a pause is not a new start. */
   private readonly attempts = new WeakMap<AnyDropFile, Map<number, number>>();
   private wd: ReturnType<typeof setTimeout> | undefined;
 
+  /** Creates an instance. Nothing touches `window` or `document` until files are added. */
   constructor(config: AnyDropCoreConfig = {}) {
     super();
     const { _uuid, _random, acceptedMimeTypes, renameFilename, ...rest } = config;
@@ -246,7 +271,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       if (value !== undefined) (options as unknown as Record<string, unknown>)[key] = value;
     }
     options.dictFileSizeUnits = { ...units, ...options.dictFileSizeUnits };
-    // Deprecated Dropzone options (0012), mapped as Dropzone 6.3.5 does.
+    // Deprecated Dropzone options, mapped as Dropzone 6.3.5 does.
     if (acceptedMimeTypes) {
       if (options.acceptedFiles) {
         throw new Error(
@@ -287,7 +312,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     }
     options[name] = value;
     if (name === 'method' && typeof value === 'string') options.method = value.toUpperCase();
-    // New limits (or a URL at last) only affect which requests start next; nothing is aborted (0001).
+    // New limits (or a URL at last) only affect which requests start next; nothing is aborted.
     if (/^(url|parallelUploads|maxChunksInFlight|parallelChunkUploads)$/.test(name)) {
       this.later(() => this.next());
     }
@@ -326,7 +351,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /**
    * Hook for subclasses: emits `complete` for a file outside the queue (a `displayExistingFile`
    * mock file, which is in neither `files` nor the tree), then re-checks `queuecomplete` while a
-   * run is open (0013), so it can never fire an extra `queuecomplete` when idle.
+   * run is open, so it can never fire an extra `queuecomplete` when idle.
    */
   protected _completeExternal(file: AnyDropFile): void {
     this.emit('complete', file);
@@ -347,6 +372,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.disabled = false;
   }
 
+  /** Reads the current value of an option. */
   getOption<K extends keyof AnyDropOptions>(name: K): AnyDropOptions[K] {
     return this.options[name];
   }
@@ -405,7 +431,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /**
    * Adds one file (Dropzone's `addFile`). `folderPath` places it in a folder (`'Photos/2024'`);
    * without it, a non-empty `webkitRelativePath` is used, else the file is loose.
-   * Calls in the same tick form one batch (0003). Returns the file with its properties added.
+   * Calls in the same tick form one batch. Returns the file with its properties added.
    */
   addFile(file: File, folderPath?: string): AnyDropFile {
     if (this.destroyed) throw new Error('This AnyDropCore instance was destroyed.');
@@ -435,30 +461,37 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.tree.root;
   }
 
+  /** A folder node by path, for example `getFolder('Photos/2024')`. */
   getFolder(path: string): FolderNode | undefined {
     return this.tree.getFolder(path);
   }
 
+  /** A file by its `id`. */
   getFile(id: string): AnyDropFile | undefined {
     return this.tree.getFile(id);
   }
 
+  /** Files accepted by validation. */
   getAcceptedFiles(): AnyDropFile[] {
     return this.files.filter((f) => f.accepted);
   }
 
+  /** Files rejected by validation. */
   getRejectedFiles(): AnyDropFile[] {
     return this.files.filter((f) => !f.accepted);
   }
 
+  /** Files with the given status. */
   getFilesWithStatus(status: FileStatus): AnyDropFile[] {
     return this.files.filter((f) => f.status === status);
   }
 
+  /** Files with status `added`. */
   getAddedFiles(): AnyDropFile[] {
     return this.getFilesWithStatus(ADDED);
   }
 
+  /** Files with status `queued`. */
   getQueuedFiles(): AnyDropFile[] {
     return this.getFilesWithStatus(QUEUED);
   }
@@ -468,11 +501,12 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.getFilesWithStatus(UPLOADING);
   }
 
+  /** Files with status `paused`. */
   getPausedFiles(): AnyDropFile[] {
     return this.getFilesWithStatus(PAUSED);
   }
 
-  /** Files in `queued`, `uploading` or `paused` (0002). */
+  /** Files in `queued`, `uploading` or `paused`. */
   getActiveFiles(): AnyDropFile[] {
     return this.files.filter(
       (f) => f.status === QUEUED || f.status === UPLOADING || f.status === PAUSED,
@@ -486,7 +520,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   // ---------------------------------------------------------------- errors
 
-  /** A copy of the error list: one entry per file currently in `error` (0007). */
+  /** A copy of the error list: one entry per file currently in `error`. */
   getErrors(): ErrorEntry[] {
     return this.errors.list();
   }
@@ -503,8 +537,8 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * Re-queues the files in `error` (under `folderPath`, or all) that can be retried: everything but
-   * validation rejections (0007). Done chunks are kept; `chunkStatusUrl` is asked first when set; a
-   * failed batch manifest is sent again (same `sessionId`, 0003). Returns the number of files re-queued.
+   * validation rejections. Done chunks are kept; `chunkStatusUrl` is asked first when set; a
+   * failed batch manifest is sent again (same `sessionId`). Returns the number of files re-queued.
    */
   retryFailedOnly(folderPath?: string): number {
     if (this.destroyed) return 0;
@@ -541,7 +575,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return ok;
   }
 
-  /** A retryable file in `error` goes back to the queue; a failed batch manifest is due again (0003). */
+  /** A retryable file in `error` goes back to the queue; a failed batch manifest is due again. */
   private requeue(f: AnyDropFile): boolean {
     if (f.status !== ERROR || f.accepted !== true) return false;
     const b = this.batchOf.get(f);
@@ -552,7 +586,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return true;
   }
 
-  // ---------------------------------------------------------------- pause (0008)
+  // ---------------------------------------------------------------- pause
 
   /** Pauses every file (`paused({ scope: 'all', reason: 'user' })`). */
   pause(): void {
@@ -617,7 +651,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Deletes this `persistKey`'s resume records (a "start over" button, 0004), and the claims of the
+   * Deletes this `persistKey`'s resume records (a "start over" button), and the claims of the
    * files in the list, so they stop writing records. Does nothing when `persistState` is false.
    */
   clearPersistedState(): Promise<void> {
@@ -634,7 +668,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return f && this.tree.has(f) ? f : undefined;
   }
 
-  /** After a flag change: refresh folder statuses, apply the flags, emit, continue (0006, 0008). */
+  /** After a flag change: refresh folder statuses, apply the flags, emit, continue. */
   private changed(
     event: 'paused' | 'resumed',
     target: PauseTarget,
@@ -674,7 +708,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * A system pause (0008, 0017): `offline`, `hidden` or `unreachable`. A repeat only applies the
+   * A system pause: `offline`, `hidden` or `unreachable`. A repeat only applies the
    * flags again; the return from a lifted `unreachable` pause emits no new `paused` event.
    */
   private sysPause(reason: PauseReason, mode: PauseMode = this.options.pauseMode): void {
@@ -698,7 +732,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Why a failed request is a pause instead of a retry or an error (0007, 0008, 0017), or `''`.
+   * Why a failed request is a pause instead of a retry or an error, or `''`.
    * A failure without any response (network, timeout, stall) while offline pauses `offline`; the
    * third in a row since the last response (any status, `send()` resets the streak) pauses
    * `unreachable`, and so does every later one. None of them uses a retry or makes an error entry.
@@ -723,14 +757,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * "Retry now": probes at once while the state is `unreachable`, and clears an `offline` pause the
-   * browser no longer reports. Does nothing when online. Unlike `resume()`, user pauses stay (0017).
+   * browser no longer reports. Does nothing when online. Unlike `resume()`, user pauses stay.
    */
   reconnect(): void {
     if (!isOffline()) this.sysResume('offline');
     this.probeNow();
   }
 
-  /** The next probe is due after `random(0.5, 1) × min(60 s, 2 s × 2^(n-1))` (0017). */
+  /** The next probe is due after `random(0.5, 1) × min(60 s, 2 s × 2^(n-1))`. */
   private reprobe(): void {
     if (!this.options.autoResumeOnReconnect || this.destroyed) return;
     const n = ++this.attempt;
@@ -781,7 +815,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       this.reprobe();
   }
 
-  /** A response arrived (any status): the streak ends, and so does the `unreachable` state (0017). */
+  /** A response arrived (any status): the streak ends, and so does the `unreachable` state. */
   private reachable(): void {
     this.streak = 0;
     if (!this.flags.sys.has('unreachable') && !this.lifted) return;
@@ -798,7 +832,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.lifted = false;
   }
 
-  /** Aborts requests without progress for too long (0017). Compares timestamps, not counted ticks. */
+  /** Aborts requests without progress for too long. Compares timestamps, not counted ticks. */
   private check(): void {
     const stall = this.options.stallTimeout;
     if (!stall) return;
@@ -829,7 +863,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       : Promise.resolve();
   }
 
-  /** Adds the lifecycle listeners (first `processQueue`, 0008); `destroy()` removes them. */
+  /** Adds the lifecycle listeners (first `processQueue`); `destroy()` removes them. */
   private watch(): void {
     if (this.detach || this.destroyed) return;
     this.hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
@@ -864,7 +898,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     });
   }
 
-  // ---------------------------------------------------------------- resume records (0004)
+  // ---------------------------------------------------------------- resume records
 
   private store(): ResumeStore {
     return this.rs || (this.rs = createResumeStore());
@@ -891,7 +925,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * Writes a file's record (batched). Chunk records only after a 2xx, and none when `transformFile`
-   * returned a different blob (its bytes may differ next time, 0011).
+   * returned a different blob (its bytes may differ next time).
    */
   private persist(f: AnyDropFile, completed: boolean): void {
     const k = this.keyOf(f);
@@ -918,7 +952,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /** Queues an added, accepted file (Dropzone's `enqueueFile`). */
   enqueueFile(file: AnyDropFile): void {
     const b = this.batchOf.get(file);
-    // In an open batch the file is not validated yet: apply the call when the batch closes (0011).
+    // In an open batch the file is not validated yet: apply the call when the batch closes.
     if (b && !b.closed && this.tree.has(file)) {
       b.deferred.push({ file, process: false });
     } else if (file.status === ADDED && file.accepted === true) {
@@ -931,13 +965,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     }
   }
 
+  /** Queues several added, accepted files (with `autoQueue: false`). */
   enqueueFiles(files: AnyDropFile[]): void {
     for (const file of files) this.enqueueFile(file);
   }
 
   /**
    * Starts queued files until `parallelUploads` files are uploading (Dropzone's `processQueue`).
-   * Files start in add order; a batch's manifest is sent before its first file (0003). Without a
+   * Files start in add order; a batch's manifest is sent before its first file. Without a
    * `url`, nothing starts. Called while a batch is still being read, it also runs when that
    * batch closes, so its files are included.
    */
@@ -971,13 +1006,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.fill();
   }
 
-  /** Starting while the browser is offline pauses `offline` at once, without an `offline` event (0017). */
+  /** Starting while the browser is offline pauses `offline` at once, without an `offline` event. */
   private offlineStart(): void {
     if (isOffline() && !this.flags.sys.has('offline') && this.tree.root.counts.queued) {
       this.sysPause('offline');
     }
   }
 
+  /** Starts one queued file now, even beyond `parallelUploads`. */
   processFile(file: AnyDropFile): void {
     this.processFiles([file]);
   }
@@ -1002,7 +1038,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.kick();
   }
 
-  /** Cancels without restarting the queue; deletes the resume records (0004). */
+  /** Cancels without restarting the queue; deletes the resume records. */
   private cancel(file: AnyDropFile): void {
     if (!this.tree.has(file)) return;
     const job = this.jobOf(file);
@@ -1041,7 +1077,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * After a removal: `removedfile`, `removedfolder` (deepest first). Completion is re-checked only
-   * when the file was unfinished and a run is open (0012, 0013), so `queuecomplete() {
+   * when the file was unfinished and a run is open, so `queuecomplete() {
    * this.removeAllFiles() }` fires once.
    */
   private removed(file: AnyDropFile, status: FileStatus, folders: FolderNode[]): void {
@@ -1158,7 +1194,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return batch;
   }
 
-  /** The batch of programmatic adds in this tick; closed on a microtask (0003). */
+  /** The batch of programmatic adds in this tick; closed on a microtask. */
   private currentTickBatch(): Batch {
     let batch = this.tickBatch;
     if (!batch) {
@@ -1313,7 +1349,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     void this.closeBatch(batch);
   }
 
-  /** Steps 3 and 4 of the batch pipeline (0003). */
+  /** Steps 3 and 4 of the batch pipeline. */
   private async closeBatch(batch: Batch): Promise<void> {
     if (batch.readErrors.length) {
       warn(`${batch.readErrors.length} dropped item(s) could not be read:`, batch.readErrors);
@@ -1327,7 +1363,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     const o = this.options;
     const files = batch.files.filter((f) => this.tree.has(f));
     this.emit('addedfiles', files);
-    // Finished in an earlier session (0004): skipped now, or once the server confirms it.
+    // Finished in an earlier session: skipped now, or once the server confirms it.
     for (const f of files) {
       if (this.toSkip.has(f) && !o.chunkStatusUrl && this.tree.has(f)) this.skip(f);
     }
@@ -1335,7 +1371,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       for (const f of files)
         if (f.status === ADDED && f.accepted === true) this.setStatus(f, QUEUED);
     }
-    // Empty folders (0005 rule 3): without a manifest there is nothing to send, so they are done.
+    // Empty folders: without a manifest there is nothing to send, so they are done.
     const completed = new Set(this.manifestDue() ? [] : this.settleEmpty(batch, SUCCESS));
     batch.terminalIn.forEach((n) => {
       for (let p: FolderNodeImpl | null = n; p && p.parent; p = p.parent) {
@@ -1346,7 +1382,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.foldersComplete(Array.from(completed));
     this.finishBatch(batch);
     if (this.manifestDue()) this.manifestBatches.add(batch);
-    // enqueueFile() / processFile() calls made while the batch was open (0011, 0012).
+    // enqueueFile() / processFile() calls made while the batch was open.
     for (const { file: f, process } of batch.deferred) {
       if (!this.tree.has(f)) continue;
       if (f.accepted !== true) {
@@ -1356,7 +1392,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       if (f.status === ADDED) this.setStatus(f, QUEUED);
       if (process) this.forced.add(f);
     }
-    // A processQueue() call made while this batch was open runs now (0011).
+    // A processQueue() call made while this batch was open runs now.
     if (o.autoProcessQueue || batch.processRequested) {
       batch.processRequested = false;
       this.processQueue();
@@ -1376,7 +1412,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Sets the batch's still-`queued` empty folders to `status` (0005 rule 3) and returns them.
+   * Sets the batch's still-`queued` empty folders to `status` and returns them.
    * With `error`, each gets a folder-level error entry.
    */
   private settleEmpty(batch: Batch, status: FileStatus, entry?: ErrorEntry): FolderNodeImpl[] {
@@ -1393,9 +1429,9 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Resume lookup (0004), before `addedfiles`: one store read for the batch's accepted files. Each
+   * Resume lookup, before `addedfiles`: one store read for the batch's accepted files. Each
    * file claims its record key unless another unfinished file holds it. A partial record is adopted
-   * when the chunk layout matches (and no `transformFile` is set, 0011); a `completed` one marks
+   * when the chunk layout matches (and no `transformFile` is set); a `completed` one marks
    * the file to be skipped.
    */
   private async prepareBatch(batch: Batch): Promise<void> {
@@ -1443,7 +1479,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     });
   }
 
-  /** A file finished in an earlier session (0004): `success` without sending anything. */
+  /** A file finished in an earlier session: `success` without sending anything. */
   private skip(f: AnyDropFile): void {
     const u = f.upload;
     this.toSkip.delete(f);
@@ -1464,7 +1500,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   // ---------------------------------------------------------------- internals: files
 
   private setStatus(file: AnyDropFile, status: FileStatus): void {
-    // A file that would be queued while it, a folder above it or the instance is paused waits paused (0008).
+    // A file that would be queued while it, a folder above it or the instance is paused waits paused.
     if (status === QUEUED && this.flags.blocks(file)) status = PAUSED;
     const was = isActive(file.status);
     if (was !== isActive(status)) {
@@ -1511,7 +1547,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       batch.terminalIn.add(file.folder as FolderNodeImpl);
       return;
     }
-    // Also after a removal: pruned folders are skipped, surviving ancestors are checked (0012).
+    // Also after a removal: pruned folders are skipped, surviving ancestors are checked.
     const done: FolderNodeImpl[] = [];
     for (let p = file.folder as FolderNodeImpl; p.parent; p = p.parent) {
       if (!p._fc && this.tree.isComplete(p) && this.tree.getFolder(p.path) === p) done.push(p);
@@ -1528,7 +1564,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     }
     this.forced.delete(file);
     this.flags.files.delete(file);
-    // removeFile deletes the resume record (0004).
+    // removeFile deletes the resume record.
     this.unpersist(file);
     const k = this.keys.get(file);
     if (k && this.claims.get(k) === file) this.claims.delete(k);
@@ -1545,7 +1581,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   // ---------------------------------------------------------------- internals: upload engine
 
   /**
-   * After any request ends: paused jobs with nothing in flight give up their file slot (0008), then
+   * After any request ends: paused jobs with nothing in flight give up their file slot, then
    * files start (with `autoProcessQueue`) and request slots are filled.
    */
   private next(): void {
@@ -1562,7 +1598,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.fill();
   }
 
-  /** Whether a manifest is sent: it needs `sendManifest` and `manifestUrl` (else one warning, 0013). */
+  /** Whether a manifest is sent: it needs `sendManifest` and `manifestUrl` (else one warning). */
   private manifestDue(): boolean {
     const o = this.options;
     if (o.sendManifest && !o.manifestUrl && !this.warned) {
@@ -1572,14 +1608,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return !!o.sendManifest && !!o.manifestUrl;
   }
 
-  /** Whether the batch's files may start; sends the manifest when it is due (0003). */
+  /** Whether the batch's files may start; sends the manifest when it is due. */
   private manifestOk(b: Batch): boolean {
     if (!this.manifestDue() || b.manifestState === 'sent') return true;
     if (b.manifestState === 'pending') void this.sendManifest(b);
     return false;
   }
 
-  /** Starts the files given to `processFiles()`, beyond `parallelUploads` (0012). */
+  /** Starts the files given to `processFiles()`, beyond `parallelUploads`. */
   private startForced(): void {
     if (!this.options.url || this.destroyed) return;
     this.forced.forEach((f) => {
@@ -1604,7 +1640,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   private startFiles(): void {
     const o = this.options;
     if (!o.url) return;
-    // Batches with nothing to upload still send their manifest (empty folders, 0003).
+    // Batches with nothing to upload still send their manifest (empty folders).
     this.manifestBatches.forEach((b) => {
       this.manifestBatches.delete(b);
       if (b.manifestState !== 'pending') return;
@@ -1629,7 +1665,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       }
       this.queue.remove(i);
       const files = [f];
-      // uploadMultiple: queued files of any batch whose manifest is done or not needed (0013).
+      // uploadMultiple: queued files of any batch whose manifest is done or not needed.
       for (let j = i; o.uploadMultiple && files.length < free && j < q.length;) {
         const g = q[j] as AnyDropFile;
         if (
@@ -1668,14 +1704,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       this.emit('processing', x);
     }
     if (o.uploadMultiple) this.emit('processingmultiple', files);
-    // The chunk layout is decided now, from the blob to send and the current options (0011).
+    // The chunk layout is decided now, from the blob to send and the current options.
     const ready = (): void => {
       if (job.dead) return;
       for (const x of files) {
         const blob = this.blobs.get(x) || x;
         const u = x.upload;
         // A restored chunk state only holds for the original bytes: a transform that changed the
-        // blob starts fresh under a new uploadId; one that passed the file through keeps it (0011).
+        // blob starts fresh under a new uploadId; one that passed the file through keeps it.
         if (blob !== x && this.restored.has(x)) {
           this.renew(x);
           u.resumed = false;
@@ -1689,7 +1725,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       job.doneBytes = doneBytes(f, job.size);
       this.progress(job);
       // A file with chunks sent (paused, retried) or restored asks chunkStatusUrl what the server
-      // has (0004); a fresh file never does.
+      // has; a fresh file never does.
       const ask = !!o.chunkStatusUrl && files.length < 2 && (f.upload.resumed || this.sent.has(f));
       const go = (): void => {
         job.finishing = false;
@@ -1699,7 +1735,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
         // so they are shared round-robin.
         else if (!sync) this.next();
       };
-      // A new uploadId the server has not been told yet (a retry after a failed resend, 0016) is
+      // A new uploadId the server has not been told yet (a retry after a failed resend) is
       // announced first; the status path does it itself.
       if (!ask && files.some((x) => this.stale.has(x))) {
         void this.announce(job).then((ok) => ok && go());
@@ -1709,7 +1745,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     let left = files.length;
     let sync = true;
     for (const x of files) {
-      // A transformed blob is kept for the session: retries send the same bytes (0011).
+      // A transformed blob is kept for the session: retries send the same bytes.
       if (!transform || this.blobs.has(x)) {
         if (!--left) ready();
         continue;
@@ -1735,7 +1771,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     sync = false;
   }
 
-  /** Starts upload POSTs round-robin across uploading files, within both limits (0001). */
+  /** Starts upload POSTs round-robin across uploading files, within both limits. */
   private fill(): void {
     const o = this.options;
     const cap = requestCap(o);
@@ -1840,20 +1876,20 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     job.tries.delete(index);
     job.doneBytes += chunkAt(f, index, job.size, 0).end - index * job.size;
     this.progress(job);
-    // Recorded only after the 2xx (0004).
+    // Recorded only after the 2xx.
     this.persist(f, false);
     if (nextChunk(f, job.busy) < 0 && !job.busy.size) void this.finishChunks(job);
     else this.next();
   }
 
-  /** `classify`, plus requests that threw while being built (0013). */
+  /** `classify`, plus requests that threw while being built. */
   private classify(res: TransportResponse): Failure | null {
     return this.setupFailed.has(res)
       ? { code: 'REQUEST_SETUP_FAILED', retry: false, mismatch: false }
       : classify(res);
   }
 
-  /** A failed upload POST: pause, unreadable file, chunk mismatch, retry with backoff, or error (0007). */
+  /** A failed upload POST: pause, unreadable file, chunk mismatch, retry with backoff, or error. */
   private async failed(job: Job, index: number, fail: Failure, res: TransportResponse) {
     const o = this.options;
     const f = job.files[0] as AnyDropFile;
@@ -1862,7 +1898,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     job.busy.set(index, wait);
     await this.grace(fail);
     if (job.dead || job.busy.get(index) !== wait) return;
-    // Offline, or hidden (iOS suspension): a pause that uses no retry and makes no entry (0008).
+    // Offline, or hidden (iOS suspension): a pause that uses no retry and makes no entry.
     const why = this.netPause(fail, f);
     if (why) {
       job.busy.delete(index);
@@ -1898,7 +1934,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       job.busy.delete(index);
       return this.refreshStatus(job);
     }
-    // A whole-file upload is never retried automatically (0007).
+    // A whole-file upload is never retried automatically.
     if (chunked && fail.retry && o.retryChunks && n <= o.retryChunksLimit) {
       return this.later(
         () => {
@@ -1912,7 +1948,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.failJob(job, this.failInfo(fail, res, 'upload', n, chunked ? index : undefined));
   }
 
-  /** All chunks acknowledged: `chunksUploaded` (replaces finalize), finalize, or done (0003). */
+  /** All chunks acknowledged: `chunksUploaded` (replaces finalize), finalize, or done. */
   private async finishChunks(job: Job): Promise<void> {
     job.finishing = true;
     const o = this.options;
@@ -1960,9 +1996,9 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Asks `chunkStatusUrl` what the server has; it wins (0004). One at a time per job, and the job's
+   * Asks `chunkStatusUrl` what the server has; it wins. One at a time per job, and the job's
    * requests in flight are aborted first, so nothing under the old state lands afterwards. `404`
-   * restarts with a new uploadId (announced in a resent manifest first, 0016); `complete: true`
+   * restarts with a new uploadId (announced in a resent manifest first); `complete: true`
    * skips a file finished in an earlier session, and a record the server does not confirm as
    * complete starts fresh the same way (its old chunk layout is unknown).
    */
@@ -1994,14 +2030,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     this.toSkip.delete(f);
     job.doneBytes = doneBytes(f, job.size);
     this.progress(job);
-    // A new uploadId is announced before any chunk is sent under it (0016).
+    // A new uploadId is announced before any chunk is sent under it.
     if (!(await this.announce(job))) return;
     job.finishing = false;
     if (u.chunked && nextChunk(f, job.busy) < 0) void this.finishChunks(job);
     else this.next();
   }
 
-  /** Posts the batch's manifest with every file's current uploadId (0003), retried like a chunk. */
+  /** Posts the batch's manifest with every file's current uploadId, retried like a chunk. */
   private postManifest(b: Batch): Promise<Called> {
     const files = b.files.filter(
       (f) => f.accepted && f.status !== CANCELED && !f.upload.skipped && this.tree.has(f),
@@ -2028,7 +2064,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     return this.call(null, 'POST', this.options.manifestUrl as string, JSON.stringify(manifest));
   }
 
-  /** Sends the batch's manifest (0003): retried like a chunk; on failure the batch's files fail. */
+  /** Sends the batch's manifest: retried like a chunk; on failure the batch's files fail. */
   private async sendManifest(b: Batch): Promise<void> {
     b.manifestState = 'sending';
     this.manifestsInFlight++;
@@ -2061,7 +2097,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
 
   /**
    * A file gets a new uploadId (a `404` from chunk status, a changed transform, a record the server
-   * does not confirm): its record is rewritten, and a manifest already sent no longer lists it (0016).
+   * does not confirm): its record is rewritten, and a manifest already sent no longer lists it.
    */
   private renew(f: AnyDropFile): void {
     const u = f.upload;
@@ -2073,7 +2109,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   }
 
   /**
-   * Before the job's files send anything under a new uploadId, the server must have it (0016): the
+   * Before the job's files send anything under a new uploadId, the server must have it: the
    * batch manifest is sent again when it already got one. True when the job may go on; otherwise the
    * job's files failed with `stage: 'manifest'` (`retryFailedOnly` announces again first).
    */
@@ -2093,7 +2129,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /**
    * Sends a batch's manifest again, once its first send got a 2xx (before that it carries current
    * ids; without `sendManifest` there is none). Callers in the same tick share one request; one that
-   * comes while a resend is in flight waits for it and gets one more (0016). Resolves to the failure, if any.
+   * comes while a resend is in flight waits for it and gets one more. Resolves to the failure, if any.
    */
   private resend(b: Batch): Promise<FailInfo | null> {
     if (b.manifestState !== 'sent' || !this.manifestDue()) return Promise.resolve(null);
@@ -2112,7 +2148,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     })());
   }
 
-  /** A JSON request (manifest, finalize, chunk status), retried with backoff (0007). */
+  /** A JSON request (manifest, finalize, chunk status), retried with backoff. */
   private async call(
     job: Job | null,
     method: string,
@@ -2135,7 +2171,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
       await this.grace(fail);
       const why = this.netPause(fail, job ? job.files[0] : undefined);
       if (why && !(job && job.dead) && !this.destroyed) {
-        // Offline or hidden: pause instead of using up retries (0008). A job's request ends with
+        // Offline or hidden: pause instead of using up retries. A job's request ends with
         // its job; a manifest waits until the instance runs again, then is sent again.
         this.sysPause(why, why === 'unreachable' ? undefined : 'abort');
         if (job) {
@@ -2158,14 +2194,14 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
   /**
    * Hands a request to the transport. Never throws: anything thrown while the request is built or
    * sent (user `url`/`method`/`timeout`/`params`/`paramName`, `xhr.open`, `setRequestHeader`, a
-   * custom transport) is reported and fails it with `REQUEST_SETUP_FAILED`, not retried (0013).
+   * custom transport) is reported and fails it with `REQUEST_SETUP_FAILED`, not retried.
    */
   private send(build: () => TransportRequest): TransportHandle {
     let h: TransportHandle;
     let body = true;
     try {
       const req = build();
-      // A Blob or FormData body is being sent until its last progress event (0017).
+      // A Blob or FormData body is being sent until its last progress event.
       body = !req.body || typeof req.body === 'string';
       h = (this.options.transport || xhrTransport).send(req);
     } catch (error) {
@@ -2185,8 +2221,8 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
         this.unlater(this.wd);
         this.wd = undefined;
       }
-      // Only aborts core starts itself are ABORTED; any other abort is a network failure (0013).
-      // A stall abort is STALLED (0017). Any other answer is a response: the server is reachable.
+      // Only aborts core starts itself are ABORTED; any other abort is a network failure.
+      // A stall abort is STALLED. Any other answer is a response: the server is reachable.
       if (r.error === 'abort') {
         if (this.stalled.has(handle)) r.error = 'stalled';
         else if (!this.own.has(handle)) r.error = 'network';
@@ -2246,7 +2282,7 @@ export class AnyDropCore extends Emitter<AnyDropEvents> {
     if (job.aux) this.abort(job.aux);
   }
 
-  /** Pause with `abort` (0008): aborted chunks are not done; the slot is freed; unpaused files requeue. */
+  /** Pause with `abort`: aborted chunks are not done; the slot is freed; unpaused files requeue. */
   private stopJob(job: Job): void {
     this.endJob(job);
     this.progress(job);

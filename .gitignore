@@ -30,3 +30,9 @@ e2e/.out-*/
 internal/
 CLAUDE.md
 .claude/
+
+# docs website (VitePress): generated API reference, copied demo build, caches and output
+docs/api/generated/
+docs/public/demo/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

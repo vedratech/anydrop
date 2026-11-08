@@ -1,4 +1,4 @@
-// Resume records (0004) behind one internal interface (0009), with an IndexedDB and a memory
+// Resume records behind one internal interface, with an IndexedDB and a memory
 // implementation. AnyDropCore reaches them only through createResumeStore(), imported in one place.
 // Every IndexedDB access is wrapped: private mode and iOS can throw, and an upload must never fail
 // because of persistence. On any failure the store warns once and carries on in memory.
@@ -206,7 +206,7 @@ export function idbStore(): ResumeStore {
   };
 }
 
-/** The one factory (0009): IndexedDB, falling back to memory on the first failure. */
+/** The one factory: IndexedDB, falling back to memory on the first failure. */
 export function createResumeStore(): ResumeStore {
   return idbStore();
 }

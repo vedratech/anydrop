@@ -1,4 +1,4 @@
-// A batch (0003): everything added by one user action, or by addFile()/addFiles() calls in the
+// A batch: everything added by one user action, or by addFile()/addFiles() calls in the
 // same tick. Each batch has its own sessionId and at most one manifest.
 import type { FolderNodeImpl } from './tree/TreeStore';
 import type { AnyDropFile } from './types';
@@ -21,11 +21,11 @@ export interface Batch {
   closed: boolean;
   manifestState: 'pending' | 'sending' | 'sent' | 'failed';
   /**
-   * processQueue() was called while the batch was open (0011), or while its manifest was being
+   * processQueue() was called while the batch was open, or while its manifest was being
    * sent: run it again when the batch closes or the manifest returns.
    */
   processRequested: boolean;
-  /** enqueueFile() / processFile() calls made while the batch was open, applied when it closes (0011, 0012). */
+  /** enqueueFile() / processFile() calls made while the batch was open, applied when it closes. */
   readonly deferred: { file: AnyDropFile; process: boolean }[];
   readonly promise: Promise<AnyDropFile[]>;
   resolve: (files: AnyDropFile[]) => void;

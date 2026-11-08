@@ -1,7 +1,7 @@
 // Typed event emitter. Same semantics as Dropzone's Emitter (listeners run with `this` bound to
 // the instance, `emit` iterates over a snapshot, `off()` / `off(name)` / `off(name, fn)`), except
 // that `on()` returns an unsubscribe function that also carries `on` and `once` for Dropzone-style
-// chaining (0012), and a listener that throws is reported without stopping the other listeners.
+// chaining, and a listener that throws is reported without stopping the other listeners.
 import { reportError } from '../util/env';
 
 export type Listener<A extends unknown[]> = (...args: A) => void;
@@ -9,7 +9,9 @@ export type Listener<A extends unknown[]> = (...args: A) => void;
 /** Returned by `on()` / `once()`: call it to remove the listener, or chain `.on()` / `.once()`. */
 export interface Unsubscribe<Self> {
   (): void;
+  /** Adds another listener and returns the same kind of function (chaining). */
   on: Self extends { on: infer F } ? F : never;
+  /** Adds a listener that runs once and returns the same kind of function (chaining). */
   once: Self extends { once: infer F } ? F : never;
 }
 
@@ -55,6 +57,7 @@ export class Emitter<E extends { [K in keyof E]: unknown[] }> {
     return this;
   }
 
+  /** Emits an event; every listener runs with `this` set to the instance. Returns the instance. */
   emit<K extends keyof E>(event: K, ...args: E[K]): this {
     const list = this._callbacks[event];
     if (list && list.length) {

@@ -11,3 +11,9 @@ test-results
 .changeset/*.md
 *.md
 e2e/.out-*
+
+# docs website: generated files
+docs/api/generated
+docs/public/demo
+docs/.vitepress/cache
+docs/.vitepress/dist

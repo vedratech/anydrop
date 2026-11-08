@@ -1,6 +1,6 @@
 # AnyDrop backend contract (protocol v1.4)
 
-> This page is generated from the project's protocol specification. AnyDrop ships no server: you implement this contract in your own backend (Express and Laravel examples are in the [README](../README.md#backend-examples)). Client packages: [`@vedratech/anydrop-core`](../packages/core/README.md), [`@vedratech/anydrop-ui`](../packages/ui/README.md).
+> This page is generated from the project's protocol specification. AnyDrop ships no server: you implement this contract in your own backend ([Express](/backend/express) and [Laravel](/backend/laravel) examples, and a [backend overview](/backend/)). Client packages: `@vedratech/anydrop-core` ([guide](/guide/headless-core)) and `@vedratech/anydrop-ui` ([guide](/guide/quick-start)).
 
 Default field names are **the same as Dropzone's chunking fields**, so an existing Dropzone chunk backend keeps working. Our additions use the `ad` prefix. All field names can be renamed with the `params()` option: what it returns is merged over the built-in fields, and a `null` value drops a built-in field (so `{ dzuuid: null, uuid: file.upload.uuid }` renames `dzuuid`).
 

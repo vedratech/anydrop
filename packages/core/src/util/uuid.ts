@@ -1,7 +1,8 @@
-// UUID v4 (0002). Uses crypto.getRandomValues, which also works in insecure contexts
+// UUID v4. Uses crypto.getRandomValues, which also works in insecure contexts
 // (crypto.randomUUID needs https). Falls back to Math.random when crypto is missing.
 // Globals are read at call time, never at import time.
 
+/** Creates a UUID version 4 (works without HTTPS). */
 export function uuidv4(): string {
   const bytes = new Uint8Array(16);
   const c = typeof crypto !== 'undefined' ? crypto : undefined;

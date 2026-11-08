@@ -40,7 +40,9 @@ export interface DataTransferItemLike {
 
 /** A `DataTransfer` (drop) or the `clipboardData` of a paste. */
 export interface DataTransferLike {
+  /** The drop items (used for folders through `webkitGetAsEntry`). */
   readonly items?: ArrayLike<DataTransferItemLike> | null;
+  /** The plain file list, used when `items` is missing. */
   readonly files?: ArrayLike<File> | null;
 }
 

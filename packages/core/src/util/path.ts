@@ -1,4 +1,4 @@
-// Path helpers (0002): `/` separators, no leading slash, no `.` or empty segments.
+// Path helpers: `/` separators, no leading slash, no `.` or empty segments.
 // No Unicode normalisation: names are kept exactly as the browser gives them.
 
 /** `'\\a//./b/'` → `'a/b'`. */
@@ -27,7 +27,7 @@ export function joinPath(dir: string, name: string): string {
 
 /**
  * Path sent on the wire (`adRelativePath`, manifest): the folder part of `relativePath`
- * plus `upload.filename`, so `renameFile()` changes only the last segment (0002).
+ * plus `upload.filename`, so `renameFile()` changes only the last segment.
  */
 export function sentRelativePath(file: {
   relativePath: string;

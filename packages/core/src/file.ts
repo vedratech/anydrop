@@ -1,4 +1,4 @@
-// augmentFile (0002): turns the native File into the public file object by adding properties.
+// augmentFile: turns the native File into the public file object by adding properties.
 // Read-only fields use Object.defineProperty (configurable, so a File can be re-added after
 // removal). The File itself is untouched otherwise: FormData, FileReader and instanceof keep working.
 import type { AnyDropFile, FolderNode } from './types';

@@ -10,10 +10,15 @@ import { drawImage, isImage, loadImage, thumbType } from './image';
 
 /** A file-like object for `displayExistingFile()`: not part of the tree or the upload queue. */
 export interface MockFile {
+  /** File name shown in the row. */
   name: string;
+  /** Size in bytes. */
   size: number;
+  /** MIME type. */
   type?: string;
+  /** Status text, for example `success`. */
   status?: string;
+  /** The row element, set by the UI. */
   previewElement?: HTMLElement;
   [key: string]: unknown;
 }

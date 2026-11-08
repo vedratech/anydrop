@@ -31,7 +31,10 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "docs:protocol": "node scripts/gen-protocol-doc.mjs"
+    "docs:protocol": "node scripts/gen-protocol-doc.mjs",
+    "docs:dev": "pnpm build && pnpm --filter @vedratech/anydrop-docs dev",
+    "docs:build": "pnpm build && pnpm --filter @vedratech/anydrop-docs build",
+    "docs:preview": "pnpm --filter @vedratech/anydrop-docs preview"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

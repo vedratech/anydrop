@@ -1,4 +1,4 @@
-// Event rate helpers (0006): a per-key trailing throttle (folderprogress, 100 ms) and a
+// Event rate helpers: a per-key trailing throttle (folderprogress, 100 ms) and a
 // microtask merge (errorlistchanged). Timers are created only when used, and `clear()` removes
 // them (destroy()).
 

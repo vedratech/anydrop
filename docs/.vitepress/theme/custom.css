@@ -1,0 +1,79 @@
+/* AnyDrop brand colours. The blue matches the default accent of the UI package. */
+:root {
+  --vp-c-brand-1: #1d4ed8;
+  --vp-c-brand-2: #2563eb;
+  --vp-c-brand-3: #1e40af;
+  --vp-c-brand-soft: rgb(29 78 216 / 14%);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #1d4ed8 30%, #38bdf8);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #1d4ed8 40%, #38bdf8 60%);
+  --vp-home-hero-image-filter: blur(56px);
+
+  --vp-button-brand-bg: var(--vp-c-brand-1);
+  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
+  --vp-button-brand-active-bg: var(--vp-c-brand-3);
+}
+
+.dark {
+  --vp-c-brand-1: #60a5fa;
+  --vp-c-brand-2: #3b82f6;
+  --vp-c-brand-3: #2563eb;
+  --vp-c-brand-soft: rgb(96 165 250 / 16%);
+  --vp-home-hero-name-background: linear-gradient(120deg, #60a5fa 30%, #7dd3fc);
+  --vp-button-brand-text: #0b1220;
+  --vp-button-brand-hover-text: #0b1220;
+}
+
+.VPFeature {
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+.VPFeature:hover {
+  transform: translateY(-2px);
+  border-color: var(--vp-c-brand-1) !important;
+}
+
+.home-note {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 8px 24px 56px;
+  text-align: center;
+  color: var(--vp-c-text-2);
+  line-height: 1.7;
+}
+.home-note p {
+  margin: 0;
+}
+
+/* Wide tables (options, methods) scroll instead of breaking the page. */
+.vp-doc table {
+  display: block;
+  overflow-x: auto;
+}
+.vp-doc td code,
+.vp-doc th code {
+  white-space: nowrap;
+}
+
+/* Generated API pages: keep the type tables readable. */
+.vp-doc h4 {
+  margin-top: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .VPFeature {
+    transition: none;
+  }
+  .VPFeature:hover {
+    transform: none;
+  }
+}
+
+/* The hero illustration is taller than VitePress's mobile image box and overlaps the title: hide it on narrow screens. */
+@media (max-width: 959px) {
+  .VPHero .image {
+    display: none;
+  }
+}

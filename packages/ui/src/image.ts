@@ -22,7 +22,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-// Image helpers: thumbnails and the default `transformFile` resize (decision 0011).
+// Image helpers: thumbnails and the default `transformFile` resize.
 // The crop/contain geometry follows Dropzone 6.3.5 `resize()` (MIT, see THIRD_PARTY_NOTICES.md),
 // rewritten as a pure function.
 export type Fit = 'crop' | 'contain';
