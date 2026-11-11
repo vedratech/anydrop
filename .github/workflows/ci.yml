@@ -25,9 +25,9 @@ jobs:
     name: Lint, typecheck, build, unit tests, packaging
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4 # the version comes from "packageManager" in package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # the version comes from "packageManager" in package.json
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -57,14 +57,14 @@ jobs:
       # One build for the whole workflow: the jobs below unpack it instead of running `pnpm build` again.
       - name: Pack the build output (packages/*/dist)
         run: tar czf "$RUNNER_TEMP/packages-dist.tgz" packages/*/dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: packages-dist
           path: ${{ runner.temp }}/packages-dist.tgz
           retention-days: 1
       # Both packages declare engines.node >=18 (decision 0019): the built files must import there too.
       # Last step of the job, because the earlier steps (pnpm 11) run on Node 22.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 18
       - name: SSR import smoke test, Node 18 (against the built dist)
@@ -80,9 +80,9 @@ jobs:
       matrix:
         project: [chromium, firefox, webkit, iphone, pixel]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -100,7 +100,7 @@ jobs:
         env:
           CI: 'true'
           AD_SLOW: ${{ (github.event_name == 'schedule' || inputs.slow) && '1' || '' }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-${{ matrix.project }}
@@ -114,9 +114,9 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -141,14 +141,14 @@ jobs:
           # Angular 18.2 (the toolchain the package is built with; TestBed in JIT, plain Vitest, zone.js).
           - { name: Angular 18, filter: '@vedratech/anydrop-angular', script: test }
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: packages-dist
           path: ${{ runner.temp }}
@@ -160,14 +160,14 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: packages-dist
           path: ${{ runner.temp }}
@@ -177,7 +177,7 @@ jobs:
       - run: pnpm examples:build
       - name: Pack the example builds
         run: tar czf "$RUNNER_TEMP/examples-dist.tgz" examples/react-vite/dist examples/nextjs/.next examples/angular/dist examples/angular/vendor
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: examples-dist
           path: ${{ runner.temp }}/examples-dist.tgz
@@ -193,20 +193,20 @@ jobs:
       matrix:
         project: [chromium, firefox, webkit, iphone]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright browsers
-        run: bash scripts/ci-install-browsers.sh ${{ matrix.project == 'iphone' && 'webkit' || matrix.project }}
-      - uses: actions/download-artifact@v4
+        run: pnpm exec playwright install --with-deps ${{ matrix.project == 'iphone' && 'webkit' || matrix.project }}
+      - uses: actions/download-artifact@v8
         with:
           name: packages-dist
           path: ${{ runner.temp }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: examples-dist
           path: ${{ runner.temp }}
@@ -218,7 +218,7 @@ jobs:
       - run: pnpm test:e2e:examples --project=${{ matrix.project }}
         env:
           CI: 'true'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-examples-${{ matrix.project }}
@@ -244,15 +244,15 @@ jobs:
           - { name: Next 14 + React 18, args: '--app nextjs --next 14' }
           - { name: Angular 18, args: '--app angular --angular 18' }
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: bash scripts/ci-install-browsers.sh chromium
-      - uses: actions/download-artifact@v4
+      - run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v8
         with:
           name: packages-dist
           path: ${{ runner.temp }}
