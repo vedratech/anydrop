@@ -1,0 +1,12 @@
+# Keeps the GitHub Actions used in CI up to date (one grouped pull request a week).
+# npm security fixes come from GitHub's Dependabot security updates (repository setting).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

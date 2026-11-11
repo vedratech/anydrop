@@ -11,6 +11,8 @@
 
 AnyDrop is a front-end upload library that treats **folders as first-class objects**. It is configured with plain options and events, and has a folder picker and tree view, chunked uploads, pause and resume, a persistent error list, and a layout that works on phones. Packages: [`@vedratech/anydrop-ui`](packages/ui/README.md) and [`@vedratech/anydrop-core`](packages/core/README.md), with wrappers for [React and Next.js](packages/react/README.md) and [Angular](packages/angular/README.md). Badges show the UI package; the badges of the core package are in its [README](packages/core/README.md).
 
+![AnyDrop uploading a folder with pause and resume](docs/public/demo.gif)
+
 ## Documentation: https://vedratech.github.io/anydrop/
 
 | | |

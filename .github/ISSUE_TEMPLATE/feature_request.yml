@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an option, event, framework or backend example
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The use case, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: An option, event, method, UI change or backend example you have in mind.
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround
