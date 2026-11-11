@@ -32,3 +32,21 @@ packageExtensions:
     peerDependenciesMeta:
       '@angular/common':
         optional: true
+
+# Security overrides for dev tooling only (nothing here reaches the published packages, which have no
+# dependencies). Each line moves a transitive dependency to a patched release (Dependabot alerts).
+overrides:
+  # VitePress 1.6.4 (latest stable) pins vite 5; use a patched vite 6 for the docs site.
+  'vitepress>vite': '^6.4.4'
+  # eslint (root) and ng-packagr 18 (Angular devDeps, via glob 10) use old minimatch.
+  'minimatch@>=7 <11.0.1': '^11.0.1'
+  # typedoc 0.28.20 (latest) calls Minimatch#matchOne, which minimatch 11 removed: it keeps 10.2.6
+  # (alert dismissed, docs generator only).
+  'typedoc>minimatch': '10.2.6'
+  # ng-packagr 18 > cacache 18 depends on glob 10 and tar 6.
+  'glob@>=9 <=14.0.1': '^14.0.2'
+  'tar@<7.5.21': '^7.5.21'
+  # ng-packagr 18 bundles with esbuild 0.23.
+  'esbuild@<0.25.0': '^0.25.0'
+  # @angular/compiler-cli 18 > @babel/core 7.25.
+  '@babel/core@<7.29.6': '^7.29.6'
