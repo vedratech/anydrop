@@ -88,7 +88,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps ${{ matrix.project == 'iphone' && 'webkit' || matrix.project == 'pixel' && 'chromium' || matrix.project }}
+        run: bash scripts/ci-install-browsers.sh ${{ matrix.project == 'iphone' && 'webkit' || matrix.project == 'pixel' && 'chromium' || matrix.project }}
       # The demo page and the CDN/dist specs run against the built packages.
       - run: pnpm build
       # Every spec makes its own fixtures from the seeded generator (e2e/fixtures/generate.mjs) in a temp
@@ -121,7 +121,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: bash scripts/ci-install-browsers.sh chromium
       - run: pnpm build
       - run: pnpm check:consumer
 
